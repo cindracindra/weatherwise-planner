@@ -53,7 +53,7 @@ All contributors to this project should follow the following ways-of-working to 
 - Create a new issue, task, or incident on our issue tracker [here](https://gitlab.doc.ic.ac.uk/msc-software-systems-engineering/sse-tp1/-/issues).
 - Populate the ticket with the appropriate information and tag.
 - Assign the ticket for someone to work on (this can also be done by Owners and Maintainers).
-- From the ticket, create a new branch, and make the changes there.
+- From the ticket, create a new merge request. This also creates a new branch and you can make any changes there.
 - Perform the relevant tests to ensure the new changes do not break existing functionality or intorduce new bugs.
 - Once completed, create a pull/merge request to master branch.
 - Assign a verified Owner or Maintainer to approve your pull/merge request.
