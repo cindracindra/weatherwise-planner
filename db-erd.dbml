@@ -1,0 +1,17 @@
+Table event {
+  id integer [primary key]
+  name varchar
+  start datetime
+  end datetime
+  location varchar
+}
+
+Table profile {
+  id integer [primary key]
+  name varchar
+}
+
+Table event_profile {
+  eventid integer [ref: > event.id]
+  profileid integer [ref: > profile.id]
+}

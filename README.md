@@ -1,8 +1,8 @@
-# SSE TP1 - Event Calender
+# SSE TP1 - Event Calendar
 
 ## Name
 
-Event Calender Web Application
+Event Calendar Web Application
 
 ## Description
 
@@ -16,7 +16,11 @@ We welcome any and all contributions to this project. Please follow the steps li
 
 ## Architecture
 
+### High-Level Diagram
 [Insert Diagram Here]
+
+### Database Schema
+![DB Schema](./db-schema.png)
 
 ## Badges
 
