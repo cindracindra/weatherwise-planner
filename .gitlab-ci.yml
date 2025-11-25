@@ -1,5 +1,6 @@
 stages:
   - format
+  - deploy
 python-formatting:
   stage: format
   image: python:3.12
@@ -7,3 +8,20 @@ python-formatting:
     - pip install flake8
   script:
     - flake8 app.py api/event-api.py api/weather-api.py
+deploy-to-impaas:
+  stage: deploy
+  needs: ["python-formatting"]
+  image: ubuntu:latest
+  variables:
+    TSURU_TARGET: https://impaas.uk
+    APP_NAME: event-calendar
+  before_script:
+    - apt-get update
+    - apt-get install -y curl
+    - curl -fsSL "https://tsuru.io/get" | bash
+    - export TSURU_TOKEN="$IMPAAS_DEPLOY_TOKEN"
+    - tsuru target add impaas "$TSURU_TARGET" -s
+  script:
+    - tsuru app deploy -a "$APP_NAME" .
+  only:
+    - main
