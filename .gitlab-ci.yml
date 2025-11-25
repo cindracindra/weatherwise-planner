@@ -24,4 +24,4 @@ deploy-to-impaas:
   script:
     - tsuru app deploy -a "$APP_NAME" .
   only:
-    - main
+    - master
