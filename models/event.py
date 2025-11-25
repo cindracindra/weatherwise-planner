@@ -10,7 +10,9 @@ class Event(Base):
     __tablename__ = "event"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    name: Mapped[DateTime]
+    name: Mapped[str]
     start: Mapped[DateTime]
-    end: Mapped[str]
+    end: Mapped[DateTime]
     location: Mapped[str]
+
+    event_profile = relationship("Event_Profile", back_populates="event")

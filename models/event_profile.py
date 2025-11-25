@@ -14,4 +14,4 @@ class Event_Profile(Base):
 
     # Relationships
     event: Mapped["Event"] = relationship(back_populates="event_profile")
-    module: Mapped["Profile"] = relationship(back_populates="event_profile")
+    profile: Mapped["Profile"] = relationship(back_populates="event_profile")

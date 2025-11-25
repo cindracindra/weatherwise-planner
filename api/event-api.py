@@ -1,8 +1,11 @@
 import os
 from sqlalchemy import create_engine, select
 from sqlalchemy.engine import URL
-from sqlalchemy.orm import Session, joinedload
+from sqlalchemy.orm import Session
 from dotenv import load_dotenv
+from models.event import Event
+from models.profile import Profile
+from models.event_profile import Event_Profile
 
 # Load environment variables
 load_dotenv()
@@ -19,45 +22,47 @@ url = URL.create(
 
 engine = create_engine(url)
 
-from ..models.event import Event
-from ..models.profile import Profile
-from ..models.event_profile import Event_Profile
-
 
 def get_events():
     stmt = select(Event)
     with Session(engine) as session:
         events = session.execute(stmt).scalars().unique().all()
-        for event in events:
-            data = {
+        data = [
+            {
                 "id": event.id,
                 "name": event.name,
                 "start": event.start,
                 "end": event.end,
                 "location": event.location,
             }
-    return {"students": data}
+            for event in events
+        ]
+    return {"events": data}
 
 
 def get_profiles():
     stmt = select(Profile)
     with Session(engine) as session:
-        profiles = session.execute(stmt).scalars().unique.all()
-        for profile in profiles:
-            data = {
+        profiles = session.execute(stmt).scalars().unique().all()
+        data = [
+            {
                 "id": profile.id,
                 "name": profile.name,
             }
-    return {"modules": data}
+            for profile in profiles
+        ]
+    return {"profiles": data}
 
 
 def get_event_profiles():
     stmt = select(Event_Profile)
     with Session(engine) as session:
         event_profiles = session.execute(stmt).scalars().all()
-        for event_profile in event_profiles:
-            data = {
+        data = [
+            {
                 "profile_id": event_profile.profileid,
                 "event_id": event_profile.eventid,
             }
-    return {"enrolments": data}
+            for event_profile in event_profiles
+        ]
+    return {"event_profiles": data}

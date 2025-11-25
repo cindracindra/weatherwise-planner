@@ -11,3 +11,5 @@ class Profile(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str]
+
+    event_profile = relationship("Event_Profile", back_populates="profile")
