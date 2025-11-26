@@ -1,6 +1,6 @@
 from flask import Flask, render_template
 
-from api import get_events, get_profiles, get_event_profiles
+from api.event_api import get_events, get_profiles, get_event_profiles
 
 app = Flask(__name__)
 
