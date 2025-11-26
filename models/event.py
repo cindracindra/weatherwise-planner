@@ -1,5 +1,5 @@
-from sqlalchemy import Column, Integer, Text, DateTime
 from sqlalchemy.orm import relationship, DeclarativeBase, Mapped, mapped_column
+from datetime import datetime
 
 
 class Base(DeclarativeBase):
@@ -11,8 +11,8 @@ class Event(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str]
-    start: Mapped[DateTime]
-    end: Mapped[DateTime]
+    start: Mapped[datetime]
+    end: Mapped[datetime]
     location: Mapped[str]
 
     event_profile = relationship("Event_Profile", back_populates="event")
