@@ -35,7 +35,3 @@ def get_holidays(year: int = 2024, country_code: str = "GB"):
     # 2. dict[date, list[Holiday]] vs list[Dict]
 
     # In our code, the function that calls get_holidays uses the return and lookup holidays by date, so dict[date, list[Holiday]] is more suitable.
-
-if __name__ == "__main__":
-    print(get_holidays(2024, "GB"))
-    
