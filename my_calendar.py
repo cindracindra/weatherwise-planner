@@ -7,7 +7,7 @@ from functools import lru_cache
 
 @lru_cache(maxsize=1)
 def _load_code_icons():
-    with open("code_icon.json", "r") as f:
+    with open("static/data/code_icon.json", "r") as f:
         return json.load(f)
 
 def print_month_calendar(year, month):
@@ -126,7 +126,3 @@ def get_month_calendar_matrix_weather(year, month):
 #     print(weather_info_week)
     # calendar_holiday_matrix = print_month_calendar(2024, 6)
     # print(calendar_holiday_matrix)
-
-if __name__ == "__main__":
-    weather_dict = {'2025-11-27': 61, '2025-11-28': 80, '2025-11-29': 80, '2025-11-30': 61, '2025-12-01': 61, '2025-12-02': 3, '2025-12-03': 3}
-    print(get_month_calendar_matrix_weather(2025, 11))
