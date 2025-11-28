@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request, redirect, url_for, jsonify
 
 from api.event_api import (
     get_events,
@@ -6,6 +6,8 @@ from api.event_api import (
     get_event_profiles,
     create_event,
     create_event_profile,
+    delete_event,
+    delete_event_profile,
 )
 
 app = Flask(__name__)
@@ -32,6 +34,22 @@ def web_create_event():
 def web_create_event_profile():
     data = request.form
     create_event_profile(data)
+
+
+# Web route: Delete event (form/button)
+@app.route("/management/delete-event/<int:event_id>", methods=["POST"])
+def web_delete_event(event_id):
+    delete_event(event_id)
+    return redirect(url_for("maangement"))
+
+
+# Web route: Delete event profile (form/button)
+@app.route(
+    "/management/delete-event-profiles/<int:event_profile_id>",
+    methods=["POST"],
+)
+def web_delete_event_profile(event_profile_id):
+    delete_event_profile(event_profile_id)
     return redirect(url_for("management"))
 
 
@@ -60,3 +78,17 @@ def api_get_event_profiles():
 def api_create_event_profile():
     data = request.json
     return create_event_profile(data)
+
+
+# API route: Delete event
+@app.route("/api/events/<int:event_id>", methods=["DELETE"])
+def api_delete_event(event_id):
+    result, status = delete_event(event_id)
+    return jsonify(result), status
+
+
+# API route: Delete event profile
+@app.route("/api/event-profiles/<int:event_profile_id>", methods=["DELETE"])
+def api_delete_event_profile(event_profile_id):
+    result, status = delete_event_profile(event_profile_id)
+    return jsonify(result), status
