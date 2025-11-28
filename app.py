@@ -1,12 +1,10 @@
 from flask import Flask, render_template, request, redirect, url_for, jsonify
 
-from api.event_api import (
-    get_events,
-    get_profiles,
+from api.event_api import get_events, create_event, delete_event
+from api.profile_api import get_profiles, create_profile, delete_profile
+from api.event_profile_api import (
     get_event_profiles,
-    create_event,
     create_event_profile,
-    delete_event,
     delete_event_profile,
 )
 
@@ -34,22 +32,37 @@ def web_create_event():
 def web_create_event_profile():
     data = request.form
     create_event_profile(data)
+    return redirect(url_for("management"))
+
+
+@app.route("/management/create-profile", methods=["POST"])
+def web_create_profile():
+    data = request.form
+    create_profile(data)
+    return redirect(url_for("management"))
 
 
 # Web route: Delete event (form/button)
 @app.route("/management/delete-event/<int:event_id>", methods=["POST"])
 def web_delete_event(event_id):
     delete_event(event_id)
-    return redirect(url_for("maangement"))
+    return redirect(url_for("management"))
 
 
 # Web route: Delete event profile (form/button)
 @app.route(
-    "/management/delete-event-profiles/<int:event_profile_id>",
+    "/management/delete-event-profile/<int:event_profile_id>",
     methods=["POST"],
 )
 def web_delete_event_profile(event_profile_id):
     delete_event_profile(event_profile_id)
+    return redirect(url_for("management"))
+
+
+# Web route: Delete profile (form/button)
+@app.route("/management/delete-profile/<int:profile_id>", methods=["POST"])
+def web_delete_profile(profile_id):
+    delete_profile(profile_id)
     return redirect(url_for("management"))
 
 
@@ -67,6 +80,18 @@ def api_create_event():
 @app.route("/api/profiles", methods=["GET"])
 def api_get_profiles():
     return get_profiles()
+
+
+@app.route("/api/profiles", methods=["POST"])
+def api_create_profile():
+    data = request.json
+    return create_profile(data)
+
+
+@app.route("/api/profiles/<int:profile_id>", methods=["DELETE"])
+def api_delete_profile(profile_id):
+    result, status = delete_profile(profile_id)
+    return jsonify(result), status
 
 
 @app.route("/api/event-profiles", methods=["GET"])
