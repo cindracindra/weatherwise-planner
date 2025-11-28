@@ -40,6 +40,56 @@ def get_events():
     return {"events": data}
 
 
+def create_event(data):
+
+    # Accept both dict (API) and ImmutableMultiDict (form)
+    if hasattr(data, "to_dict"):
+        data = data.to_dict()
+
+    required_fields = ["name", "start", "end", "location"]
+    missing = [
+        field
+        for field in required_fields
+        if field not in data or not data[field]
+    ]
+    if missing:
+        return {"error": f"Missing required fields: {', '.join(missing)}"}, 400
+
+    # Validate datetime fields
+    from datetime import datetime
+
+    try:
+        start_dt = datetime.fromisoformat(data["start"])
+        end_dt = datetime.fromisoformat(data["end"])
+    except Exception:
+        return {
+            "error": "'start' and 'end' must be valid ISO datetime strings."
+        }, 400
+
+    if end_dt < start_dt:
+        return {"error": "'end' must be after 'start'."}, 400
+
+    # Create event
+    with Session(engine) as session:
+        event = Event(
+            name=data["name"],
+            start=start_dt,
+            end=end_dt,
+            location=data["location"],
+        )
+        session.add(event)
+        session.commit()
+        session.refresh(event)
+        result = {
+            "id": event.id,
+            "name": event.name,
+            "start": event.start.isoformat(),
+            "end": event.end.isoformat(),
+            "location": event.location,
+        }
+    return result, 201
+
+
 def get_profiles():
     stmt = select(Profile)
     with Session(engine) as session:
@@ -66,3 +116,44 @@ def get_event_profiles():
             for event_profile in event_profiles
         ]
     return {"event_profiles": data}
+
+
+def create_event_profile(data):
+    pass
+    # Accept both dict (API) and ImmutableMultiDict (form)
+    if hasattr(data, "to_dict"):
+        data = data.to_dict()
+
+    required_fields = ["eventid", "profileid"]
+    missing = [
+        field
+        for field in required_fields
+        if field not in data or not data[field]
+    ]
+    if missing:
+        return {"error": f"Missing required fields: {', '.join(missing)}"}, 400
+
+    try:
+        eventid = int(data["eventid"])
+        profileid = int(data["profileid"])
+    except Exception:
+        return {"error": "'eventid' and 'profileid' must be integers."}, 400
+
+    # TODO: check if event/profile exist
+
+    with Session(engine) as session:
+        event = session.get(Event, eventid)
+        profile = session.get(Profile, profileid)
+        if not event or not profile:
+            return {"error": "Event or Profile not found."}, 404
+
+        event_profile = Event_Profile(eventid=eventid, profileid=profileid)
+        session.add(event_profile)
+        session.commit()
+        session.refresh(event_profile)
+        result = {
+            "id": event_profile.id,
+            "eventid": event_profile.eventid,
+            "profileid": event_profile.profileid,
+        }
+    return result, 201
