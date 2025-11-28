@@ -12,11 +12,11 @@ load_dotenv()
 
 url = URL.create(
     drivername="postgresql+psycopg2",
-    username=os.getenv("DB_USERNAME"),
-    password=os.getenv("DB_PASSWORD"),
-    host=os.getenv("DB_HOST"),
-    port=int(os.getenv("DB_PORT", "5432")),
-    database=os.getenv("DB_NAME"),
+    username=os.getenv("PGUSER"),
+    password=os.getenv("PGPASSWORD"),
+    host=os.getenv("PGHOST"),
+    port=int(os.getenv("PGPORT", "5432")),
+    database=os.getenv("PGDATABASE"),
     query={"client_encoding": "utf8"},
 )
 
@@ -157,6 +157,8 @@ def create_event_profile(data):
             "profileid": event_profile.profileid,
         }
     return result, 201
+
+
 def delete_event(event_id):
     try:
         event_id = int(event_id)
