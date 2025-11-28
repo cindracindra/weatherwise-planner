@@ -66,3 +66,33 @@ def get_event_profiles():
             for event_profile in event_profiles
         ]
     return {"event_profiles": data}
+
+
+def delete_event(event_id):
+    try:
+        event_id = int(event_id)
+    except Exception:
+        return {"error": "'event_id' must be an integer."}, 400
+
+    with Session(engine) as session:
+        event = session.get(Event, event_id)
+        if not event:
+            return {"error": "Event not found."}, 404
+        session.delete(event)
+        session.commit()
+    return {"message": f"Event {event_id} deleted."}, 200
+
+
+def delete_event_profile(event_profile_id):
+    try:
+        event_profile_id = int(event_profile_id)
+    except Exception:
+        return {"error": "'event_profile_id' must be an integer."}, 400
+
+    with Session(engine) as session:
+        event_profile = session.get(Event_Profile, event_profile_id)
+        if not event_profile:
+            return {"error": "Event_Profile not found."}, 404
+        session.delete(event_profile)
+        session.commit()
+    return {"message": f"Event_Profile {event_profile_id} deleted."}, 200
