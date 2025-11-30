@@ -1,5 +1,5 @@
 from sqlalchemy import ForeignKey
-from sqlalchemy.orm import relationship, DeclarativeBase, Mapped, mapped_column
+from sqlalchemy.orm import relationship, Mapped, mapped_column
 
 from models.base import Base
 
@@ -9,9 +9,11 @@ class Event_Profile(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     eventid: Mapped[int] = mapped_column(
-        ForeignKey("event.id"), nullable=False)
+        ForeignKey("event.id"), nullable=False
+    )
     profileid: Mapped[int] = mapped_column(
-        ForeignKey("profile.id"), nullable=False)
+        ForeignKey("profile.id"), nullable=False
+    )
 
     # Relationships
     event = relationship("Event", back_populates="event_profile")

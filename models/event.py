@@ -1,7 +1,8 @@
-from sqlalchemy.orm import relationship, DeclarativeBase, Mapped, mapped_column
+from sqlalchemy.orm import relationship, Mapped, mapped_column
 from datetime import datetime
 
 from models.base import Base
+
 
 class Event(Base):
     __tablename__ = "event"

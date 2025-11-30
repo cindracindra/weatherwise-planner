@@ -1,6 +1,7 @@
-from sqlalchemy.orm import relationship, DeclarativeBase, Mapped, mapped_column
+from sqlalchemy.orm import relationship, Mapped, mapped_column
 
 from models.base import Base
+
 
 class Profile(Base):
     __tablename__ = "profile"

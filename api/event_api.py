@@ -44,7 +44,8 @@ def create_event(data):
         end_time_dt = datetime.fromisoformat(data["end_time"])
     except Exception:
         return {
-            "error": "'start_time' and 'end_time' must be valid ISO datetime strings."
+            "error": "'start_time' and 'end_time' must be valid "
+            "ISO datetime strings."
         }, 400
 
     if end_time_dt < start_time_dt:
