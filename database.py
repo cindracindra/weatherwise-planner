@@ -3,8 +3,8 @@ from sqlalchemy import create_engine
 from sqlalchemy.engine import URL
 from dotenv import load_dotenv
 
-# Load environment variables
-load_dotenv()
+# Load environment variables (only for local testing)
+// load_dotenv(override=True)
 
 # Create database engine
 url = URL.create(

@@ -1,9 +1,7 @@
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import relationship, DeclarativeBase, Mapped, mapped_column
 
-
-class Base(DeclarativeBase):
-    pass
+from models.base import Base
 
 
 class Event_Profile(Base):

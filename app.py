@@ -8,6 +8,8 @@ from api.event_profile_api import (
     delete_event_profile,
 )
 
+from models import event, event_profile, profile
+
 app = Flask(__name__)
 
 
