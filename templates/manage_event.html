@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
+    <title>Event Calendar</title>
+  </head>
+
+<body>
+  <h1>Manage your events here!</h1>
+</body>
+
+<div class="event-management-section">
+  <div class="event-list-section"> 
+    {% for day in full_event_list %}
+    <div class="daily-event-list"> {{ day["day"] }}
+      {% for e in day["daily_events"] %}
+      <form action="/manage_event" method="post">
+        <input type="hidden" name="event_id" value="{{ e['id'] }}">
+        <button type="submit" class="event-entry">
+          <span class="event-title">{{ e["title"] }}</span> <br>
+          <span class="event-time">{{ e["start_hour"] }} - {{ e["end_hour"] }}</span> <br>
+          <span class="event-description">{{ e["description"] }}</span> <br>
+        </button>
+      </form>
+      {% endfor %}
+    </div>
+    {% endfor %}
+  </div>
+
+  <div class="selected-event-section"> 
+  {% if selected_event %}
+    <form method="post" action="/manage_event">
+        <input type="hidden" name="event_id" value="{{ selected_event.id }}">
+        <input type="text" name="title" value="{{ selected_event.title }}">
+        <input type="text" name="start_time" value="{{selected_event.start_hour}}">
+        <input type="text" name="end_time" value="{{selected_event.end_hour}}">
+        <textarea name="description">{{ selected_event.description }}</textarea>
+        <input type="submit" value="Update Event">
+    </form>
+</div>
+{% else %}
+<p>Click an event to see details.</p>
+{% endif %}
+</div>
+

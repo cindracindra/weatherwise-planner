@@ -1,12 +1,79 @@
 <!DOCTYPE html>
 <html lang="en">
-
-<head>
-  <title>Event Calendar</title>
-</head>
+  <head>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
+    <title>Event Calendar</title>
+  </head>
 
 <body>
   <h1>Welcome to Event Calendar, the portal for all your planning and scheduling needs!</h1>
 </body>
 
+<div class="calendar-section">
+  <div class="left-container">
+    <div class="left-subheader"> 
+      <div class="calendar-subheader">{{month_name}} {{current_year}} </div>
+      <form action="/manage_event" method="get">
+        <input type="submit" value="Manage Events">
+      </form>
+      <form action="/reload_calendar" method="get">
+        <input type="submit" value="Reload Calendar">
+      </form>
+    </div>
+    <table class="calendar">
+      <tr>
+        <th>MON</th><th>TUE</th><th>WED</th>
+        <th>THU</th><th>FRI</th><th>SAT</th><th>SUN</th>
+      </tr>
+      {% for week in weeks %}
+      <tr>
+        {% for day in week %}
+          {% if day == 0 %}
+            <td></td>
+          {% else %}
+            <td>
+              <div class="calendar-cell">
+                <div class="day-number">{{day}}</div>
+                <img src="{{ url_for('static', filename='weather_logo/CLEARday.svg') }}" alt="clearday" class="weather-icon">
+              </div>
+              {% if day in events %}
+                {% for entry in events[day]  %}
+                  <div class="event">{{ entry }}</div>
+                {% endfor %}
+              {% endif %}
+            </td>
+          {% endif %}
+        {% endfor %}
+      </tr>
+      {% endfor %}
+    </table>
+  </div>
+
+  <div class="right-container">
+    <div class="prompt-container">
+
+    </div>
+    <div class="daily-schedule-container">
+      <p id="daily-schedule-subheader">{{day_name}}, {{current_date}} {{month_name}}</p>
+      <div class="day-container">
+        {% for entry in hourly_temp %}
+        <div class="hour-row">
+          <span class="temperature">{{ entry.temperature }}°</span>
+          <span class="hour-number"> | {{ entry.hour_number }}</span>
+          <span class="hour-ampm">{{ entry.hour_ampm }}</span>
+        </div>
+        {% endfor %}
+
+        {% for e in day_events %}
+        <div class="event-block"
+            style="--start: {{ e.start_hour }}; --duration: {{ e.duration }};">
+            {{ e.title }}
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+
 </html>
+
