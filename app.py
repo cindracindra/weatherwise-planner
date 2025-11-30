@@ -1,8 +1,12 @@
-from flask import Flask, render_template, redirect, url_for, request
+from flask import Flask, render_template, request, redirect, url_for, jsonify
 
-import calendar
-from calendar import monthcalendar
-from datetime import date, datetime
+from api.event_api import get_events, create_event, delete_event
+from api.profile_api import get_profiles, create_profile, delete_profile
+from api.event_profile_api import (
+    get_event_profiles,
+    create_event_profile,
+    delete_event_profile,
+)
 
 app = Flask(__name__)
 
@@ -13,83 +17,109 @@ events = {
         20: ["Team Meeting"]
     }
 
-day_events = [
-    {"id": 1, "title": "Meeting", "description": "Team sync", "start_hour": "10", "end_hour": "11", "duration": 1},
-    {"id": 2, "title": "Workout", "description": "Gym session", "start_hour": "18", "end_hour": "18.5", "duration": 0.5},
-    {"id": 2, "title": "Tesr", "description": "Gym session", "start_hour": "18.5", "end_hour": "19", "duration": 0.5}
-    ]
-
-full_event_list = [
-    {"day": "Thursday, 27 November 2025", "daily_events": day_events},
-    {"day": "Friday, 28 November 2025", "daily_events": []}
-]
-
-
 @app.route("/")
 def homepage():
-    current_date = datetime.now().day
-    current_month = datetime.now().month
-    current_year = datetime.now().year
-    
-    month_name = calendar.month_name[current_month]
-    day_name = "Monday"
-
-    
-    hourly_temp = [{ "hour_number": 12, "hour_ampm": "AM", "temperature": 5 },
-    { "hour_number": 1, "hour_ampm": "AM", "temperature": 6 },
-    { "hour_number": 2, "hour_ampm": "AM", "temperature": 5 },
-    { "hour_number": 3, "hour_ampm": "AM", "temperature": 6 },
-    { "hour_number": 4, "hour_ampm": "AM", "temperature": 5 },
-    { "hour_number": 5, "hour_ampm": "AM", "temperature": 6 },
-    { "hour_number": 6, "hour_ampm": "AM", "temperature": 5 },
-    { "hour_number": 7, "hour_ampm": "AM", "temperature": 6 },
-    { "hour_number": 8, "hour_ampm": "AM", "temperature": 5 },
-    { "hour_number": 9, "hour_ampm": "AM", "temperature": 6 },
-    { "hour_number": 10, "hour_ampm": "AM", "temperature": 5 },
-    { "hour_number": 11, "hour_ampm": "AM", "temperature": 6 },
-    { "hour_number": 12, "hour_ampm": "PM", "temperature": 5 },
-    { "hour_number": 1, "hour_ampm": "PM", "temperature": 6 },
-    { "hour_number": 2, "hour_ampm": "PM", "temperature": 5 },
-    { "hour_number": 3, "hour_ampm": "PM", "temperature": 6 },
-    { "hour_number": 4, "hour_ampm": "PM", "temperature": 5 },
-    { "hour_number": 5, "hour_ampm": "PM", "temperature": 6 },
-    { "hour_number": 6, "hour_ampm": "PM", "temperature": 5 },
-    { "hour_number": 7, "hour_ampm": "PM", "temperature": 6 },
-    { "hour_number": 8, "hour_ampm": "PM", "temperature": 5 },
-    { "hour_number": 9, "hour_ampm": "PM", "temperature": 6 },
-    { "hour_number": 10, "hour_ampm": "PM", "temperature": 5 },
-    { "hour_number": 11, "hour_ampm": "PM", "temperature": 6 }]
-    
-    weeks = monthcalendar(current_year, current_month)
-    return render_template(
-        "index.html",
-        weeks=weeks,
-        month_name=month_name,
-        current_year=current_year,
-        events=events,
-        day_name=day_name,
-        current_date=current_date,
-        hourly_temp=hourly_temp,
-        day_events=day_events)
+    return render_template("index.html")
 
 
-@app.route("/reload_calendar", methods=['GET'])
-def reload_calendar():
-    return redirect(url_for("homepage"))
+@app.route("/management")
+def management():
+    return render_template("index.html")  # replace with proper html file
 
-@app.route("/manage_event", methods=["GET", "POST"])
-def manage_event():
-    
-    selected_event = None
-    if request.method == "POST":
-        event_id = int(request.form.get("event_id"))
-        
-        # Find event by ID
-        selected_event = None
-        for i in full_event_list:
-            for e in i["daily_events"]:
-                if e["id"] == event_id:
-                    selected_event = e
-                    break
 
-    return render_template("manage_event.html", full_event_list=full_event_list, selected_event=selected_event)
+@app.route("/management/create-event", methods=["POST"])
+def web_create_event():
+    data = request.form
+    create_event(data)
+    return redirect(url_for("management"))
+
+
+@app.route("/management/create-event-profile", methods=["POST"])
+def web_create_event_profile():
+    data = request.form
+    create_event_profile(data)
+    return redirect(url_for("management"))
+
+
+@app.route("/management/create-profile", methods=["POST"])
+def web_create_profile():
+    data = request.form
+    create_profile(data)
+    return redirect(url_for("management"))
+
+
+# Web route: Delete event (form/button)
+@app.route("/management/delete-event/<int:event_id>", methods=["POST"])
+def web_delete_event(event_id):
+    delete_event(event_id)
+    return redirect(url_for("management"))
+
+
+# Web route: Delete event profile (form/button)
+@app.route(
+    "/management/delete-event-profile/<int:event_profile_id>",
+    methods=["POST"],
+)
+def web_delete_event_profile(event_profile_id):
+    delete_event_profile(event_profile_id)
+    return redirect(url_for("management"))
+
+
+# Web route: Delete profile (form/button)
+@app.route("/management/delete-profile/<int:profile_id>", methods=["POST"])
+def web_delete_profile(profile_id):
+    delete_profile(profile_id)
+    return redirect(url_for("management"))
+
+
+@app.route("/api/events", methods=["GET"])
+def api_get_events():
+    return get_events()
+
+
+@app.route("/api/events", methods=["POST"])
+def api_create_event():
+    data = request.json
+    return create_event(data)
+
+
+@app.route("/api/profiles", methods=["GET"])
+def api_get_profiles():
+    return get_profiles()
+
+
+@app.route("/api/profiles", methods=["POST"])
+def api_create_profile():
+    data = request.json
+    return create_profile(data)
+
+
+@app.route("/api/profiles/<int:profile_id>", methods=["DELETE"])
+def api_delete_profile(profile_id):
+    result, status = delete_profile(profile_id)
+    return jsonify(result), status
+
+
+@app.route("/api/event-profiles", methods=["GET"])
+def api_get_event_profiles():
+    return get_event_profiles()
+
+
+@app.route("/api/event-profiles", methods=["POST"])
+def api_create_event_profile():
+    data = request.json
+    return create_event_profile(data)
+
+
+# API route: Delete event
+@app.route("/api/events/<int:event_id>", methods=["DELETE"])
+def api_delete_event(event_id):
+    result, status = delete_event(event_id)
+    return jsonify(result), status
+
+
+# API route: Delete event profile
+@app.route("/api/event-profiles/<int:event_profile_id>", methods=["DELETE"])
+def api_delete_event_profile(event_profile_id):
+    result, status = delete_event_profile(event_profile_id)
+    return jsonify(result), status
