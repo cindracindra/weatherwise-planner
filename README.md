@@ -17,10 +17,10 @@ We welcome any and all contributions to this project. Please follow the steps li
 ## Architecture
 
 ### High-Level Diagram
-[Insert Diagram Here]
+<img src="./diagrams/architecture.svg" alr="HLD" width="500">
 
 ### Database Schema
-![DB Schema](./db-schema.png)
+<img src="./diagrams/db-schema.png" alt="DB Schema" width="500">
 
 ## Badges
 

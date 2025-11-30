@@ -7,7 +7,7 @@ python-formatting:
   before_script:
     - pip install flake8
   script:
-    - flake8 app.py api/event-api.py api/weather-api.py
+    - flake8 app.py api/*.py models/*
 deploy-to-impaas:
   stage: deploy
   needs: ["python-formatting"]
