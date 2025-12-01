@@ -10,63 +10,17 @@ from api.event_profile_api import (
 )
 
 from my_calendar import get_month_calendar_matrix_weather
+from weather import get_hourly_weather
+
 import calendar
-from datetime import date, datetime
+from datetime import datetime
 
 app = Flask(__name__)
-
-current_day_event = [
-    {"id": 1, "name": "Meeting", "start": "10", "end": "11", "duration": 1},
-    {"id": 2, "name": "Workout", "start": "18", "end": "18.5", "duration": 0.5},
-    {"id": 3, "name": "Test", "start": "18.5", "end": "19", "duration": 0.5}
-    ]
-
-current_month_event = [
-    {"date": 27, "day": "Thursday, 27 November 2025", "daily_events": current_day_event},
-    {"date": 30, "day": "Sunday, 30 November 2025", "daily_events": current_day_event}
-]
-
-all_event = [
-    {"date": 27, "day": "Thursday, 27 November 2025", "daily_events": current_day_event},
-    {"date": 30, "day": "Sunday, 30 November 2025", "daily_events": current_day_event}
-]
-
-hourly_temp = [
-    { "hour_number": 12, "hour_ampm": "AM", "temperature": 5 },
-    { "hour_number": 1, "hour_ampm": "AM", "temperature": 6 },
-    { "hour_number": 2, "hour_ampm": "AM", "temperature": 5 },
-    { "hour_number": 3, "hour_ampm": "AM", "temperature": 6 },
-    { "hour_number": 4, "hour_ampm": "AM", "temperature": 5 },
-    { "hour_number": 5, "hour_ampm": "AM", "temperature": 6 },
-    { "hour_number": 6, "hour_ampm": "AM", "temperature": 5 },
-    { "hour_number": 7, "hour_ampm": "AM", "temperature": 6 },
-    { "hour_number": 8, "hour_ampm": "AM", "temperature": 5 },
-    { "hour_number": 9, "hour_ampm": "AM", "temperature": 6 },
-    { "hour_number": 10, "hour_ampm": "AM", "temperature": 5 },
-    { "hour_number": 11, "hour_ampm": "AM", "temperature": 6 },
-    { "hour_number": 12, "hour_ampm": "PM", "temperature": 5 },
-    { "hour_number": 1, "hour_ampm": "PM", "temperature": 6 },
-    { "hour_number": 2, "hour_ampm": "PM", "temperature": 5 },
-    { "hour_number": 3, "hour_ampm": "PM", "temperature": 6 },
-    { "hour_number": 4, "hour_ampm": "PM", "temperature": 5 },
-    { "hour_number": 5, "hour_ampm": "PM", "temperature": 6 },
-    { "hour_number": 6, "hour_ampm": "PM", "temperature": 5 },
-    { "hour_number": 7, "hour_ampm": "PM", "temperature": 6 },
-    { "hour_number": 8, "hour_ampm": "PM", "temperature": 5 },
-    { "hour_number": 9, "hour_ampm": "PM", "temperature": 6 },
-    { "hour_number": 10, "hour_ampm": "PM", "temperature": 5 },
-    { "hour_number": 11, "hour_ampm": "PM", "temperature": 6 }
-]
-
-### TODO: Need function to retrieve all the valid user name
-### TODO: Need function to get the current month event for a specific username
-### TODO: Need function to get today's detail
-### TODO: Need function to get today's hourly tempertature
 
 @app.route("/")
 def homepage():
     username = request.args.get("username", "")
-    valid_usernames = ["Cindracindra", "Test1", "Test2"] # get_valid_users()
+    profile_list = get_profiles()
 
     now = datetime.now()
     today_detail = {
@@ -75,9 +29,11 @@ def homepage():
         "month": calendar.month_name[now.month],
         "year": now.year
     }
-
+    
+    hourly_temp = get_hourly_temp() # create appropriate function
+    
     if username:
-        event_list = current_month_event # get_events_for_user(username) 
+        event_list = get_events_for_user(username) # create appropriate function
     else:
         event_list = []
 
@@ -86,7 +42,7 @@ def homepage():
         calendar_matrix=get_month_calendar_matrix_weather(today_detail['year'], now.month),
         today_detail=today_detail,
         username=username,
-        valid_usernames=valid_usernames,
+        profile_list=profile_list["profiles"],
         event_list=event_list,
         hourly_temp=hourly_temp,
     )
@@ -106,15 +62,8 @@ def management():
     username = request.args.get("username", "")
     selected_event_id = request.args.get("selected_event_id", "")
     
-    # all_event = get_events_for_user(username) 
-    selected_event = None
-    
-    # Find event by ID
-    for day in all_event:
-        for event in day["daily_events"]:
-            if str(event["id"]) == str(selected_event_id):
-                selected_event = event
-                break
+    all_event = get_events_for_user(username) # create appropriate function
+    selected_event = get_selected_event(selected_event_id) # create appropriate function
     
     return render_template(
         "event_management.html", 
@@ -127,14 +76,10 @@ def web_load_event(event_id):
     username = request.form.get("username", "")
     return redirect(url_for("management", username=username, selected_event_id=event_id))
 
-
-### TODO: Need function to get all events for a specific username
-### TODO: Need the app route for edit
 @app.route("/management/edit-event/<int:event_id>", methods=["POST"])
 def web_edit_event(event_id):
     username = request.form.get("username", "")
     data = request.form
-    ### edit_event(data)
     return redirect(url_for("management", username=username))
 
 
@@ -142,7 +87,6 @@ def web_edit_event(event_id):
 def web_create_event():
     username = request.form.get("username", "")
     data = request.form
-    # edit_event(data)
     return redirect(url_for("management", username=username))
 
 
