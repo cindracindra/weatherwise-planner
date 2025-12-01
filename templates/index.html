@@ -1,79 +1,137 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style/homepage.css') }}">
     <title>Event Calendar</title>
   </head>
 
-<body>
-  <h1>Welcome to Event Calendar, the portal for all your planning and scheduling needs!</h1>
-</body>
+  <body>
+    <!-- HEADER -->
+    <header class="header">
+      <div class="header__left">
+        <h1 class="header__title">
+          Welcome to Event Calendar, the portal for all your planning and scheduling needs!
+        </h1>
+      </div>
 
-<div class="calendar-section">
-  <div class="left-container">
-    <div class="left-subheader"> 
-      <div class="calendar-subheader">{{month_name}} {{current_year}} </div>
-      <form action="/manage_event" method="get">
-        <input type="submit" value="Manage Events">
-      </form>
-      <form action="/reload_calendar" method="get">
-        <input type="submit" value="Reload Calendar">
-      </form>
-    </div>
-    <table class="calendar">
-      <tr>
-        <th>MON</th><th>TUE</th><th>WED</th>
-        <th>THU</th><th>FRI</th><th>SAT</th><th>SUN</th>
-      </tr>
-      {% for week in weeks %}
-      <tr>
-        {% for day in week %}
-          {% if day == 0 %}
-            <td></td>
-          {% else %}
-            <td>
-              <div class="calendar-cell">
-                <div class="day-number">{{day}}</div>
-                <img src="{{ url_for('static', filename='weather_logo/CLEARday.svg') }}" alt="clearday" class="weather-icon">
-              </div>
-              {% if day in events %}
-                {% for entry in events[day]  %}
-                  <div class="event">{{ entry }}</div>
+      <div class="header__right">
+        <form action="/" method="get" class="header__form">
+          <select name="username" class="header__select">
+            <option value="">Select profile</option>
+            {% for u in valid_usernames %}
+              <option value="{{ u }}" {% if u == username %}selected{% endif %}>{{ u }}</option>
+            {% endfor %}
+          </select>
+          <button type="submit" class="header__button">Go</button>
+        </form>
+      </div>
+    </header>
+
+    <!-- MAIN SECTION -->
+    <section class="calendar-section">
+
+      <!-- LEFT: CALENDAR -->
+      <section class="calendar-section__left">
+        <div class="calendar-section__header">
+          <div class="calendar-section__title">{{ today_detail.month }} {{ today_detail.year }}</div>
+
+          <div class="calendar-section__button-group">
+            <form action="/management" method="get" class="calendar-section__button-form">
+              <input type="hidden" name="username" value="{{ username }}">
+              <input type="submit" value="Manage Events">
+            </form>
+            <form action="/reload_calendar" method="get" class="calendar-section__button-form">
+              <input type="hidden" name="username" value="{{ username }}">
+              <input type="submit" value="Reload Calendar">
+            </form>
+          </div>
+        </div>
+
+        <table class="calendar">
+          <thead>
+            <tr>
+              <th>SUN</th><th>MON</th><th>TUE</th><th>WED</th>
+              <th>THU</th><th>FRI</th><th>SAT</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {% for week in calendar_matrix %}
+            <tr>
+              {% for day in week %}
+                <td>
+                  {% if day.day != 0 %}
+                  <div class="calendar-cell {% if day.day == today_detail.date %}calendar-cell--today{% endif %}">
+
+                    <!-- Top row: date and weather -->
+                    <div class="calendar-cell__top-row">
+                      <div class="calendar-cell__day-number">{{ day.day }}</div>
+                      {% if day.weather %}
+                        <img src="{{ url_for('static', filename='images/icons/' ~ day.weather.icon) }}" alt="{{ day.weather.label }}" class="calendar-cell__weather-icon">
+                      {% endif %}
+                    </div>
+
+                    <!-- Events and Holidays -->
+                    <div class="calendar-cell__events">
+                      {% if day.holiday %}
+                        {% for holiday in day.holiday %}
+                          <div class="calendar-cell__event calendar-cell__event--holiday">{{ holiday }}</div>
+                        {% endfor %}
+                      {% endif %}
+
+                      {% for daily in event_list %}
+                        {% if day.day == daily.date %}
+                          {% for event in daily.daily_events %}
+                            <div class="calendar-cell__event">{{ event.name }} ({{ event.start }}-{{ event.end }})</div>
+                          {% endfor %}
+                        {% endif %}
+                      {% endfor %}
+                    </div>
+                  </div>
+                  {% endif %}
+                </td>
+              {% endfor %}
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </section>
+
+      <!-- RIGHT: SCHEDULE & PROMPT -->
+      <section class="calendar-section__right">
+
+        <!-- PROMPT: FOR ENHANCEMENT -->
+        <section class="calendar-section__prompt">
+        </section>
+
+        <!-- SCHEDULE -->
+        <section class="calendar-section__daily-schedule">
+          <div class="calendar-section__today-header">
+            {{ today_detail.day }}, {{ today_detail.date }} {{ today_detail.month }}
+          </div>
+
+          <div class="calendar-section__day-container">
+            {% for entry in hourly_temp %}
+            <div class="calendar-section__hour-row">
+              <span class="calendar-section__temperature">{{ entry.temperature }}°</span>
+              <span class="calendar-section__hour-number"> | {{ entry.hour_number }}</span>
+              <span class="calendar-section__hour-ampm">{{ entry.hour_ampm }}</span>
+            </div>
+            {% endfor %}
+
+            {% for daily in event_list %}
+              {% if today_detail.date == daily.date %}
+                {% for event in daily.daily_events %}
+                  <div class="calendar-section__event-block" style="--start: {{ event.start }}; --duration: {{ event.duration }};">
+                    {{ event.name }}
+                  </div>
                 {% endfor %}
               {% endif %}
-            </td>
-          {% endif %}
-        {% endfor %}
-      </tr>
-      {% endfor %}
-    </table>
-  </div>
+            {% endfor %}
+          </div>
+        </section>
+      </section>
 
-  <div class="right-container">
-    <div class="prompt-container">
-
-    </div>
-    <div class="daily-schedule-container">
-      <p id="daily-schedule-subheader">{{day_name}}, {{current_date}} {{month_name}}</p>
-      <div class="day-container">
-        {% for entry in hourly_temp %}
-        <div class="hour-row">
-          <span class="temperature">{{ entry.temperature }}°</span>
-          <span class="hour-number"> | {{ entry.hour_number }}</span>
-          <span class="hour-ampm">{{ entry.hour_ampm }}</span>
-        </div>
-        {% endfor %}
-
-        {% for e in day_events %}
-        <div class="event-block"
-            style="--start: {{ e.start_hour }}; --duration: {{ e.duration }};">
-            {{ e.title }}
-        </div>
-        {% endfor %}
-      </div>
-    </div>
-  </div>
-</div>
-
+    </section>
+  </body>
 </html>
-
