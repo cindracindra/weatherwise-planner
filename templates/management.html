@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Management</title>
+</head>
+<body>
+    <h1>Management Page</h1>
+    {% if isReqSucc is not none %}
+        {% if isReqSucc %}
+            <div style="color: green;">Operation was successful!</div>
+        {% else %}
+            <div style="color: red;">Operation failed.</div>
+        {% endif %}
+    {% else %}
+        <div>No operation performed yet.</div>
+    {% endif %}
+    <!-- Add your management page content here -->
+</body>
+</html>
