@@ -13,7 +13,6 @@ def _load_code_icons():
 def print_month_calendar(year, month):
     cal = calendar.Calendar(firstweekday=6)
     
-
     weeks = cal.monthdayscalendar(year, month)
     return weeks
     # has to be a matix because we know first, how many weeks, second, where does the day start in a week at the beginning of the month

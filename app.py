@@ -77,9 +77,9 @@ def web_load_event(event_id):
     return redirect(url_for("management", username=username, selected_event_id=event_id))
 
 @app.route("/management/edit-event/<int:event_id>", methods=["POST"])
-def web_edit_event(event_id):
+def web_edit_event(): # add event_id into the function call
     username = request.form.get("username", "")
-    data = request.form
+
     return redirect(url_for("management", username=username))
 
 
@@ -87,6 +87,7 @@ def web_edit_event(event_id):
 def web_create_event():
     username = request.form.get("username", "")
     data = request.form
+    create_event(data)
     return redirect(url_for("management", username=username))
 
 
