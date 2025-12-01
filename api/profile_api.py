@@ -1,7 +1,7 @@
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 from models.profile import Profile
-from database import engine
+from database.database import engine
 
 
 def get_profiles():
@@ -16,6 +16,25 @@ def get_profiles():
             for profile in profiles
         ]
     return {"profiles": data}
+
+
+def get_profile_by_id(profile_id):
+    try:
+        profile_id = int(profile_id)
+    except Exception:
+        return {"error": "'profile_id' must be an integer."}, 400
+    try:
+        with Session(engine) as session:
+            profile = session.get(Profile, profile_id)
+            if not profile:
+                return {"error": "Profile not found."}, 404
+            result = {
+                "id": profile.id,
+                "name": profile.name,
+            }
+        return result, 200
+    except Exception as e:
+        return {"error": f"Internal server error: {str(e)}"}, 500
 
 
 def create_profile(data):
