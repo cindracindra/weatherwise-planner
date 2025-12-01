@@ -12,8 +12,8 @@ def get_events():
             {
                 "id": event.id,
                 "name": event.name,
-                "start": event.start,
-                "end": event.end,
+                "start_time": event.start_time,
+                "end_time": event.end_time,
                 "location": event.location,
             }
             for event in events
@@ -27,7 +27,7 @@ def create_event(data):
     if hasattr(data, "to_dict"):
         data = data.to_dict()
 
-    required_fields = ["name", "start", "end", "location"]
+    required_fields = ["name", "start_time", "end_time", "location"]
     missing = [
         field
         for field in required_fields
@@ -40,22 +40,23 @@ def create_event(data):
     from datetime import datetime
 
     try:
-        start_dt = datetime.fromisoformat(data["start"])
-        end_dt = datetime.fromisoformat(data["end"])
+        start_time_dt = datetime.fromisoformat(data["start_time"])
+        end_time_dt = datetime.fromisoformat(data["end_time"])
     except Exception:
         return {
-            "error": "'start' and 'end' must be valid ISO datetime strings."
+            "error": "'start_time' and 'end_time' must be valid "
+            "ISO datetime strings."
         }, 400
 
-    if end_dt < start_dt:
-        return {"error": "'end' must be after 'start'."}, 400
+    if end_time_dt < start_time_dt:
+        return {"error": "'end_time' must be after 'start_time'."}, 400
 
     # Create event
     with Session(engine) as session:
         event = Event(
             name=data["name"],
-            start=start_dt,
-            end=end_dt,
+            start_time=start_time_dt,
+            end_time=end_time_dt,
             location=data["location"],
         )
         session.add(event)
@@ -64,11 +65,69 @@ def create_event(data):
         result = {
             "id": event.id,
             "name": event.name,
-            "start": event.start.isoformat(),
-            "end": event.end.isoformat(),
+            "start_time": event.start_time.isoformat(),
+            "end_time": event.end_time.isoformat(),
             "location": event.location,
         }
     return result, 201
+
+
+def update_event(event_id, data):
+    try:
+        event_id = int(event_id)
+    except Exception:
+        return {"error": "'event_id' must be an integer."}, 400
+
+    # Accept both dict (API) and ImmutableMultiDict (form)
+    if hasattr(data, "to_dict"):
+        data = data.to_dict()
+
+    with Session(engine) as session:
+        event = session.get(Event, event_id)
+        if not event:
+            return {"error": "Event not found."}, 404
+
+        # Validate datetime fields if provided
+        from datetime import datetime
+
+        if "start_time" in data and data["start_time"]:
+            try:
+                start_time_dt = datetime.fromisoformat(data["start_time"])
+                event.start_time = start_time_dt
+            except Exception:
+                return {
+                    "error": "'start_time' must be a valid ISO datetime."
+                }, 400
+
+        if "end_time" in data and data["end_time"]:
+            try:
+                end_time_dt = datetime.fromisoformat(data["end_time"])
+                event.end_time = end_time_dt
+            except Exception:
+                return {
+                    "error": "'end_time' must be a valid ISO datetime."
+                }, 400
+
+        # Validate end_time is after start_time
+        if event.end_time < event.start_time:
+            return {"error": "'end_time' must be after 'start_time'."}, 400
+
+        # Update other fields
+        if "name" in data and data["name"]:
+            event.name = data["name"]
+        if "location" in data and data["location"]:
+            event.location = data["location"]
+
+        session.commit()
+        session.refresh(event)
+        result = {
+            "id": event.id,
+            "name": event.name,
+            "start_time": event.start_time.isoformat(),
+            "end_time": event.end_time.isoformat(),
+            "location": event.location,
+        }
+    return result, 200
 
 
 def delete_event(event_id):
