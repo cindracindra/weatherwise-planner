@@ -1,8 +1,8 @@
 from dataclasses import dataclass
 from typing import Optional
 
-@dataclass
 
+@dataclass
 class WeatherCode:
     code: Optional[int]
     icon: Optional[str]

@@ -2,6 +2,7 @@ from dataclasses import dataclass, field
 from typing import List, Optional
 from models.api_models.weather import WeatherCode
 
+
 @dataclass
 class CalendarDay:
     day: int
@@ -11,11 +12,10 @@ class CalendarDay:
     @property
     def is_empty(self) -> bool:
         return self.day == 0
-    
+
     @property
     def is_holiday(self) -> bool:
         return len(self.holidays) > 0
-
 
     def to_dict(self) -> dict:
         return {
@@ -33,7 +33,6 @@ class CalendarWeek:
         if len(self.days) != 7:
             raise ValueError("A week must contain exactly 7 days.")
 
-
     def to_dict(self) -> List[dict]:
         return [day.to_dict() for day in self.days]
 
@@ -43,9 +42,7 @@ class CalendarMonth:
     year: int
     month: int
     weeks: List[CalendarWeek]
-    current_day: int = 0 # day to highlight for today (0 if not current month)
-
-
+    current_day: int = 0  # day to highlight for today (0 if not current month)
 
     def to_dict(self) -> List[List[dict]]:
         return {

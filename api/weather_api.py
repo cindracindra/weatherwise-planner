@@ -3,6 +3,7 @@ from requests import Response
 from config import Config
 from typing import Dict, Any
 
+
 class WeatherAPIError(Exception):
     """Raised when weather API requests fail."""
     pass
