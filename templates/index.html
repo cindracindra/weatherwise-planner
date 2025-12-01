@@ -18,8 +18,8 @@
         <form action="/" method="get" class="header__form">
           <select name="username" class="header__select">
             <option value="">Select profile</option>
-            {% for u in valid_usernames %}
-              <option value="{{ u }}" {% if u == username %}selected{% endif %}>{{ u }}</option>
+            {% for profile in profile_list %}
+              <option value="{{ profile.name }}" {% if profile.name == username %}selected{% endif %}>{{ profile.name }}</option>
             {% endfor %}
           </select>
           <button type="submit" class="header__button">Go</button>
