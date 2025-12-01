@@ -20,6 +20,7 @@ def get_public_holidays(year: int = 2025, country_code: str = "GB") -> Dict[date
 
     return dict(holidays_by_date)
 
+
 def get_holidays_for_date(target_date: date, year: int = None) -> List[str]:
     if year is None:
         year = target_date.year
@@ -27,4 +28,3 @@ def get_holidays_for_date(target_date: date, year: int = None) -> List[str]:
     holidays_dict = get_public_holidays(year)
 
     return holidays_dict.get(target_date, [])
-    

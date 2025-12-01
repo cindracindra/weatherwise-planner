@@ -18,6 +18,3 @@ class Holiday:
             "date": self.date.isoformat(),
             "local_name": self.local_name
         }
-
-
-

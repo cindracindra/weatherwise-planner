@@ -1,11 +1,12 @@
 import requests
 from requests import Response
 from config import Config
-from typing import Dict, Any, List
+from typing import Dict, Any
 
 class WeatherAPIError(Exception):
     """Raised when weather API requests fail."""
     pass
+
 
 def _make_request(params: dict) -> Dict[str, Any]:
     try:
@@ -18,6 +19,7 @@ def _make_request(params: dict) -> Dict[str, Any]:
         return response.json()
     except requests.RequestException as e:
         raise WeatherAPIError(f"Weather API request failed: {e}")
+
 
 def fetch_current_weather() -> Dict[str, Any]:
     latitude = Config.LONDON_LAT
@@ -32,6 +34,7 @@ def fetch_current_weather() -> Dict[str, Any]:
         "timezone": Config.TIMEZONE
     }
     return _make_request(params)
+
 
 def fetch_hourly_forecast_today() -> Dict[str, Any]:
     latitude = Config.LONDON_LAT
@@ -48,9 +51,8 @@ def fetch_hourly_forecast_today() -> Dict[str, Any]:
 
     return _make_request(params)
 
+
 def fetch_daily_forecast() -> Dict[str, Any]:
-    latitude = Config.LONDON_LAT
-    longitude = Config.LONDON_LON
 
     params = {
         "latitude": 51.5074,

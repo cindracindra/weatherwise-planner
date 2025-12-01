@@ -1,11 +1,12 @@
 import requests
 from requests import Response
-from typing import Any, Dict, List
+from typing import Any, Dict
 from config import Config
 
 class HolidayAPIError(Exception):
     """Raised when holiday API requests fail."""
     pass
+
 
 def _make_request(year: int, country_code: str) -> Dict[str, Any]:
     try:
@@ -16,6 +17,7 @@ def _make_request(year: int, country_code: str) -> Dict[str, Any]:
         return response.json()
     except requests.RequestException as e:
         raise HolidayAPIError(f"Holiday API request failed: {e}")
+
 
 def fetch_public_holidays(year: int = 2025, country_code: str = Config.DEFAULT_COUNTRY_CODE) -> Dict[str, Any]:
 

@@ -15,6 +15,7 @@ class WeatherCode:
             "label": self.label
         }
 
+
 @dataclass
 class WeatherReading:
     temperature: Optional[int]

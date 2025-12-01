@@ -12,15 +12,18 @@ def get_current_month_year() -> tuple[int, int]:
     now = datetime.now()
     return now.year, now.month
 
+
 def get_current_day_if_matches(year: int, month: int) -> int:
     now = datetime.now()
     if now.year == year and now.month == month:
         return now.day
     return 0
 
+
 def build_calendar_matrix(year: int, month: int) -> List[List[int]]:
     cal = calendar.Calendar(firstweekday=6) # Sunday as the first day of the week
     return cal.monthdayscalendar(year, month)
+
 
 def get_calendar_with_holidays(year: int, month: int) -> CalendarMonth:
     matrix = build_calendar_matrix(year, month)
@@ -46,6 +49,7 @@ def get_calendar_with_holidays(year: int, month: int) -> CalendarMonth:
 
     return CalendarMonth(year=year, month=month, weeks=weeks, current_day=current_day)
 
+
 def get_calendar_with_weather(year: int, month: int) -> CalendarMonth:
     calendar_month = get_calendar_with_holidays(year, month)
 
@@ -61,6 +65,7 @@ def get_calendar_with_weather(year: int, month: int) -> CalendarMonth:
                     day.weather = weather_dict[date_str]
 
     return calendar_month
+
 
 def get_full_calendar(year: int, month: int) -> CalendarMonth:
 

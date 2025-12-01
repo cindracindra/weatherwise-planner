@@ -21,6 +21,7 @@ def get_current_weather() -> WeatherReading:
         weather_code=weather_code
     )
 
+
 def get_hourly_forecast_today() -> List[WeatherReading]:
 
     data = weather_api.fetch_hourly_forecast_today()
@@ -44,6 +45,7 @@ def get_hourly_forecast_today() -> List[WeatherReading]:
         )
 
     return hourly_forecast
+
 
 def get_daily_forecast() -> Dict[str, WeatherCode]:
 

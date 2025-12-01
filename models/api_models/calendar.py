@@ -23,7 +23,8 @@ class CalendarDay:
             "holidays": self.holidays,
             "weather": self.weather.to_dict() if self.weather else None
         }
-    
+
+
 @dataclass
 class CalendarWeek:
     days: List[CalendarDay]
@@ -35,7 +36,8 @@ class CalendarWeek:
 
     def to_dict(self) -> List[dict]:
         return [day.to_dict() for day in self.days]
-    
+
+
 @dataclass
 class CalendarMonth:
     year: int
@@ -52,4 +54,3 @@ class CalendarMonth:
             "weeks": [weeks.to_dict() for weeks in self.weeks],
             "current_day": self.current_day
         }
-        
