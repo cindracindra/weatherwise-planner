@@ -54,12 +54,14 @@ def fetch_hourly_forecast_today() -> Dict[str, Any]:
 
 
 def fetch_daily_forecast() -> Dict[str, Any]:
+    latitude = Config.LONDON_LAT
+    longitude = Config.LONDON_LON
 
     params = {
-        "latitude": 51.5074,
-        "longitude": -0.1278,
+        "latitude": latitude,
+        "longitude": longitude,
         "daily": "weather_code",
-        "timezone": "Europe/London",
+        "timezone": Config.TIMEZONE,
         "forecast_days": 16
     }
 

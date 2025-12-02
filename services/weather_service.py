@@ -1,8 +1,14 @@
-from utils.converters import round_temperature, round_temperatures, weather_code_to_info
+from utils.converters import (
+    round_temperature,
+    round_temperatures,
+    weather_code_to_info
+)
 from api import weather_api
 from models.api_models.weather import WeatherCode, WeatherReading
 from typing import List, Dict
 
+
+# Main functions to be used externally by other services (app.py)
 def get_current_weather() -> WeatherReading:
 
     data = weather_api.fetch_current_weather()
@@ -12,7 +18,11 @@ def get_current_weather() -> WeatherReading:
     code = current.get("weather_code", None)
 
     rounded_temp = round_temperature(temp)
-    icon, label = weather_code_to_info(code) if code is not None else (None, None)
+
+    if code is not None:
+        icon, label = weather_code_to_info(code)
+    else:
+        icon, label = None, None
 
     weather_code = WeatherCode(code=code, icon=icon, label=label)
 
@@ -22,6 +32,7 @@ def get_current_weather() -> WeatherReading:
     )
 
 
+# Main functions to be used externally by other services (app.py)
 def get_hourly_forecast_today() -> List[WeatherReading]:
 
     data = weather_api.fetch_hourly_forecast_today()
@@ -47,6 +58,7 @@ def get_hourly_forecast_today() -> List[WeatherReading]:
     return hourly_forecast
 
 
+# Called internally by calendar_service.py
 def get_daily_forecast() -> Dict[str, WeatherCode]:
 
     data = weather_api.fetch_daily_forecast()
@@ -58,7 +70,9 @@ def get_daily_forecast() -> Dict[str, WeatherCode]:
     weather_codes = {}
 
     for date_str, code in zip(dates, codes):
-        ico, label = weather_code_to_info(code)
-        weather_codes[date_str] = WeatherCode(code=code, icon=ico, label=label)
+        icon, label = weather_code_to_info(code)
+        weather_codes[date_str] = WeatherCode(code=code,
+                                              icon=icon,
+                                              label=label)
 
     return weather_codes
