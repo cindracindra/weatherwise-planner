@@ -1,4 +1,4 @@
-from api.event_profile_api import get_event_by_profile
+from api.event_profile_api import get_event_profile_by_id
 
 def get_daily_event_by_profile(profile_name):
     profile_name

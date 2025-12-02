@@ -16,10 +16,10 @@
 
       <div class="header__right">
         <form action="/" method="get" class="header__form">
-          <select name="username" class="header__select">
+          <select name="profile_id" class="header__select">
             <option value="">Select profile</option>
             {% for profile in profile_list %}
-              <option value="{{ profile.name }}" {% if profile.name == username %}selected{% endif %}>{{ profile.name }}</option>
+              <option value="{{ profile.id }}" {% if profile.id|string == profile_id|string %}selected{% endif %}>{{ profile.name }}</option>
             {% endfor %}
           </select>
           <button type="submit" class="header__button">Go</button>
@@ -37,11 +37,11 @@
 
           <div class="calendar-section__button-group">
             <form action="/management" method="get" class="calendar-section__button-form">
-              <input type="hidden" name="username" value="{{ username }}">
+              <input type="hidden" name="profile_id" value="{{ profile_id }}">
               <input type="submit" value="Manage Events">
             </form>
             <form action="/reload_calendar" method="get" class="calendar-section__button-form">
-              <input type="hidden" name="username" value="{{ username }}">
+              <input type="hidden" name="profile_id" value="{{ profile_id }}">
               <input type="submit" value="Reload Calendar">
             </form>
           </div>
@@ -73,12 +73,15 @@
 
                     <!-- Events and Holidays -->
                     <div class="calendar-cell__events">
+
+                      <!-- Holidays  -->
                       {% if day.holiday %}
                         {% for holiday in day.holiday %}
                           <div class="calendar-cell__event calendar-cell__event--holiday">{{ holiday }}</div>
                         {% endfor %}
                       {% endif %}
-
+                      
+                      <!-- Events  -->
                       {% for daily in monthly_event_list %}
                         {% if day.day == daily.date %}
                           {% for event in daily.daily_events %}
@@ -97,37 +100,29 @@
         </table>
       </section>
 
-      <!-- RIGHT: SCHEDULE & PROMPT -->
+      <!-- RIGHT: SCHEDULE -->
       <section class="calendar-section__right">
+        <div class="calendar-section__today-header">
+          {{ today_detail.day_name }}, {{ today_detail.day }} {{ today_detail.month_name }}
+        </div>
 
-        <!-- PROMPT: FOR ENHANCEMENT -->
-        <section class="calendar-section__prompt">
-        </section>
-
-        <!-- SCHEDULE -->
-        <section class="calendar-section__daily-schedule">
-          <div class="calendar-section__today-header">
-            {{ today_detail.day_name }}, {{ today_detail.day }} {{ today_detail.month_name }}
+        <div class="calendar-section__day-container">
+          {% for entry in hourly_temp %}
+          <div class="calendar-section__hour-row">
+            <span class="calendar-section__temperature">{{ entry.temperature }}°</span>
+            <span class="calendar-section__hour-number"> | {{ entry.hour_number }}</span>
+            <span class="calendar-section__hour-ampm">{{ entry.hour_ampm }}</span>
           </div>
+          {% endfor %}
 
-          <div class="calendar-section__day-container">
-            {% for entry in hourly_temp %}
-            <div class="calendar-section__hour-row">
-              <span class="calendar-section__temperature">{{ entry.temperature }}°</span>
-              <span class="calendar-section__hour-number"> | {{ entry.hour_number }}</span>
-              <span class="calendar-section__hour-ampm">{{ entry.hour_ampm }}</span>
-            </div>
+          {% for daily in daily_event_list %}
+            {% for event in daily.daily_events %}
+              <div class="calendar-section__event-block" style="--start: {{ event.start }}; --duration: {{ event.duration }};">
+                {{ event.name }}
+              </div>
             {% endfor %}
-
-            {% for daily in daily_event_list %}
-              {% for event in daily.daily_events %}
-                <div class="calendar-section__event-block" style="--start: {{ event.start }}; --duration: {{ event.duration }};">
-                  {{ event.name }}
-                </div>
-              {% endfor %}
-            {% endfor %}
-          </div>
-        </section>
+          {% endfor %}
+        </div>
       </section>
 
     </section>

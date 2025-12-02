@@ -175,19 +175,8 @@ input[type="submit"] {
 /* =======================
    6. RIGHT SECTION: SCHEDULE
    ======================= */
+
 .calendar-section__right {
-    display: grid;
-    grid-template-rows: 1fr 2fr;
-    gap: 20px;
-}
-
-.calendar-section__prompt {
-    background-color: rgb(255, 246, 237);
-    border-radius: 15px;
-    padding: 20px;
-}
-
-.calendar-section__daily-schedule {
     background-color: rgb(255, 246, 237);
     border-radius: 15px;
     padding: 20px;

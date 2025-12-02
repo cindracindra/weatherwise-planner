@@ -16,7 +16,6 @@ from api.profile_api import (
 
 from api.event_profile_api import (
     get_event_profiles,
-    get_event_by_profile,
     get_event_profile_by_id,
     create_event_profile,
     delete_event_profile,
@@ -40,7 +39,7 @@ app = Flask(__name__)
 # Route to homepage (index.html)
 @app.route("/")
 def homepage():
-    username = request.args.get("username", "")
+    profile_id = request.args.get("profile_id", "")
     profile_list = get_profiles()
 
     today = get_today_detail()
@@ -48,9 +47,9 @@ def homepage():
     # create appropriate function
     hourly_temp = get_hourly_forecast_today()
 
-    if username:
-        monthly_event_list = get_monthly_event_by_profile(username)
-        daily_event_list = get_daily_event_by_profile(username)
+    if profile_id:
+        monthly_event_list = get_monthly_event_by_profile(profile_id)
+        daily_event_list = get_daily_event_by_profile(profile_id)
     else:
         monthly_event_list = []
         daily_event_list = []
@@ -59,7 +58,7 @@ def homepage():
         "index.html",
         calendar_matrix=get_full_calendar(today.year, today.month),
         today_detail=today,
-        username=username,
+        profile_id=profile_id,
         profile_list=profile_list["profiles"],
         monthly_event_list=monthly_event_list,
         daily_event_list=daily_event_list,
@@ -69,14 +68,14 @@ def homepage():
 
 @app.route("/profile", methods=['GET'])
 def load_profile():
-    username = request.args.get("username", "")
-    return redirect(url_for("homepage", username=username))
+    profile_id = request.args.get("profile_id", "")
+    return redirect(url_for("homepage", profile_id=profile_id))
 
 
 @app.route("/reload_calendar", methods=['GET'])
 def reload_calendar():
-    username = request.args.get("username", "")
-    return redirect(url_for("homepage", username=username))
+    profile_id = request.args.get("profile_id", "")
+    return redirect(url_for("homepage", profile_id=profile_id))
 
 
 # Route to management page
@@ -84,16 +83,16 @@ def reload_calendar():
 def management():
     code = request.args.get("reqHttpCode", 100)
     if code == 100:
-        username = request.args.get("username", "")
+        profile_id = request.args.get("profile_id", "")
         selected_event_id = request.args.get("selected_event_id", "")
 
         # create appropriate function
-        all_event = get_event_by_profile(username)
-        selected_event = get_event(selected_event_id)
+        all_event = get_event_profile_by_id(profile_id)
+        selected_event = get_event_by_id(selected_event_id)
 
         return render_template(
             "event_management.html",
-            username=username,
+            profile_id=profile_id,
             all_event=all_event["event_by_profile"],
             selected_event=selected_event)
 
@@ -106,25 +105,36 @@ def management():
 # Route to trigger event creation from web
 @app.route("/management/event/create", methods=["POST"])
 def web_create_event():
-    username = request.form.get("username", "")
+    profile_id = request.form.get("profile_id", "")
     data = request.form
     result, status = create_event(data)
-    return redirect(url_for("management", reqHttpCode=status))
+    return redirect(url_for(
+        "management",
+        reqHttpCode=status,
+        profile_id=profile_id))
 
 
 # Route to trigger event update from web
 @app.route("/management/event/update/<int:event_id>", methods=["POST"])
 def web_update_event(event_id):
+    profile_id = request.form.get("profile_id", "")
     data = request.form
     result, status = update_event(event_id, data)
-    return redirect(url_for("management", reqHttpCode=status))
+    return redirect(url_for(
+        "management",
+        reqHttpCode=status,
+        profile_id=profile_id))
 
 
 # Route to trigger event deletion from web
 @app.route("/management/event/delete/<int:event_id>", methods=["POST"])
 def web_delete_event(event_id):
+    profile_id = request.form.get("profile_id", "")
     result, status = delete_event(event_id)
-    return redirect(url_for("management", reqHttpCode=status))
+    return redirect(url_for(
+        "management",
+        reqHttpCode=status,
+        profile_id=profile_id))
 
 
 # Route to trigger event-profile creation from web
