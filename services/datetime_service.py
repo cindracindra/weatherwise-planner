@@ -5,9 +5,9 @@ def get_today_detail():
     now = datetime.now()
     
     today_detail = {
-        "day": now.day,
-        "month": now.month,
-        "year": now.year,
+        "day": int(now.day),
+        "month": int(now.month),
+        "year": int(now.year),
         "day_name": calendar.day_name[now.weekday()],
         "month_name": calendar.month_name[now.month],
     }

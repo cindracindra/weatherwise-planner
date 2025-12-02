@@ -31,6 +31,7 @@ input[type="submit"] {
 .header__form {
     display: flex;
     gap: 5px;
+    margin-top: 10px;
 }
 
 .header__select {
