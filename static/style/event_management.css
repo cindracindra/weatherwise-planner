@@ -39,9 +39,17 @@ body {
     background-color: rgb(255, 246, 237);
     border-radius: 15px;
     padding: 20px;
-    height: 400px;
     font-size: 14px;
     overflow-y: auto;
+}
+
+.event-mgmt__list {
+    height: 600px;
+    overflow-y: auto;
+}
+
+.event-mgmt__details {
+    height: 300px;
 }
 
 /* ---------- LEFT COLUMN: EVENT LIST ---------- */
@@ -94,6 +102,14 @@ body {
 
 /* ---------- RIGHT COLUMN: SELECTED EVENT ---------- */
 
+.event-create__form {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 20px;
+    margin-right: 5px;
+    border-radius: 4px;
+}
+
 .event-details__row {
     display: flex;
     align-items: center;
@@ -112,6 +128,10 @@ body {
     padding: 6px 10px;
     border: 1px solid #ccc;
     border-radius: 6px;
+    margin-left: 5px;
+    margin-right: 5px;
+    font-size: 16px;
+    font-weight: 200;
 }
 
 .event-details__submit {

@@ -24,7 +24,7 @@
       <div class="event-mgmt__list">
         {% for day in all_event %}
           <div class="event-list">
-            <div class="event-list__day">{{ day.day }}</div>
+            <div class="event-list__day">{{ day.full_date }} </div>
 
             {% for event in day.daily_events %}
               <div class="event-item">
@@ -32,7 +32,7 @@
                   <input type="hidden" name="profile_id" value="{{ profile_id }}" />
                   <button type="submit" class="event-item__button">
                     <span class="event-item__title">{{ event.name }}</span><br />
-                    <span class="event-item__time">{{ event.start }} - {{ event.end }}</span>
+                    <span class="event-item__time">{{ event.start_time }} - {{ event.end_time }}</span>
                   </button>
                 </form>
 
@@ -47,52 +47,69 @@
 
       <!-- RIGHT COLUMN: SELECTED EVENT DETAILS -->
       <div class="event-mgmt__details">
-        {% if selected_event %}
-          <form action="/management/event/update/<int:event_id>" method="post" class="event-details">
-            <input type="hidden" name="profile_id" value="{{ profile_id }}" />
-
-            <div class="event-details__row">
-              <img src="/static/images/icon-title.png" class="event-details__icon" />
-              <input type="text" name="title" class="event-details__input" value="{{ selected_event.name }}" placeholder="Event Title" />
-            </div>
-
-            <div class="event-details__row">
-              <img src="/static/images/icon-time.png" class="event-details__icon" />
-              <input type="text" name="start_time" class="event-details__input" value="{{ selected_event.start }}" placeholder="Start Time" />
-              <input type="text" name="end_time" class="event-details__input" value="{{ selected_event.end }}" placeholder="End Time" />
-            </div>
-
-            <div class="event-details__row">
-              <img src="/static/images/icon-location.png" class="event-details__icon" />
-              <input type="text" name="location" class="event-details__input" placeholder="Location" />
-            </div>
-
-            <input type="submit" value="Update Event" class="event-details__submit" />
+        <div class="event-mgmt__create">
+          <form action="/management" method="get" class="event-create__form">
+            <input type="hidden" name="profile_id" value="{{ profile_id }}">
+            <input type="submit" value="Create New Event">
           </form>
-        {% else %}
-          <form action="/management/event/create" method="post" class="event-details">
-            <input type="hidden" name="profile_id" value="{{ profile_id }}" />
+        </div>
+        <div class="event-mgmt__load">
+          {% if selected_event %}
+            <form action="/management/event/update/<int:event_id>" method="post" class="event-details">
+              <input type="hidden" name="profile_id" value="{{ profile_id }}" />
 
-            <div class="event-details__row">
-              <img src="/static/images/icon-title.png" class="event-details__icon" />
-              <input type="text" name="title" class="event-details__input" placeholder="Event Name" />
-            </div>
+              <div class="event-details__row">
+                <img src="/static/images/icon-title.png" class="event-details__icon" />
+                <input type="text" name="title" class="event-details__input" value="{{ selected_event.name }}" placeholder="Event Title" />
+              </div>
 
-            <div class="event-details__row">
-              <img src="/static/images/icon-time.png" class="event-details__icon" />
-              <input type="text" name="start_time" class="event-details__input" placeholder="Start Time (HH:MM)" />
-              <input type="text" name="end_time" class="event-details__input" placeholder="End Time (HH:MM)" />
-            </div>
+              <div class="event-details__row">
+                <img src="/static/images/icon-time.png" class="event-details__icon" />
+                  <!-- Start -->
+                  <input type="date" name="start_date" class="event-details__input" value="{{ selected_event.start_date }}" />
+                  <input type="time" name="start_time" class="event-details__input" value="{{ selected_event.start_time }}" step="1800" />
+                  -
+                  <!-- End -->
+                  <input type="date" name="end_date" class="event-details__input" value="{{ selected_event.end_date }}" />
+                  <input type="time" name="end_time" class="event-details__input" value="{{ selected_event.end_time }}" step="1800" />
+              </div>
 
-            <div class="event-details__row">
-              <img src="/static/images/icon-location.png" class="event-details__icon" />
-              <input type="text" name="location" class="event-details__input" placeholder="Location" />
-            </div>
+              <div class="event-details__row">
+                <img src="/static/images/icon-location.png" class="event-details__icon" />
+                <input type="text" name="location" class="event-details__input" placeholder="Location" />
+              </div>
 
-            <input type="submit" value="Create Event" class="event-details__submit" />
-          </form>
-          <p class="event-details__placeholder">Click an event to see details.</p>
-        {% endif %}
+              <input type="submit" value="Update Event" class="event-details__submit" />
+            </form>
+          {% else %}
+            <form action="/management/event/create" method="post" class="event-details">
+              <input type="hidden" name="profile_id" value="{{ profile_id }}" />
+
+              <div class="event-details__row">
+                <img src="/static/images/icon-title.png" class="event-details__icon" />
+                <input type="text" name="title" class="event-details__input" placeholder="Event Name" />
+              </div>
+
+              <div class="event-details__row">
+                <img src="/static/images/icon-time.png" class="event-details__icon" />
+                  <!-- Start -->
+                  <input type="date" name="start_date" class="event-details__input" value="{{ selected_event.start_date }}" />
+                  <input type="time" name="start_time" class="event-details__input" value="{{ selected_event.start_time }}" step="1800" />
+                  -
+                  <!-- End -->
+                  <input type="date" name="end_date" class="event-details__input" value="{{ selected_event.end_date }}" />
+                  <input type="time" name="end_time" class="event-details__input" value="{{ selected_event.end_time }}" step="1800" />
+              </div>
+
+              <div class="event-details__row">
+                <img src="/static/images/icon-location.png" class="event-details__icon" />
+                <input type="text" name="location" class="event-details__input" placeholder="Location" />
+              </div>
+
+              <input type="submit" value="Create Event" class="event-details__submit" />
+            </form>
+          {% endif %}
+        </div>
       </div>
     </section>
   </body>

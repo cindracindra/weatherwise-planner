@@ -87,7 +87,7 @@ def management():
     code = request.args.get("reqHttpCode", 100)
     if code == 100:
         profile_id = request.args.get("profile_id", "")
-        selected_event_id = request.args.get("selected_event_id", "")
+        selected_event_id = int(request.args.get("selected_event_id", 0))
 
         # create appropriate function
         all_event = dummy_get_all_event_by_profile(profile_id)
