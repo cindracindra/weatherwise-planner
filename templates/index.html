@@ -1,12 +1,130 @@
 <!DOCTYPE html>
 <html lang="en">
+  <head>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style/homepage.css') }}">
+    <title>Event Calendar</title>
+  </head>
 
-<head>
-  <title>Event Calendar</title>
-</head>
+  <body>
+    <!-- HEADER -->
+    <header class="header">
+      <div class="header__left">
+        <h1 class="header__title">
+          Welcome to Event Calendar, the portal for all your planning and scheduling needs!
+        </h1>
+      </div>
 
-<body>
-  <h1>Welcome to Event Calendar, the portal for all your planning and scheduling needs!</h1>
-</body>
+      <div class="header__right">
+        <form action="/" method="get" class="header__form">
+          <select name="profile_id" class="header__select">
+            <option value="">Select profile</option>
+            {% for profile in profile_list %}
+              <option value="{{ profile.id }}" {% if profile.id|string == profile_id|string %}selected{% endif %}>{{ profile.name }}</option>
+            {% endfor %}
+          </select>
+          <button type="submit" class="header__button">Go</button>
+        </form>
+      </div>
+    </header>
 
+    <!-- MAIN SECTION -->
+    <section class="calendar-section">
+
+      <!-- LEFT: CALENDAR -->
+      <section class="calendar-section__left">
+        <div class="calendar-section__header">
+          <div class="calendar-section__title">{{ today_detail.month_name }} {{ today_detail.year }}</div>
+
+          <div class="calendar-section__button-group">
+            <form action="/management" method="get" class="calendar-section__button-form">
+              <input type="hidden" name="profile_id" value="{{ profile_id }}">
+              <input type="submit" value="Manage Events">
+            </form>
+            <form action="/reload_calendar" method="get" class="calendar-section__button-form">
+              <input type="hidden" name="profile_id" value="{{ profile_id }}">
+              <input type="submit" value="Reload Calendar">
+            </form>
+          </div>
+        </div>
+
+        <table class="calendar">
+          <thead>
+            <tr>
+              <th>SUN</th><th>MON</th><th>TUE</th><th>WED</th>
+              <th>THU</th><th>FRI</th><th>SAT</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {% for week in calendar_matrix %}
+            <tr>
+              {% for day in week %}
+                <td>
+                  {% if day.day != 0 %}
+                  <div class="calendar-cell {% if day.day == today_detail.date %}calendar-cell--today{% endif %}">
+
+                    <!-- Top row: date and weather -->
+                    <div class="calendar-cell__top-row">
+                      <div class="calendar-cell__day-number">{{ day.day }}</div>
+                      {% if day.weather %}
+                        <img src="{{ url_for('static', filename='images/icons/' ~ day.weather.icon) }}" alt="{{ day.weather.label }}" class="calendar-cell__weather-icon">
+                      {% endif %}
+                    </div>
+
+                    <!-- Events and Holidays -->
+                    <div class="calendar-cell__events">
+
+                      <!-- Holidays  -->
+                      {% if day.holiday %}
+                        {% for holiday in day.holiday %}
+                          <div class="calendar-cell__event calendar-cell__event--holiday">{{ holiday }}</div>
+                        {% endfor %}
+                      {% endif %}
+                      
+                      <!-- Events  -->
+                      {% for daily in monthly_event_list %}
+                        {% if day.day == daily.date %}
+                          {% for event in daily.daily_events %}
+                            <div class="calendar-cell__event">{{ event.name }} ({{ event.start }}-{{ event.end }})</div>
+                          {% endfor %}
+                        {% endif %}
+                      {% endfor %}
+                    </div>
+                  </div>
+                  {% endif %}
+                </td>
+              {% endfor %}
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </section>
+
+      <!-- RIGHT: SCHEDULE -->
+      <section class="calendar-section__right">
+        <div class="calendar-section__today-header">
+          {{ today_detail.day_name }}, {{ today_detail.day }} {{ today_detail.month_name }}
+        </div>
+
+        <div class="calendar-section__day-container">
+          {% for entry in hourly_temp %}
+          <div class="calendar-section__hour-row">
+            <span class="calendar-section__temperature">{{ entry.temperature }}°</span>
+            <span class="calendar-section__hour-number"> | {{ entry.hour_number }}</span>
+            <span class="calendar-section__hour-ampm">{{ entry.hour_ampm }}</span>
+          </div>
+          {% endfor %}
+
+          {% for daily in daily_event_list %}
+            {% for event in daily.daily_events %}
+              <div class="calendar-section__event-block" style="--start: {{ event.start }}; --duration: {{ event.duration }};">
+                {{ event.name }}
+              </div>
+            {% endfor %}
+          {% endfor %}
+        </div>
+      </section>
+
+    </section>
+  </body>
 </html>

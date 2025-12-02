@@ -1,0 +1,127 @@
+body {
+    margin: auto;
+    background-color: #ffffff;
+    font-family: Verdana, 'Gill Sans', sans-serif;
+    width: 90%;
+}
+
+/* ---------- HEADER ---------- */
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.header__title {
+    font-size: 22px;
+}
+
+.header__home-btn {
+    padding: 5px 10px;
+    border-radius: 4px;
+    border: none;
+    background-color: #5d5757;
+    color: white;
+}
+
+/* ---------- PAGE LAYOUT ---------- */
+
+.event-mgmt {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 20px;
+}
+
+.event-mgmt__list,
+.event-mgmt__details {
+    background-color: rgb(255, 246, 237);
+    border-radius: 15px;
+    padding: 20px;
+    height: 400px;
+    font-size: 14px;
+    overflow-y: auto;
+}
+
+/* ---------- LEFT COLUMN: EVENT LIST ---------- */
+
+.event-list {
+    margin-bottom: 20px;
+}
+
+.event-list__day {
+    margin-bottom: 8px;
+}
+
+.event-item {
+    display: flex;
+    justify-content: space-between;
+    border-top: 1px solid #6e6e6e81;
+    padding-top: 8px;
+    margin-top: 10px;
+}
+
+.event-item__button {
+    background: none;
+    border: none;
+    padding: 5px;
+    cursor: pointer;
+    text-align: left;
+    width: 100%;
+}
+
+.event-item__title {
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.event-item__time {
+    font-size: 10px;
+    color: rgb(54, 54, 54);
+}
+
+.event-item__delete-btn {
+    background-color: #e24e4e;
+    border: none;
+    border-radius: 4px;
+    padding: 4px 6px;
+    color: white;
+    cursor: pointer;
+    font-size: 10px;
+    height: 20px;
+}
+
+/* ---------- RIGHT COLUMN: SELECTED EVENT ---------- */
+
+.event-details__row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.event-details__icon {
+    width: 20px;
+    height: 20px;
+    opacity: 0.7;
+    margin-right: 10px;
+}
+
+.event-details__input {
+    flex: 1;
+    padding: 6px 10px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+}
+
+.event-details__submit {
+    margin-top: 16px;
+    padding: 8px 14px;
+    border-radius: 6px;
+    width: 100%;
+}
+
+.event-details__placeholder {
+    color: #555;
+    font-style: italic;
+}
