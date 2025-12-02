@@ -24,11 +24,13 @@ from api.event_profile_api import (
 from services.calendar_service import get_full_calendar
 from services.datetime_service import get_today_detail
 from services.event_services import (
-    get_daily_event_by_profile,
-    get_monthly_event_by_profile
+    dummy_get_daily_event_by_profile,
+    dummy_get_monthly_event_by_profile,
+    dummy_get_all_event_by_profile,
+    dummy_get_event_by_id
 )
 from services.weather_service import get_hourly_forecast_today
-
+from services.profile_service import dummy_get_profiles
 
 app = Flask(__name__)
 
@@ -40,29 +42,30 @@ app = Flask(__name__)
 @app.route("/")
 def homepage():
     profile_id = request.args.get("profile_id", "")
-    profile_list = get_profiles()
+    profile_list = dummy_get_profiles()
 
     today = get_today_detail()
+    calendar_matrix = get_full_calendar(today["year"], today["month"])
 
-    # create appropriate function
-    hourly_temp = get_hourly_forecast_today()
+    hourly_forecast = get_hourly_forecast_today()
+    hourly_forecast = [reading.to_dict() for reading in hourly_forecast]
 
     if profile_id:
-        monthly_event_list = get_monthly_event_by_profile(profile_id)
-        daily_event_list = get_daily_event_by_profile(profile_id)
+        monthly_event_list = dummy_get_monthly_event_by_profile(profile_id)
+        daily_event_list = dummy_get_daily_event_by_profile(profile_id)
     else:
         monthly_event_list = []
         daily_event_list = []
 
     return render_template(
         "index.html",
-        calendar_matrix=get_full_calendar(today.year, today.month),
+        calendar_matrix=calendar_matrix,
         today_detail=today,
         profile_id=profile_id,
         profile_list=profile_list["profiles"],
         monthly_event_list=monthly_event_list,
         daily_event_list=daily_event_list,
-        hourly_temp=hourly_temp,
+        hourly_forecast=hourly_forecast,
     )
 
 
@@ -87,19 +90,28 @@ def management():
         selected_event_id = request.args.get("selected_event_id", "")
 
         # create appropriate function
-        all_event = get_event_profile_by_id(profile_id)
-        selected_event = get_event_by_id(selected_event_id)
+        all_event = dummy_get_all_event_by_profile(profile_id)
+        selected_event = dummy_get_event_by_id(selected_event_id)
 
         return render_template(
             "event_management.html",
             profile_id=profile_id,
-            all_event=all_event["event_by_profile"],
+            all_event=all_event,
             selected_event=selected_event)
 
     elif code == 200 or code == 201:
         return render_template("management.html", isReqSucc=True)
     else:
         return render_template("management.html", isReqSucc=False)
+
+
+@app.route("/management/event/load/<int:event_id>", methods=["POST"])
+def web_load_event(event_id):
+    profile_id = request.form.get("profile_id", "")
+    return redirect(url_for(
+        "management",
+        profile_id=profile_id,
+        selected_event_id=event_id))
 
 
 # Route to trigger event creation from web
@@ -153,6 +165,11 @@ def web_create_event_profile():
 def web_delete_event_profile(event_profile_id):
     result, status = delete_event_profile(event_profile_id)
     return redirect(url_for("management", reqHttpCode=status))
+
+
+@app.route("/management/profile")
+def web_profile():
+    return render_template("profile_management.html")
 
 
 # Route to trigger profile creation from web

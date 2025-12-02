@@ -24,6 +24,9 @@
           </select>
           <button type="submit" class="header__button">Go</button>
         </form>
+        <form action="/management/profile" method="get" class="header__form">
+          <button type="submit" class="header__button">Manage Profiles</button>
+        </form>
       </div>
     </header>
 
@@ -56,12 +59,12 @@
           </thead>
 
           <tbody>
-            {% for week in calendar_matrix %}
+            {% for week in calendar_matrix.weeks %}
             <tr>
-              {% for day in week %}
+              {% for day in week.days %}
                 <td>
                   {% if day.day != 0 %}
-                  <div class="calendar-cell {% if day.day == today_detail.date %}calendar-cell--today{% endif %}">
+                  <div class="calendar-cell {% if day.day == today_detail.day %}calendar-cell--today{% endif %}">
 
                     <!-- Top row: date and weather -->
                     <div class="calendar-cell__top-row">
@@ -75,15 +78,15 @@
                     <div class="calendar-cell__events">
 
                       <!-- Holidays  -->
-                      {% if day.holiday %}
-                        {% for holiday in day.holiday %}
+                      {% if day.holidays %}
+                        {% for holiday in day.holidays %}
                           <div class="calendar-cell__event calendar-cell__event--holiday">{{ holiday }}</div>
                         {% endfor %}
                       {% endif %}
                       
                       <!-- Events  -->
                       {% for daily in monthly_event_list %}
-                        {% if day.day == daily.date %}
+                        {% if day.day == daily.day %}
                           {% for event in daily.daily_events %}
                             <div class="calendar-cell__event">{{ event.name }} ({{ event.start }}-{{ event.end }})</div>
                           {% endfor %}
@@ -107,12 +110,11 @@
         </div>
 
         <div class="calendar-section__day-container">
-          {% for entry in hourly_temp %}
-          <div class="calendar-section__hour-row">
-            <span class="calendar-section__temperature">{{ entry.temperature }}°</span>
-            <span class="calendar-section__hour-number"> | {{ entry.hour_number }}</span>
-            <span class="calendar-section__hour-ampm">{{ entry.hour_ampm }}</span>
-          </div>
+          {% for entry in hourly_forecast %}
+            <div class="calendar-section__hour-row">
+              <span class="calendar-section__temperature">{{ entry.temperature }}°</span>
+              <span class="calendar-section__hour-number"> | {{ "%02d:00"|format(loop.index0) }}</span>
+            </div>
           {% endfor %}
 
           {% for daily in daily_event_list %}
