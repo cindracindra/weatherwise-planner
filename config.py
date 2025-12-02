@@ -6,7 +6,7 @@ class Config:
 
     # API Endpoints
     OPEN_METEO_BASE_URL = "https://api.open-meteo.com/v1/forecast"
-    NAGER_BASE_URL = "https://date.nager.at/api/v3/PublicHolidays"
+    NAGER_DATE_BASE_URL = "https://date.nager.at/api/v3/PublicHolidays"
 
     # Defaults
     DEFAULT_COUNTRY_CODE = "GB"
