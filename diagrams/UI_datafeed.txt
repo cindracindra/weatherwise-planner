@@ -1,0 +1,33 @@
+INCOMING (to db)
+
+
+
+
+OUTGOING (from API/ db)
+
+/* profile list - for drop down of valid username in homepage */
+PROFILES = 
+{
+    "profiles": [
+        { "id": "user-a123", "name": "Alice Johnson" },
+        { "id": "user-b456", "name": "Bob Smith" }
+    ]
+}
+
+/* today detail - in the format needed to display */
+{
+    "day": 1,
+    "month": 12,
+    "year": 2025,
+    "day_name": "Monday",
+    "month_name": "December",
+}
+
+/* calendar, holiday and weather */
+DAY = {
+            "day": 1,
+            "weather": { "code": 800, "icon": "01d.png", "label": "Clear" },
+            "holiday": ["New Year's Day"]
+}
+WEEK = DAY[7]
+MONTH = WEEK[n] // n depends on the number of weeks in that month

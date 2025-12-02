@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style/profile_management.css') }}" />
+    <title>Event Calendar</title>
+  </head>
+
+  <body>
+    <header class="header">
+      <div class="header__left">
+        <h1 class="header__title">Profiles</h1>
+      </div>
+
+      <div class="header__right">
+        <form action="/" method="get" class="header__home-form">
+          <input type="hidden" name="username" value="{{ username }}" />
+          <input type="submit" value="HOME" class="header__home-btn" />
+        </form>
+      </div>
+    </header>
+
+
+    <section class="profile-mgmt">
+      <!-- LEFT COLUMN: CREATE NEW PROFILE -->
+      <div class="profile-mgmt__create">
+        {{Create New Profile}}
+        <form action="/profile/create-profile" method="post" class="profile-item__create-form">
+          <input type="text" name="username" class="profile-create__input" placeholder="username" />
+        </form>
+      </div>
+
+      <!-- RIGHT COLUMN: PROFILE LIST -->
+      <div class="profile-mgmt__list">
+        {% for profile_id in all_profile %}
+          <div class="profile-list">
+            <div class="profile-list__username">{{ profile_id }}</div>
+            <form action="/management/delete-profile/{{ profile_id }}" method="post" class="profile-item__delete-form">
+              <button type="submit" class="profile-item__delete-btn" title="Delete profile">X</button>
+            </form>
+          </div>
+        {% endfor %}
+      </div>
+
+    </section>
+  </body>
+</html>
