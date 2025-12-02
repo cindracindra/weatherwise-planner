@@ -33,7 +33,7 @@
       <!-- LEFT: CALENDAR -->
       <section class="calendar-section__left">
         <div class="calendar-section__header">
-          <div class="calendar-section__title">{{ today_detail.month }} {{ today_detail.year }}</div>
+          <div class="calendar-section__title">{{ today_detail.month_name }} {{ today_detail.year }}</div>
 
           <div class="calendar-section__button-group">
             <form action="/management" method="get" class="calendar-section__button-form">
@@ -79,7 +79,7 @@
                         {% endfor %}
                       {% endif %}
 
-                      {% for daily in event_list %}
+                      {% for daily in monthly_event_list %}
                         {% if day.day == daily.date %}
                           {% for event in daily.daily_events %}
                             <div class="calendar-cell__event">{{ event.name }} ({{ event.start }}-{{ event.end }})</div>
@@ -107,7 +107,7 @@
         <!-- SCHEDULE -->
         <section class="calendar-section__daily-schedule">
           <div class="calendar-section__today-header">
-            {{ today_detail.day }}, {{ today_detail.date }} {{ today_detail.month }}
+            {{ today_detail.day_name }}, {{ today_detail.day }} {{ today_detail.month_name }}
           </div>
 
           <div class="calendar-section__day-container">
@@ -119,14 +119,12 @@
             </div>
             {% endfor %}
 
-            {% for daily in event_list %}
-              {% if today_detail.date == daily.date %}
-                {% for event in daily.daily_events %}
-                  <div class="calendar-section__event-block" style="--start: {{ event.start }}; --duration: {{ event.duration }};">
-                    {{ event.name }}
-                  </div>
-                {% endfor %}
-              {% endif %}
+            {% for daily in daily_event_list %}
+              {% for event in daily.daily_events %}
+                <div class="calendar-section__event-block" style="--start: {{ event.start }}; --duration: {{ event.duration }};">
+                  {{ event.name }}
+                </div>
+              {% endfor %}
             {% endfor %}
           </div>
         </section>

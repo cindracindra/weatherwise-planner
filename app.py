@@ -1,81 +1,100 @@
 from flask import Flask, render_template, request, redirect, url_for, jsonify
 
-from api.event_api import get_events, create_event, update_event, delete_event
+from api.event_api import (
+    get_events,
+    get_event,
+    create_event,
+    update_event,
+    delete_event
+)
 from api.profile_api import get_profiles, create_profile, delete_profile
 from api.event_profile_api import (
     get_event_profiles,
+    get_event_by_profile,
     create_event_profile,
     delete_event_profile,
 )
 
-from my_calendar import get_month_calendar_matrix_weather
+from services.calendar_service import get_full_calendar
+from services.datetime_service import get_today_detail
+from services.event_services import (
+    get_daily_event_by_profile,
+    get_monthly_event_by_profile
+)
+from services.weather_service import get_hourly_forecast_today
 
-import calendar
-from datetime import datetime
 
 app = Flask(__name__)
+
 
 @app.route("/")
 def homepage():
     username = request.args.get("username", "")
     profile_list = get_profiles()
 
-    now = datetime.now()
-    today_detail = {
-        "day": calendar.day_name[now.weekday()],
-        "date": now.day,
-        "month": calendar.month_name[now.month],
-        "year": now.year
-    }
-    
-    hourly_temp = get_hourly_temp() # create appropriate function
-    
+    today = get_today_detail()
+
+    # create appropriate function
+    hourly_temp = get_hourly_forecast_today()
+
     if username:
-        event_list = get_events_for_user(username) # create appropriate function
+        monthly_event_list = get_monthly_event_by_profile(username)
+        daily_event_list = get_daily_event_by_profile(username)
     else:
-        event_list = []
+        monthly_event_list = []
+        daily_event_list = []
 
     return render_template(
         "index.html",
-        calendar_matrix=get_month_calendar_matrix_weather(today_detail['year'], now.month),
-        today_detail=today_detail,
+        calendar_matrix=get_full_calendar(today.year, today.month),
+        today_detail=today,
         username=username,
         profile_list=profile_list["profiles"],
-        event_list=event_list,
+        monthly_event_list=monthly_event_list,
+        daily_event_list=daily_event_list,
         hourly_temp=hourly_temp,
     )
+
 
 @app.route("/profile", methods=['GET'])
 def load_profile():
     username = request.args.get("username", "")
     return redirect(url_for("homepage", username=username))
 
-@app.route("/reload_calendar", methods=['GET']) 
+
+@app.route("/reload_calendar", methods=['GET'])
 def reload_calendar():
     username = request.args.get("username", "")
-    return redirect(url_for("homepage",username=username))
+    return redirect(url_for("homepage", username=username))
+
 
 @app.route("/management")
 def management():
     username = request.args.get("username", "")
     selected_event_id = request.args.get("selected_event_id", "")
-    
-    all_event = get_events_for_user(username) # create appropriate function
-    selected_event = get_selected_event(selected_event_id) # create appropriate function
-    
+
+    # create appropriate function
+    all_event = get_event_by_profile(username)
+    selected_event = get_event(selected_event_id)
+
     return render_template(
-        "event_management.html", 
+        "event_management.html",
         username=username,
-        all_event=all_event,
-        selected_event=selected_event) 
+        all_event=all_event["event_by_profile"],
+        selected_event=selected_event)
+
 
 @app.route("/management/load-event/<int:event_id>", methods=["POST"])
 def web_load_event(event_id):
     username = request.form.get("username", "")
-    return redirect(url_for("management", username=username, selected_event_id=event_id))
+    return redirect(url_for(
+        "management",
+        username=username,
+        selected_event_id=event_id))
+
 
 @app.route("/management/edit-event/<int:event_id>", methods=["POST"])
-def web_edit_event(): # add event_id into the function call
+def web_edit_event():  # add event_id into the function call
     username = request.form.get("username", "")
 
     return redirect(url_for("management", username=username))
