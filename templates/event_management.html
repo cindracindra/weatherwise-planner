@@ -36,7 +36,7 @@
                   </button>
                 </form>
 
-                <form action="/management/event/delete/<int:event_id>" method="post" class="event-item__delete-form">
+                <form action="/management/event/delete/{{ event.id }}" method="post" class="event-item__delete-form">
                   <button type="submit" class="event-item__delete-btn" title="Delete event">X</button>
                 </form>
               </div>
@@ -55,7 +55,7 @@
         </div>
         <div class="event-mgmt__load">
           {% if selected_event %}
-            <form action="/management/event/update/<int:event_id>" method="post" class="event-details">
+            <form action="/management/event/update/{{ event.id }}" method="post" class="event-details">
               <input type="hidden" name="profile_id" value="{{ profile_id }}" />
 
               <div class="event-details__row">
@@ -66,12 +66,10 @@
               <div class="event-details__row">
                 <img src="/static/images/icon-time.png" class="event-details__icon" />
                   <!-- Start -->
-                  <input type="date" name="start_date" class="event-details__input" value="{{ selected_event.start_date }}" />
-                  <input type="time" name="start_time" class="event-details__input" value="{{ selected_event.start_time }}" step="1800" />
+                  <input type="datetime-local" name="start_time" class="event-details__input" value="{{ selected_event.start_time }}"/>
                   -
                   <!-- End -->
-                  <input type="date" name="end_date" class="event-details__input" value="{{ selected_event.end_date }}" />
-                  <input type="time" name="end_time" class="event-details__input" value="{{ selected_event.end_time }}" step="1800" />
+                  <input type="datetime-local" name="end_time" class="event-details__input" value="{{ selected_event.end_time }}"/>
               </div>
 
               <div class="event-details__row">
@@ -93,12 +91,10 @@
               <div class="event-details__row">
                 <img src="/static/images/icon-time.png" class="event-details__icon" />
                   <!-- Start -->
-                  <input type="date" name="start_date" class="event-details__input" value="{{ selected_event.start_date }}" />
-                  <input type="time" name="start_time" class="event-details__input" value="{{ selected_event.start_time }}" step="1800" />
+                  <input type="datetime-local" name="start_time" class="event-details__input" value="{{ selected_event.start_time }}"/>
                   -
                   <!-- End -->
-                  <input type="date" name="end_date" class="event-details__input" value="{{ selected_event.end_date }}" />
-                  <input type="time" name="end_time" class="event-details__input" value="{{ selected_event.end_time }}" step="1800" />
+                  <input type="datetime-local" name="end_time" class="event-details__input" value="{{ selected_event.end_time }}"/>
               </div>
 
               <div class="event-details__row">
