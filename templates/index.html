@@ -15,6 +15,9 @@
       </div>
 
       <div class="header__right">
+        <form action="/management/profile" method="get" class="header__form">
+          <button type="submit" class="header__button">Manage Profiles</button>
+        </form>
         <form action="/" method="get" class="header__form">
           <select name="profile_id" class="header__select">
             <option value="">Select profile</option>
@@ -24,11 +27,26 @@
           </select>
           <button type="submit" class="header__button">Go</button>
         </form>
-        <form action="/management/profile" method="get" class="header__form">
-          <button type="submit" class="header__button">Manage Profiles</button>
-        </form>
       </div>
     </header>
+
+    <!-- ERROR MESSAGE SECTION -->
+    <div class="flash-message-container">ç
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% for category, message in messages %}
+            
+            <input type="checkbox" id="flash-toggle-{{ loop.index }}" class="flash-toggle" checked>
+            
+            <div class="notification is-{{ category }}" role="alert">
+              <strong>{{ category | capitalize }}:</strong> {{ message }}
+              
+              <label for="flash-toggle-{{ loop.index }}" class="delete-btn">&times;</label>
+            </div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+    </div>
 
     <!-- MAIN SECTION -->
     <section class="calendar-section">
@@ -43,7 +61,7 @@
               <input type="hidden" name="profile_id" value="{{ profile_id }}">
               <input type="submit" value="Manage Events">
             </form>
-            <form action="/reload_calendar" method="get" class="calendar-section__button-form">
+            <form action="/reload" method="get" class="calendar-section__button-form">
               <input type="hidden" name="profile_id" value="{{ profile_id }}">
               <input type="submit" value="Reload Calendar">
             </form>
@@ -88,7 +106,7 @@
                       {% for daily in monthly_event_list %}
                         {% if day.day == daily.day %}
                           {% for event in daily.daily_events %}
-                            <div class="calendar-cell__event">{{ event.name }} ({{ event.start }}-{{ event.end }})</div>
+                            <div class="calendar-cell__event">{{ event.name }}</div>
                           {% endfor %}
                         {% endif %}
                       {% endfor %}
@@ -113,13 +131,13 @@
           {% for entry in hourly_forecast %}
             <div class="calendar-section__hour-row">
               <span class="calendar-section__temperature">{{ entry.temperature }}°</span>
-              <span class="calendar-section__hour-number"> | {{ "%02d:00"|format(loop.index0) }}</span>
+              <span class="calendar-section__hour-number">|  {{ "%02d:00"|format(loop.index0) }}</span>
             </div>
           {% endfor %}
 
           {% for daily in daily_event_list %}
             {% for event in daily.daily_events %}
-              <div class="calendar-section__event-block" style="--start: {{ event.start }}; --duration: {{ event.duration }};">
+              <div class="calendar-section__event-block" style="--start: {{ event.start_int }}; --duration: {{ event.duration }};">
                 {{ event.name }}
               </div>
             {% endfor %}

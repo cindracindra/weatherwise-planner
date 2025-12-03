@@ -30,8 +30,10 @@ body {
 
 .profile-mgmt {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
     gap: 20px;
+    height: 300px;
+    width: 40%;
 }
 
 .profile-mgmt__create,
@@ -40,9 +42,10 @@ body {
     border-radius: 15px;
     padding: 20px;
     font-size: 14px;
+    font-weight: bold;
 }
 
-
+.profile-item__create-form,
 .profile-item__delete-form {
     display: flex;
     gap: 5px;
@@ -50,8 +53,9 @@ body {
 }
 
 .profile-item__select {
-    padding: 5px 10px;
+    padding: 10px 10px;
     border-radius: 4px;
+    width: 150px;
 }
 
 .profile-create__button, .profile-delete__button {

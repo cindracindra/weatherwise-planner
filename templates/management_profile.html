@@ -8,33 +8,49 @@
   <body>
     <header class="header">
       <div class="header__left">
-        <h1 class="header__title">Profiles</h1>
+        <h1 class="header__title">Manage your profiles here! </h1>
       </div>
 
       <div class="header__right">
         <form action="/" method="get" class="header__home-form">
-          <input type="hidden" name="username" value="{{ username }}" />
           <input type="submit" value="HOME" class="header__home-btn" />
         </form>
       </div>
     </header>
 
+    <!-- ERROR MESSAGE SECTION -->
+    <div class="flash-message-container">
+      {% with messages=get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% for category, message in messages %}
+            <input type="checkbox" id="flash-toggle-{{ loop.index }}" class="flash-toggle" checked />
+
+            <div class="notification is-{{ category }}" role="alert">
+              <strong>{{ category|capitalize }}:</strong> {{ message }}
+
+              <label for="flash-toggle-{{ loop.index }}" class="delete-btn">&times;</label>
+            </div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+    </div>
+
 
     <section class="profile-mgmt">
-      <!-- LEFT COLUMN: CREATE NEW PROFILE -->
+      <!-- CREATE NEW PROFILE -->
       <div class="profile-mgmt__create">
         Create New Profile
         <form action="/management/profile/create" method="post" class="profile-item__create-form">
-          <input type="text" name="profile_name" class="profile-create__input" placeholder="profile name" />
+          <input type="text" name="profile_name" class="profile-create__input" placeholder="profile name" maxlength="15" required/>
           <button type="submit" class="profile-create__button">Create</button>
         </form>
       </div>
 
-      <!-- RIGHT COLUMN: DELETE PROFILE -->
+      <!-- DELETE PROFILE -->
       <div class="profile-mgmt__delete">
         Delete Profile
         <form action="/management/profile/delete" method="post" class="profile-item__delete-form">
-          <select name="profile_id" class="profile-item___select">
+          <select name="profile_id" class="profile-item__select">
             <option value="">Select profile </option>
             {% for profile in profile_list %}
               <option value="{{ profile.id }}" {% if profile.id|string == profile_id|string %}selected{% endif %}>{{ profile.name }}</option>

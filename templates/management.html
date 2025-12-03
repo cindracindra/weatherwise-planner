@@ -1,20 +1,127 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Management</title>
-</head>
-<body>
-    <h1>Management Page</h1>
-    {% if isReqSucc is not none %}
-        {% if isReqSucc %}
-            <div style="color: green;">Operation was successful!</div>
-        {% else %}
-            <div style="color: red;">Operation failed.</div>
+  <head>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style/event_management.css') }}" />
+    <title>Event Calendar</title>
+  </head>
+
+  <body>
+    <header class="header">
+      <div class="header__left">
+        <h1 class="header__title">Manage your events here!</h1>
+      </div>
+
+      <div class="header__right">
+        <form action="/" method="get" class="header__home-form">
+          <input type="hidden" name="profile_id" value="{{ profile_id }}" />
+          <input type="submit" value="HOME" class="header__home-btn" />
+        </form>
+      </div>
+    </header>
+
+    <!-- ERROR MESSAGE SECTION -->
+    <div class="flash-message-container">
+      {% with messages=get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% for category, message in messages %}
+            <input type="checkbox" id="flash-toggle-{{ loop.index }}" class="flash-toggle" checked />
+
+            <div class="notification is-{{ category }}" role="alert">
+              <strong>{{ category|capitalize }}:</strong> {{ message }}
+
+              <label for="flash-toggle-{{ loop.index }}" class="delete-btn">&times;</label>
+            </div>
+          {% endfor %}
         {% endif %}
-    {% else %}
-        <div>No operation performed yet.</div>
-    {% endif %}
-    <!-- Add your management page content here -->
-</body>
+      {% endwith %}
+    </div>
+
+    <section class="event-mgmt">
+      <!-- LEFT COLUMN: EVENT LIST -->
+      <div class="event-mgmt__list">
+        {% for day in all_event %}
+          <div class="event-list">
+            <div class="event-list__day">{{ day.full_date }}</div>
+
+            {% for event in day.daily_events %}
+              <div class="event-item">
+                <form action="/management/event/load/{{ event.id }}" method="post" class="event-item__form">
+                  <input type="hidden" name="profile_id" value="{{ profile_id }}" />
+                  <button type="submit" class="event-item__button">
+                    <span class="event-item__title">{{ event.name }}</span><br />
+                    <span class="event-item__time">{{ event.start_time.strftime('%H:%M') }} - {{ event.end_time.strftime('%H:%M') }}</span>
+                  </button>
+                </form>
+
+                <form action="/management/event/delete/{{ event.id }}" method="post" class="event-item__delete-form">
+                  <button type="submit" class="event-item__delete-btn" title="Delete event">X</button>
+                </form>
+              </div>
+            {% endfor %}
+          </div>
+        {% endfor %}
+      </div>
+
+      <!-- RIGHT COLUMN: SELECTED EVENT DETAILS -->
+      <div class="event-mgmt__details">
+        <div class="event-mgmt__create">
+          <form action="/management/event" method="get" class="event-create__form">
+            <input type="hidden" name="profile_id" value="{{ profile_id }}" />
+            <input type="submit" value="Create New Event" />
+          </form>
+        </div>
+        <div class="event-mgmt__load">
+          {% if selected_event %}
+            <form action="/management/event/update/{{ selected_event_id }}" method="post" class="event-details">
+              <input type="hidden" name="profile_id" value="{{ profile_id }}" />
+
+              <div class="event-details__row">
+                <img src="/static/images/icon-title.png" class="event-details__icon" />
+                <input type="text" name="name" class="event-details__input" value="{{ selected_event.name }}" placeholder="Event Name" maxlength="30" required/>
+              </div>
+
+              <div class="event-details__row">
+                <img src="/static/images/icon-time.png" class="event-details__icon" />
+                <!-- Start -->
+                <input type="datetime-local" name="start_time" class="event-details__input" value="{{ selected_event.start_time.strftime('%Y-%m-%dT%H:%M') }}" />-
+                <!-- End -->
+                <input type="datetime-local" name="end_time" class="event-details__input" value="{{ selected_event.end_time.strftime('%Y-%m-%dT%H:%M') }}" />
+              </div>
+
+              <div class="event-details__row">
+                <img src="/static/images/icon-location.png" class="event-details__icon" />
+                <input type="text" name="location" class="event-details__input" placeholder="Location" value="{{ selected_event.location }}" />
+              </div>
+
+              <input type="submit" value="Update Event" class="event-details__submit" />
+            </form>
+          {% else %}
+            <form action="/management/event/create" method="post" class="event-details">
+              <input type="hidden" name="profile_id" value="{{ profile_id }}" />
+
+              <div class="event-details__row">
+                <img src="/static/images/icon-title.png" class="event-details__icon" />
+                <input type="text" name="name" class="event-details__input" placeholder="Event Name" maxlength="30" required />
+              </div>
+
+              <div class="event-details__row">
+                <img src="/static/images/icon-time.png" class="event-details__icon" />
+                <!-- Start -->
+                <input type="datetime-local" name="start_time" class="event-details__input" required/>-
+                <!-- End -->
+                <input type="datetime-local" name="end_time" class="event-details__input" required/>
+              </div>
+
+              <div class="event-details__row">
+                <img src="/static/images/icon-location.png" class="event-details__icon" />
+                <input type="text" name="location" class="event-details__input" placeholder="Location" required />
+              </div>
+
+              <input type="submit" value="Create Event" class="event-details__submit" />
+            </form>
+          {% endif %}
+        </div>
+      </div>
+    </section>
+  </body>
 </html>

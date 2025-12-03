@@ -28,15 +28,22 @@ input[type="submit"] {
     font-size: 22px;
 }
 
+.header__right {
+    display: flex;
+    gap: 10px;
+    align-items: stretch;
+}
+
 .header__form {
     display: flex;
     gap: 5px;
-    margin-top: 10px;
+    flex: 1;
 }
 
 .header__select {
     padding: 5px 10px;
     border-radius: 4px;
+    flex: 1;
 }
 
 .header__button {
@@ -45,6 +52,11 @@ input[type="submit"] {
     border: none;
     background-color: #5d5757;
     color: white;
+    white-space: nowrap;
+}
+
+.header__form:last-child .header__button {
+    width: 100%;
 }
 
 /* =======================
@@ -194,7 +206,7 @@ input[type="submit"] {
 .calendar-section__day-container {
     position: relative;
     width: 100%;
-    height: 380px;
+    height: 600px;
     overflow-y: auto;
 }
 
@@ -235,3 +247,63 @@ input[type="submit"] {
     display: flex;
     align-items: flex-start;
 }
+
+/* =======================
+   7. ERROR MESSAGE CONTAINER
+   ======================= */
+
+/* 1. General Positioning */
+.flash-message-container {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1000;
+    width: 90%;
+    max-width: 400px;
+}
+
+/* 2. Hide the actual Checkbox */
+.flash-toggle {
+    display: none;
+}
+
+/* 3. Notification Box Styling */
+.notification {
+    padding: 15px;
+    margin-bottom: 10px;
+    border-radius: 4px;
+    color: #fff;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: opacity 0.3s ease-in-out;
+    /* Optional: for a smooth hide effect */
+}
+
+/* 4. Category Colors */
+.is-error {
+    background-color: #f44336;
+}
+
+/* 5. Close Button Styling (The Label) */
+.delete-btn {
+    font-size: 24px;
+    font-weight: bold;
+    line-height: 1;
+    cursor: pointer;
+    margin-left: 15px;
+    opacity: 0.8;
+}
+
+/* 6. THE CORE CSS LOGIC: Hide the notification when the linked checkbox is UNCHECKED */
+.flash-toggle:not(:checked)+.notification {
+    /* When the checkbox is not checked, hide the sibling notification */
+    opacity: 0;
+    visibility: hidden;
+    height: 0;
+    padding: 0;
+    margin: 0;
+}
+
