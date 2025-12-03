@@ -2,7 +2,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session, joinedload
 from models.event import Event
 from models.event_profile import Event_Profile
-from models.profile import Profile
+# from models.profile import Profile
 from database.database import engine
 
 
@@ -11,7 +11,9 @@ def get_events_by_profile_id(profile_id):
         select(Event)
         .join(Event.event_profile)
         .where(Event_Profile.profileid == profile_id)
-        .options(joinedload(Event.event_profile).joinedload(Event_Profile.profile))
+        .options(
+            joinedload(Event.event_profile)
+            .joinedload(Event_Profile.profile))
     )
     with Session(engine) as session:
         events = session.execute(stmt).scalars().unique().all()
