@@ -145,3 +145,66 @@ body {
     color: #555;
     font-style: italic;
 }
+
+/* =======================
+   7. ERROR MESSAGE CONTAINER
+   ======================= */
+
+/* 1. General Positioning */
+.flash-message-container {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1000;
+    width: 90%;
+    max-width: 400px;
+}
+
+/* 2. Hide the actual Checkbox */
+.flash-toggle {
+    display: none;
+}
+
+/* 3. Notification Box Styling */
+.notification {
+    padding: 15px;
+    margin-bottom: 10px;
+    border-radius: 4px;
+    color: #fff;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: opacity 0.3s ease-in-out;
+    /* Optional: for a smooth hide effect */
+}
+
+/* 4. Category Colors */
+.is-error {
+    background-color: #f44336;
+}
+
+.is-success {
+    background-color: #4CAF50;
+}
+
+/* 5. Close Button Styling (The Label) */
+.delete-btn {
+    font-size: 24px;
+    font-weight: bold;
+    line-height: 1;
+    cursor: pointer;
+    margin-left: 15px;
+    opacity: 0.8;
+}
+
+/* 6. THE CORE CSS LOGIC: Hide the notification when the linked checkbox is UNCHECKED */
+.flash-toggle:not(:checked)+.notification {
+    /* When the checkbox is not checked, hide the sibling notification */
+    opacity: 0;
+    visibility: hidden;
+    height: 0;
+    padding: 0;
+    margin: 0;
+}

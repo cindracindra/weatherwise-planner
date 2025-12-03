@@ -1,4 +1,12 @@
-from flask import Flask, render_template, request, redirect, url_for, jsonify
+from flask import (
+    Flask,
+    render_template,
+    request,
+    redirect,
+    url_for,
+    jsonify,
+    flash
+)
 
 from api.event_api import (
     get_events,
@@ -35,7 +43,7 @@ from services.weather_service import get_hourly_forecast_today
 from services.profile_service import dummy_get_profiles
 
 app = Flask(__name__)
-
+app.secret_key = 'event-calendar'
 
 # ========== Routes ==========
 
@@ -43,6 +51,10 @@ app = Flask(__name__)
 # Route to homepage (index.html)
 @app.route("/")
 def homepage():
+    isReqSucc = request.args.get("isReqSucc", True)
+    if isReqSucc == "False":
+        flash('Select a profile to manage events.', 'error')
+
     profile_id = request.args.get("profile_id", "")
     profile_list = dummy_get_profiles()
 
@@ -71,47 +83,63 @@ def homepage():
     )
 
 
-@app.route("/profile", methods=['GET'])
-def load_profile():
-    profile_id = request.args.get("profile_id", "")
-    return redirect(url_for("homepage", profile_id=profile_id))
-
-
-@app.route("/reload_calendar", methods=['GET'])
+@app.route("/reload", methods=['GET'])
 def reload_calendar():
     profile_id = request.args.get("profile_id", "")
     return redirect(url_for("homepage", profile_id=profile_id))
 
 
+@app.route("/management", methods=['GET'])
+def management_handle_form():
+    profile_id = request.args.get("profile_id", "")
+
+    if not profile_id:
+        return redirect(url_for("homepage", isReqSucc=False))
+    else:
+        return redirect(url_for(
+            "web_management",
+            profile_id=profile_id))
+
+
 # Route to management page
-@app.route("/management")
-def management():
+@app.route("/management/event")
+def web_management():
+    profile_id = request.args.get("profile_id", "")
     code = request.args.get("reqHttpCode", 100)
+    selected_event_id = int(request.args.get("selected_event_id", 0))
+
+    # create appropriate function
+    all_event = dummy_get_all_event_by_profile(profile_id)
+    selected_event = dummy_get_event_by_id(selected_event_id)
+
     if code == 100:
-        profile_id = request.args.get("profile_id", "")
-        selected_event_id = int(request.args.get("selected_event_id", 0))
-
-        # create appropriate function
-        all_event = dummy_get_all_event_by_profile(profile_id)
-        selected_event = dummy_get_event_by_id(selected_event_id)
-
         return render_template(
-            "event_management.html",
+            "management.html",
             profile_id=profile_id,
             all_event=all_event,
             selected_event=selected_event)
 
     elif code == 200 or code == 201:
-        return render_template("management.html", isReqSucc=True)
+        flash('Event successfully updated/created/deleted', 'success')
+        return render_template(
+            "management.html",
+            profile_id=profile_id,
+            all_event=all_event,
+            selected_event=selected_event)
     else:
-        return render_template("management.html", isReqSucc=False)
+        flash('Unable to update/create/delete event', 'error')
+        return render_template(
+            "management.html",
+            profile_id=profile_id,
+            all_event=all_event,
+            selected_event=selected_event)
 
 
 @app.route("/management/event/load/<int:event_id>", methods=["POST"])
 def web_load_event(event_id):
     profile_id = request.form.get("profile_id", "")
     return redirect(url_for(
-        "management",
+        "web_management",
         profile_id=profile_id,
         selected_event_id=event_id))
 
@@ -123,7 +151,7 @@ def web_create_event():
     data = request.form
     result, status = create_event(data)
     return redirect(url_for(
-        "management",
+        "web_management",
         reqHttpCode=status,
         profile_id=profile_id))
 
@@ -135,7 +163,7 @@ def web_update_event(event_id):
     data = request.form
     result, status = update_event(event_id, data)
     return redirect(url_for(
-        "management",
+        "web_management",
         reqHttpCode=status,
         profile_id=profile_id))
 
@@ -146,7 +174,7 @@ def web_delete_event(event_id):
     profile_id = request.form.get("profile_id", "")
     result, status = delete_event(event_id)
     return redirect(url_for(
-        "management",
+        "web_management",
         reqHttpCode=status,
         profile_id=profile_id))
 
@@ -156,7 +184,7 @@ def web_delete_event(event_id):
 # def web_create_event_profile():
 #     data = request.form
 #     result, status = create_event_profile(data)
-#     return redirect(url_for("management", reqHttpCode=status))
+#     return redirect(url_for("management/event", reqHttpCode=status))
 
 
 # # Route to trigger event-profile deletion from web
@@ -166,15 +194,28 @@ def web_delete_event(event_id):
 # )
 # def web_delete_event_profile(event_profile_id):
 #     result, status = delete_event_profile(event_profile_id)
-#     return redirect(url_for("management", reqHttpCode=status))
+#     return redirect(url_for("management/event", reqHttpCode=status))
 
 
 @app.route("/management/profile")
 def web_profile():
+    code = request.args.get("reqHttpCode", 100)
     profile_list = dummy_get_profiles()
-    return render_template(
-        "profile_management.html",
-        profile_list=profile_list["profiles"])
+
+    if code == 100:
+        return render_template(
+            "management_profile.html",
+            profile_list=profile_list["profiles"])
+    elif code == 200 or code == 201:
+        flash('Profile successfully created/ deleted', 'success')
+        return render_template(
+            "management_profile.html",
+            profile_list=profile_list["profiles"])
+    else:
+        flash('Unable to create/delete profile', 'error')
+        return render_template(
+            "management_profile.html",
+            profile_list=profile_list["profiles"])
 
 
 # Route to trigger profile creation from web
