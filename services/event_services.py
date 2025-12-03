@@ -1,25 +1,23 @@
 current_day_event = [
     {
-        "id": 1, 
-        "name": "Meeting", 
-        "start": "10", 
-        "end": "11", 
-        "duration": 1,
-        "start_date": "2025-12-27",
-        "start_time": "10:00",
-        "end_date": "2025-12-27",
-        "end_time": "11:00"
+        "id": 1, # database
+        "name": "Meeting", # database
+        "start_time": "2025-12-27T10:00:00Z", # database
+        "end_time": "2025-12-27T11:00:00Z", # database
+        "location": "Huxley Building", # database
+        "start_int": 10, # additional manipulation
+        "end_int": 11, # additional manipulation
+        "durantion" : 1 # additional manipulation
     },
     {
         "id": 2, 
         "name": "Workout", 
-        "start": "18", 
-        "end": "18.5", 
-        "duration": 0.5,
-        "start_date": "2025-12-27",
-        "start_time": "18:00",
-        "end_date": "2025-12-27",
-        "end_time": "18:30"
+        "start_time": "2025-12-27T18:00:00Z", # database
+        "end_time": "2025-12-27T18:30:00Z", # database
+        "location": "Huxley Building", # database
+        "start_int": 18, # additional manipulation
+        "end_int": 18.5, # additional manipulation
+        "durantion" : 0.5 # additional manipulation
     },
     {
         "id": 3, 
@@ -72,14 +70,10 @@ current_month_event = [
 
 all_event = [
     {
-        "day": 27, 
-        "month": 12, 
         "full_date": "Thursday, 27 December 2025", 
         "daily_events": current_day_event
     },
-    {
-        "day": 30, 
-        "month": 12, 
+    { 
         "full_date": "Sunday, 30 December 2025", 
         "daily_events": current_day_event_2
     }
@@ -87,16 +81,52 @@ all_event = [
 
 def dummy_get_daily_event_by_profile(profile_id):
     profile_id
+    
+#     current_day_event = [
+#     {
+#         "id": 1, # database
+#         "name": "Meeting", # database
+#         "start_time": "2025-12-27T10:00:00Z", # database
+#         "end_time": "2025-12-27T11:00:00Z", # database
+#         "location": "Huxley Building", # database
+#         "start_int": 10, # additional manipulation
+#         "end_int": 11, # additional manipulation
+#         "durantion" : 1 # additional manipulation
+#     }
+# ]
+
 
     return current_day_event
 
 def dummy_get_monthly_event_by_profile(profile_id):
     profile_id
     
+#     current_month_event = [
+#     {
+#         "day": 27, 
+#         "daily_events": current_day_event
+#     },
+#     {
+#         "day": 30,  
+#         "daily_events": current_day_event_2
+#     }
+# ]
+    
     return current_month_event
 
 def dummy_get_all_event_by_profile(profile_id):
     profile_id
+    
+#     all_event = [
+#     { 
+#         "full_date": "Thursday, 27 December 2025", 
+#         "daily_events": current_day_event
+#     },
+#     {
+#         "full_date": "Sunday, 30 December 2025", 
+#         "daily_events": current_day_event_2
+#     }
+# ]
     
     return all_event
 
