@@ -21,6 +21,8 @@ from api.event_profile_api import (
     delete_event_profile,
 )
 
+from api.composite_api import get_events_by_profile_id
+
 from services.calendar_service import get_full_calendar
 from services.datetime_service import get_today_detail
 from services.event_services import (
@@ -90,8 +92,8 @@ def management():
         selected_event_id = int(request.args.get("selected_event_id", 0))
 
         # create appropriate function
-        all_event = dummy_get_all_event_by_profile(profile_id)
-        selected_event = dummy_get_event_by_id(selected_event_id)
+        all_event = get_events_by_profile_id(profile_id) # need new
+        selected_event = get_event_by_id(selected_event_id) 
 
         return render_template(
             "event_management.html",
@@ -149,22 +151,22 @@ def web_delete_event(event_id):
         profile_id=profile_id))
 
 
-# Route to trigger event-profile creation from web
-@app.route("/management/event-profile/create", methods=["POST"])
-def web_create_event_profile():
-    data = request.form
-    result, status = create_event_profile(data)
-    return redirect(url_for("management", reqHttpCode=status))
+# # Route to trigger event-profile creation from web
+# @app.route("/management/event-profile/create", methods=["POST"])
+# def web_create_event_profile():
+#     data = request.form
+#     result, status = create_event_profile(data)
+#     return redirect(url_for("management", reqHttpCode=status))
 
 
-# Route to trigger event-profile deletion from web
-@app.route(
-    "/management/event-profile/delete/<int:event_profile_id>",
-    methods=["POST"],
-)
-def web_delete_event_profile(event_profile_id):
-    result, status = delete_event_profile(event_profile_id)
-    return redirect(url_for("management", reqHttpCode=status))
+# # Route to trigger event-profile deletion from web
+# @app.route(
+#     "/management/event-profile/delete/<int:event_profile_id>",
+#     methods=["POST"],
+# )
+# def web_delete_event_profile(event_profile_id):
+#     result, status = delete_event_profile(event_profile_id)
+#     return redirect(url_for("management", reqHttpCode=status))
 
 
 @app.route("/management/profile")
