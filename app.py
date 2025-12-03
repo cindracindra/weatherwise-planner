@@ -1,4 +1,12 @@
-from flask import Flask, render_template, request, redirect, url_for, jsonify, flash
+from flask import (
+    Flask,
+    render_template,
+    request,
+    redirect,
+    url_for,
+    jsonify,
+    flash
+)
 
 from api.event_api import (
     get_events,
@@ -46,7 +54,7 @@ def homepage():
     isReqSucc = request.args.get("isReqSucc", True)
     if isReqSucc == "False":
         flash('Select a profile to manage events.', 'error')
-    
+
     profile_id = request.args.get("profile_id", "")
     profile_list = dummy_get_profiles()
 
@@ -84,7 +92,7 @@ def reload_calendar():
 @app.route("/management", methods=['GET'])
 def management_handle_form():
     profile_id = request.args.get("profile_id", "")
-    
+
     if not profile_id:
         return redirect(url_for("homepage", isReqSucc=False))
     else:
@@ -99,11 +107,11 @@ def web_management():
     profile_id = request.args.get("profile_id", "")
     code = request.args.get("reqHttpCode", 100)
     selected_event_id = int(request.args.get("selected_event_id", 0))
-        
+
     # create appropriate function
     all_event = dummy_get_all_event_by_profile(profile_id)
     selected_event = dummy_get_event_by_id(selected_event_id)
-    
+
     if code == 100:
         return render_template(
             "management.html",
@@ -114,7 +122,7 @@ def web_management():
     elif code == 200 or code == 201:
         flash('Event successfully updated/created/deleted', 'success')
         return render_template(
-            "management.html", 
+            "management.html",
             profile_id=profile_id,
             all_event=all_event,
             selected_event=selected_event)
@@ -193,7 +201,7 @@ def web_delete_event(event_id):
 def web_profile():
     code = request.args.get("reqHttpCode", 100)
     profile_list = dummy_get_profiles()
-    
+
     if code == 100:
         return render_template(
             "management_profile.html",
