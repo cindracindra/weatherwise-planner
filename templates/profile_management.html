@@ -23,22 +23,25 @@
     <section class="profile-mgmt">
       <!-- LEFT COLUMN: CREATE NEW PROFILE -->
       <div class="profile-mgmt__create">
-        {{Create New Profile}}
-        <form action="/profile/create-profile" method="post" class="profile-item__create-form">
-          <input type="text" name="username" class="profile-create__input" placeholder="username" />
+        Create New Profile
+        <form action="/management/profile/create" method="post" class="profile-item__create-form">
+          <input type="text" name="profile_name" class="profile-create__input" placeholder="profile name" />
+          <button type="submit" class="profile-create__button">Create</button>
         </form>
       </div>
 
-      <!-- RIGHT COLUMN: PROFILE LIST -->
-      <div class="profile-mgmt__list">
-        {% for profile_id in all_profile %}
-          <div class="profile-list">
-            <div class="profile-list__username">{{ profile_id }}</div>
-            <form action="/management/delete-profile/{{ profile_id }}" method="post" class="profile-item__delete-form">
-              <button type="submit" class="profile-item__delete-btn" title="Delete profile">X</button>
-            </form>
-          </div>
-        {% endfor %}
+      <!-- RIGHT COLUMN: DELETE PROFILE -->
+      <div class="profile-mgmt__delete">
+        Delete Profile
+        <form action="/management/profile/delete" method="post" class="profile-item__delete-form">
+          <select name="profile_id" class="profile-item___select">
+            <option value="">Select profile </option>
+            {% for profile in profile_list %}
+              <option value="{{ profile.id }}" {% if profile.id|string == profile_id|string %}selected{% endif %}>{{ profile.name }}</option>
+            {% endfor %}
+          </select>
+          <button type="submit" class="profile-delete__button">Delete</button>
+        </form>
       </div>
 
     </section>

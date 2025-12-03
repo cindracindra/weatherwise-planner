@@ -21,7 +21,7 @@ from api.event_profile_api import (
     delete_event_profile,
 )
 
-from api.composite_api import get_events_by_profile_id
+# from api.composite_api import get_events_by_profile_id
 
 from services.calendar_service import get_full_calendar
 from services.datetime_service import get_today_detail
@@ -92,8 +92,8 @@ def management():
         selected_event_id = int(request.args.get("selected_event_id", 0))
 
         # create appropriate function
-        all_event = get_events_by_profile_id(profile_id) # need new
-        selected_event = get_event_by_id(selected_event_id) 
+        all_event = dummy_get_all_event_by_profile(profile_id)
+        selected_event = dummy_get_event_by_id(selected_event_id)
 
         return render_template(
             "event_management.html",
@@ -171,7 +171,10 @@ def web_delete_event(event_id):
 
 @app.route("/management/profile")
 def web_profile():
-    return render_template("profile_management.html")
+    profile_list = dummy_get_profiles()
+    return render_template(
+        "profile_management.html",
+        profile_list=profile_list["profiles"])
 
 
 # Route to trigger profile creation from web
@@ -179,14 +182,15 @@ def web_profile():
 def web_create_profile():
     data = request.form
     result, status = create_profile(data)
-    return redirect(url_for("management", reqHttpCode=status))
+    return redirect(url_for("web_profile", reqHttpCode=status))
 
 
 # Route to trigger profile deletion from web
-@app.route("/management/profile/delete/<int:profile_id>", methods=["POST"])
-def web_delete_profile(profile_id):
+@app.route("/management/profile/delete", methods=["POST"])
+def web_delete_profile():
+    profile_id = request.form.get("profile_id", "")
     result, status = delete_profile(profile_id)
-    return redirect(url_for("management", reqHttpCode=status))
+    return redirect(url_for("web_profile", reqHttpCode=status))
 
 
 # ========== Event APIs ==========
