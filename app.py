@@ -74,13 +74,8 @@ def homepage():
     hourly_forecast = [reading.to_dict() for reading in hourly_forecast]
 
     if profile_id:
-        # monthly_event_list = dummy_get_monthly_event_by_profile(profile_id)
-        # daily_event_list = dummy_get_daily_event_by_profile(profile_id)
-    
         event_by_profile = get_events_by_profile_id(profile_id)
-
         monthly_event_list = monthly_events_grouped(event_by_profile)
-
         daily_event_list = build_daily_event_list(event_by_profile)
     
     else:
@@ -124,11 +119,6 @@ def web_management():
     code = request.args.get("reqHttpCode", 100)
     selected_event_id = int(request.args.get("selected_event_id", 0))
 
-    # create appropriate function
-    # all_event = dummy_get_all_event_by_profile(profile_id)
-    # selected_event = dummy_get_event_by_id(selected_event_id)
-
-
     if profile_id:
 
         event_by_profile = get_events_by_profile_id(profile_id)
@@ -140,7 +130,6 @@ def web_management():
     else:
         all_event = []
         selected_event = None
-
 
     if code == 100:
         return render_template(
