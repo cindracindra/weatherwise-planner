@@ -123,14 +123,11 @@ def web_management():
         event_by_profile = get_events_by_profile_id(profile_id)
         all_event = group_all_events_by_full_date(event_by_profile)
 
+        selected_event = None
         if selected_event_id:
-            selected_event = get_event_by_id(selected_event_id)[0] 
-        else:
-            selected_event = None    
-        if selected_event:
-            selected_event = parse_event_for_datepicker(selected_event) 
-        else: 
-            selected_event = None
+            event = get_event_by_id(selected_event_id)
+            if event:
+                selected_event = parse_event_for_datepicker(event[0])
 
     else:
         all_event = []
