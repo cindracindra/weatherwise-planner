@@ -42,7 +42,7 @@ def create_profile(data):
     if hasattr(data, "to_dict"):
         data = data.to_dict()
 
-    required_fields = ["name"]
+    required_fields = ["profile_name"]
     missing = [
         field
         for field in required_fields
@@ -53,7 +53,7 @@ def create_profile(data):
 
     # Create profile
     with Session(engine) as session:
-        profile = Profile(name=data["name"])
+        profile = Profile(name=data["profile_name"])
         session.add(profile)
         session.commit()
         session.refresh(profile)
