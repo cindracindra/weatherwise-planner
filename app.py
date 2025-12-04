@@ -50,6 +50,7 @@ app.secret_key = 'event-calendar'
 
 # ========== Helper Functions ==========
 
+
 def safe_int(value, default=0):
     """Safely convert value to int, return default if conversion fails."""
     try:
@@ -58,6 +59,7 @@ def safe_int(value, default=0):
         return default
 
 # ========== Routes ==========
+
 
 # Route to homepage (index.html)
 @app.route("/")
