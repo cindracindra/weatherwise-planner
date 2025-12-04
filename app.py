@@ -33,14 +33,14 @@ from api.event_profile_api import (
 
 from services.calendar_service import get_full_calendar
 from services.datetime_service import get_today_detail
-from services.event_services import (
-    dummy_get_daily_event_by_profile,
-    dummy_get_monthly_event_by_profile,
-    dummy_get_all_event_by_profile,
-    dummy_get_event_by_id
-)
+# from services.event_services import (
+#     dummy_get_daily_event_by_profile,
+#     dummy_get_monthly_event_by_profile,
+#     dummy_get_all_event_by_profile,
+#     dummy_get_event_by_id
+# )
 from services.weather_service import get_hourly_forecast_today
-from services.profile_service import dummy_get_profiles
+# from services.profile_service import dummy_get_profiles
 
 from utils.datafeed import (
     monthly_events_grouped,
@@ -124,7 +124,7 @@ def web_management():
         event_by_profile = get_events_by_profile_id(profile_id)
         all_event = group_all_events_by_full_date(event_by_profile)
 
-        selected_event = get_event_by_id(selected_event_id)[0] if selected_event_id != 0 else None
+        selected_event = get_event_by_id(selected_event_id)[0] if selected_event_id else None
         selected_event = parse_event_for_datepicker(selected_event) if selected_event else None
 
     else:
