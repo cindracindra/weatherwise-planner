@@ -77,7 +77,6 @@ def homepage():
         event_by_profile = get_events_by_profile_id(profile_id)
         monthly_event_list = monthly_events_grouped(event_by_profile)
         daily_event_list = build_daily_event_list(event_by_profile)
-    
     else:
         monthly_event_list = []
         daily_event_list = []
@@ -124,8 +123,14 @@ def web_management():
         event_by_profile = get_events_by_profile_id(profile_id)
         all_event = group_all_events_by_full_date(event_by_profile)
 
-        selected_event = get_event_by_id(selected_event_id)[0] if selected_event_id else None
-        selected_event = parse_event_for_datepicker(selected_event) if selected_event else None
+        if selected_event_id:
+            selected_event = get_event_by_id(selected_event_id)[0] 
+        else:
+            selected_event = None    
+        if selected_event:
+            selected_event = parse_event_for_datepicker(selected_event) 
+        else: 
+            selected_event = None
 
     else:
         all_event = []

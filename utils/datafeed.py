@@ -4,9 +4,6 @@ from collections import defaultdict
 
 # ===================== homepage ===================== 
 
-
-
-
 def build_daily_event_list(event_by_profile):
     """
     Convert event_by_profile → daily_event_list for the current day.
@@ -24,7 +21,6 @@ def build_daily_event_list(event_by_profile):
     }
     ]
     """
-
     now = datetime.now(timezone.utc)
     current_year = now.year
     current_month = now.month
