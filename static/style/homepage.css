@@ -92,7 +92,6 @@ input[type="submit"] {
     display: flex;
     gap: 10px;
     justify-content: flex-end;
-    /* Aligns buttons to the right */
 }
 
 .calendar-section__button-form input[type="submit"] {
@@ -143,10 +142,9 @@ input[type="submit"] {
 }
 
 .calendar-cell--today {
-    background-color: rgb(246, 192, 197);
+    background-color: #f0f8ff;
 }
 
-/* Top row: day number + weather icon */
 .calendar-cell__top-row {
     display: flex;
     justify-content: space-between;
@@ -164,11 +162,18 @@ input[type="submit"] {
     object-fit: contain;
 }
 
-/* Events container at bottom */
 .calendar-cell__events {
     display: flex;
     flex-direction: column;
     gap: 3px;
+}
+
+.calendar-cell__event-count-badge {
+    background-color: inherit;
+    font-size: 10px;
+    font-weight: bold;
+    color: #000000;
+    text-align: center;
 }
 
 .calendar-cell__event {
@@ -202,7 +207,6 @@ input[type="submit"] {
     margin-bottom: 10px;
 }
 
-/* Hourly temperature rows */
 .calendar-section__day-container {
     position: relative;
     width: 100%;
@@ -230,7 +234,6 @@ input[type="submit"] {
     font-size: 10px;
 }
 
-/* Event block in right panel */
 .calendar-section__event-block {
     position: absolute;
     left: 100px;
@@ -252,7 +255,6 @@ input[type="submit"] {
    7. ERROR MESSAGE CONTAINER
    ======================= */
 
-/* 1. General Positioning */
 .flash-message-container {
     position: fixed;
     top: 20px;
@@ -263,12 +265,10 @@ input[type="submit"] {
     max-width: 400px;
 }
 
-/* 2. Hide the actual Checkbox */
 .flash-toggle {
     display: none;
 }
 
-/* 3. Notification Box Styling */
 .notification {
     padding: 15px;
     margin-bottom: 10px;
@@ -279,15 +279,12 @@ input[type="submit"] {
     justify-content: space-between;
     align-items: center;
     transition: opacity 0.3s ease-in-out;
-    /* Optional: for a smooth hide effect */
 }
 
-/* 4. Category Colors */
 .is-error {
     background-color: #f44336;
 }
 
-/* 5. Close Button Styling (The Label) */
 .delete-btn {
     font-size: 24px;
     font-weight: bold;
@@ -297,9 +294,7 @@ input[type="submit"] {
     opacity: 0.8;
 }
 
-/* 6. THE CORE CSS LOGIC: Hide the notification when the linked checkbox is UNCHECKED */
 .flash-toggle:not(:checked)+.notification {
-    /* When the checkbox is not checked, hide the sibling notification */
     opacity: 0;
     visibility: hidden;
     height: 0;

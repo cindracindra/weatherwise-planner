@@ -33,14 +33,8 @@ from api.event_profile_api import (
 
 from services.calendar_service import get_full_calendar
 from services.datetime_service import get_today_detail
-# from services.event_services import (
-#     dummy_get_daily_event_by_profile,
-#     dummy_get_monthly_event_by_profile,
-#     dummy_get_all_event_by_profile,
-#     dummy_get_event_by_id
-# )
+
 from services.weather_service import get_hourly_forecast_today
-# from services.profile_service import dummy_get_profiles
 
 from utils.datafeed import (
     monthly_events_grouped,
@@ -54,13 +48,21 @@ from api.composite_api import get_events_by_profile_id
 app = Flask(__name__)
 app.secret_key = 'event-calendar'
 
-# ========== Routes ==========
+# ========== Helper Functions ==========
 
+def safe_int(value, default=0):
+    """Safely convert value to int, return default if conversion fails."""
+    try:
+        return int(value) if value else default
+    except (ValueError, TypeError):
+        return default
+
+# ========== Routes ==========
 
 # Route to homepage (index.html)
 @app.route("/")
 def homepage():
-    isReqSucc = request.args.get("isReqSucc", True)
+    isReqSucc = request.args.get("isReqSucc", "True")
     if isReqSucc == "False":
         flash('Select a profile to manage events.', 'error')
 
@@ -115,52 +117,40 @@ def management_handle_form():
 @app.route("/management/event")
 def web_management():
     profile_id = request.args.get("profile_id", "")
-    code = request.args.get("reqHttpCode", 100)
-    selected_event_id = int(request.args.get("selected_event_id", 0))
+    code = safe_int(request.args.get("reqHttpCode"), 100)
+    selected_event_id = safe_int(request.args.get("selected_event_id"), 0)
+
+    all_event = []
+    selected_event = None
 
     if profile_id:
-
         event_by_profile = get_events_by_profile_id(profile_id)
         all_event = group_all_events_by_full_date(event_by_profile)
 
-        selected_event = None
         if selected_event_id:
             event = get_event_by_id(selected_event_id)
-            if event:
+            if event and len(event) > 0:
                 selected_event = parse_event_for_datepicker(event[0])
 
-    else:
-        all_event = []
-        selected_event = None
+        # Handle flash messages
+        if code in [200, 201]:
+            flash('Event successfully updated/created/deleted', 'success')
+        elif code != 100:
+            flash('Unable to update/create/delete event', 'error')
 
-    if code == 100:
         return render_template(
             "management.html",
             profile_id=profile_id,
             all_event=all_event,
             selected_event=selected_event,
             selected_event_id=selected_event_id
-            )
-
-    elif code == 200 or code == 201:
-        flash('Event successfully updated/created/deleted', 'success')
-        return render_template(
-            "management.html",
-            profile_id=profile_id,
-            all_event=all_event,
-            selected_event=selected_event)
-    else:
-        flash('Unable to update/create/delete event', 'error')
-        return render_template(
-            "management.html",
-            profile_id=profile_id,
-            all_event=all_event,
-            selected_event=selected_event)
+        )
 
 
-@app.route("/management/event/load/<int:event_id>", methods=["POST"])
+@app.route("/management/event/load", methods=["POST"])
 def web_load_event(event_id):
     profile_id = request.form.get("profile_id", "")
+    event_id = safe_int(request.form.get("event_id", ""))
     return redirect(url_for(
         "web_management",
         profile_id=profile_id,
@@ -180,9 +170,10 @@ def web_create_event():
 
 
 # Route to trigger event update from web
-@app.route("/management/event/update/<int:event_id>", methods=["POST"])
+@app.route("/management/event/update", methods=["POST"])
 def web_update_event(event_id):
     profile_id = request.form.get("profile_id", "")
+    event_id = safe_int(request.form.get("event_id", ""))
     data = request.form
     result, status = update_event(event_id, data)
     return redirect(url_for(
@@ -192,9 +183,10 @@ def web_update_event(event_id):
 
 
 # Route to trigger event deletion from web
-@app.route("/management/event/delete/<int:event_id>", methods=["POST"])
-def web_delete_event(event_id):
+@app.route("/management/event/delete", methods=["POST"])
+def web_delete_event():
     profile_id = request.form.get("profile_id", "")
+    event_id = safe_int(request.form.get("event_id", ""))
     result, status = delete_event(event_id)
     return redirect(url_for(
         "web_management",
@@ -222,23 +214,17 @@ def web_delete_event(event_id):
 
 @app.route("/management/profile")
 def web_profile():
-    code = request.args.get("reqHttpCode", 100)
+    code = safe_int(request.args.get("reqHttpCode"), 100)
     profile_list = get_profiles()
 
-    if code == 100:
-        return render_template(
-            "management_profile.html",
-            profile_list=profile_list["profiles"])
-    elif code == 200 or code == 201:
-        flash('Profile successfully created/ deleted', 'success')
-        return render_template(
-            "management_profile.html",
-            profile_list=profile_list["profiles"])
-    else:
+    if code in [200, 201]:
+        flash('Profile successfully created/deleted', 'success')
+    elif code != 100:
         flash('Unable to create/delete profile', 'error')
-        return render_template(
-            "management_profile.html",
-            profile_list=profile_list["profiles"])
+
+    return render_template(
+        "management_profile.html",
+        profile_list=profile_list["profiles"])
 
 
 # Route to trigger profile creation from web
