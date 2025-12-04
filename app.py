@@ -33,14 +33,23 @@ from api.event_profile_api import (
 
 from services.calendar_service import get_full_calendar
 from services.datetime_service import get_today_detail
-from services.event_services import (
-    dummy_get_daily_event_by_profile,
-    dummy_get_monthly_event_by_profile,
-    dummy_get_all_event_by_profile,
-    dummy_get_event_by_id
-)
+# from services.event_services import (
+#     dummy_get_daily_event_by_profile,
+#     dummy_get_monthly_event_by_profile,
+#     dummy_get_all_event_by_profile,
+#     dummy_get_event_by_id
+# )
 from services.weather_service import get_hourly_forecast_today
-from services.profile_service import dummy_get_profiles
+# from services.profile_service import dummy_get_profiles
+
+from utils.datafeed import (
+    monthly_events_grouped,
+    build_daily_event_list,
+    group_all_events_by_full_date,
+    parse_event_for_datepicker
+)
+
+from api.composite_api import get_events_by_profile_id
 
 app = Flask(__name__)
 app.secret_key = 'event-calendar'
@@ -56,7 +65,7 @@ def homepage():
         flash('Select a profile to manage events.', 'error')
 
     profile_id = request.args.get("profile_id", "")
-    profile_list = dummy_get_profiles()
+    profile_list = get_profiles()
 
     today = get_today_detail()
     calendar_matrix = get_full_calendar(today["year"], today["month"])
@@ -65,8 +74,9 @@ def homepage():
     hourly_forecast = [reading.to_dict() for reading in hourly_forecast]
 
     if profile_id:
-        monthly_event_list = dummy_get_monthly_event_by_profile(profile_id)
-        daily_event_list = dummy_get_daily_event_by_profile(profile_id)
+        event_by_profile = get_events_by_profile_id(profile_id)
+        monthly_event_list = monthly_events_grouped(event_by_profile)
+        daily_event_list = build_daily_event_list(event_by_profile)
     else:
         monthly_event_list = []
         daily_event_list = []
@@ -108,16 +118,29 @@ def web_management():
     code = request.args.get("reqHttpCode", 100)
     selected_event_id = int(request.args.get("selected_event_id", 0))
 
-    # create appropriate function
-    all_event = dummy_get_all_event_by_profile(profile_id)
-    selected_event = dummy_get_event_by_id(selected_event_id)
+    if profile_id:
+
+        event_by_profile = get_events_by_profile_id(profile_id)
+        all_event = group_all_events_by_full_date(event_by_profile)
+
+        selected_event = None
+        if selected_event_id:
+            event = get_event_by_id(selected_event_id)
+            if event:
+                selected_event = parse_event_for_datepicker(event[0])
+
+    else:
+        all_event = []
+        selected_event = None
 
     if code == 100:
         return render_template(
             "management.html",
             profile_id=profile_id,
             all_event=all_event,
-            selected_event=selected_event)
+            selected_event=selected_event,
+            selected_event_id=selected_event_id
+            )
 
     elif code == 200 or code == 201:
         flash('Event successfully updated/created/deleted', 'success')
@@ -200,7 +223,7 @@ def web_delete_event(event_id):
 @app.route("/management/profile")
 def web_profile():
     code = request.args.get("reqHttpCode", 100)
-    profile_list = dummy_get_profiles()
+    profile_list = get_profiles()
 
     if code == 100:
         return render_template(
