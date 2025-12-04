@@ -38,6 +38,13 @@
 
     <section class="event-mgmt">
       <!-- LEFT COLUMN: EVENT LIST -->
+      <div class="event-mgmt__create">
+        <form action="/management/event" method="get" class="event-create__form">
+          <input type="hidden" name="profile_id" value="{{ profile_id }}" />
+          <input type="submit" value="Create New Event" />
+        </form>
+      </div>
+      
       <div class="event-mgmt__list">
         {% for day in all_event %}
           <div class="event-list">
@@ -45,15 +52,18 @@
 
             {% for event in day.daily_events %}
               <div class="event-item">
-                <form action="/management/event/load/{{ event.id }}" method="post" class="event-item__form">
+                <form action="/management/event/load" method="post" class="event-item__form">
                   <input type="hidden" name="profile_id" value="{{ profile_id }}" />
+                  <input type="hidden" name="event_id" value="{{ event.id  }}" />
                   <button type="submit" class="event-item__button">
                     <span class="event-item__title">{{ event.name }}</span><br />
                     <span class="event-item__time">{{ event.start_time.strftime('%H:%M') }} - {{ event.end_time.strftime('%H:%M') }}</span>
                   </button>
                 </form>
 
-                <form action="/management/event/delete/{{ event.id }}" method="post" class="event-item__delete-form">
+                <form action="/management/event/delete" method="post" class="event-item__delete-form">
+                  <input type="hidden" name="profile_id" value="{{ profile_id }}" />
+                  <input type="hidden" name="event_id" value="{{ event.id  }}" />
                   <button type="submit" class="event-item__delete-btn" title="Delete event">X</button>
                 </form>
               </div>
@@ -64,16 +74,11 @@
 
       <!-- RIGHT COLUMN: SELECTED EVENT DETAILS -->
       <div class="event-mgmt__details">
-        <div class="event-mgmt__create">
-          <form action="/management/event" method="get" class="event-create__form">
-            <input type="hidden" name="profile_id" value="{{ profile_id }}" />
-            <input type="submit" value="Create New Event" />
-          </form>
-        </div>
         <div class="event-mgmt__load">
           {% if selected_event %}
-            <form action="/management/event/update/{{ selected_event_id }}" method="post" class="event-details">
+            <form action="/management/event/update" method="post" class="event-details">
               <input type="hidden" name="profile_id" value="{{ profile_id }}" />
+              <input type="hidden" name="event_id" value="{{ selected_event_id }}" />
 
               <div class="event-details__row">
                 <img src="/static/images/icon-title.png" class="event-details__icon" />

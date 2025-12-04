@@ -31,7 +31,7 @@
     </header>
 
     <!-- ERROR MESSAGE SECTION -->
-    <div class="flash-message-container">ç
+    <div class="flash-message-container">
       {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
           {% for category, message in messages %}
@@ -105,9 +105,17 @@
                       <!-- Events  -->
                       {% for daily in monthly_event_list %}
                         {% if day.day == daily.day %}
-                          {% for event in daily.daily_events %}
+                          {% set daily_events = daily.daily_events %}
+                          {% set event_count = daily_events | length %}
+
+                          {% for event in daily_events[:2] %}
                             <div class="calendar-cell__event">{{ event.name }}</div>
                           {% endfor %}
+
+                          {% if event_count > 2 %}
+                            <div class="calendar-cell__event-count-badge">{{ event_count - 2 }}+ more</div>
+                          {% endif %}
+                          
                         {% endif %}
                       {% endfor %}
                     </div>

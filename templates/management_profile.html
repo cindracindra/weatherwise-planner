@@ -50,7 +50,7 @@
       <div class="profile-mgmt__delete">
         Delete Profile
         <form action="/management/profile/delete" method="post" class="profile-item__delete-form">
-          <select name="profile_id" class="profile-item__select">
+          <select name="profile_id" class="profile-item__select" required>
             <option value="">Select profile </option>
             {% for profile in profile_list %}
               <option value="{{ profile.id }}" {% if profile.id|string == profile_id|string %}selected{% endif %}>{{ profile.name }}</option>
