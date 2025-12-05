@@ -1,3 +1,5 @@
+"""Unit tests for services/weather_service.py - weather data transformation and business logic."""
+
 from services.weather_service import (
     get_current_weather,
     get_hourly_forecast_today,
@@ -7,12 +9,15 @@ from models.api_models.weather import WeatherCode, WeatherReading
 
 
 class TestGetCurrentWeather:
+    """Test get_current_weather() - transforms raw API data to WeatherReading."""
+
     def test_get_current_weather_success(
             self,
             mocker,
             sample_current_weather_response,
             sample_weather_code_data
     ):
+        """Test fetching and transforming current weather with rounded temperature."""
         mocker.patch(
             'services.weather_service.weather_api.fetch_current_weather',
             return_value=sample_current_weather_response
@@ -33,6 +38,7 @@ class TestGetCurrentWeather:
         assert result.weather_code.label == "Rain"
 
     def test_get_current_weather_none_values(self, mocker):
+        """Test handling None values from API response."""
         mocker.patch(
             'services.weather_service.weather_api.fetch_current_weather',
             return_value={
@@ -51,6 +57,7 @@ class TestGetCurrentWeather:
 
 
 class TestGetHourlyForecastToday:
+    """Test get_hourly_forecast_today() - transforms hourly forecast to list of WeatherReadings."""
 
     def test_get_hourly_forecast_today(
             self,
@@ -58,6 +65,7 @@ class TestGetHourlyForecastToday:
             sample_hourly_forecast_response,
             sample_weather_code_data
     ):
+        """Test fetching and transforming hourly forecast data."""
         mocker.patch(
             'services.weather_service.weather_api.fetch_hourly_forecast_today',
             return_value=sample_hourly_forecast_response
@@ -78,13 +86,15 @@ class TestGetHourlyForecastToday:
 
 
 class TestGetDailyForecast:
+    """Test get_daily_forecast() - transforms daily forecast to date-to-WeatherCode dict."""
+
     def test_get_daily_forecast_success(
         self,
         mocker,
         sample_daily_weather_response,
         sample_weather_code_data
     ):
-        """Test getting daily forecast successfully."""
+        """Test fetching and transforming daily forecast with date keys."""
         mocker.patch(
             'services.weather_service.weather_api.fetch_daily_forecast',
             return_value=sample_daily_weather_response
