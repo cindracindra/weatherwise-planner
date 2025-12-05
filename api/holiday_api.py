@@ -12,7 +12,8 @@ class HolidayAPIError(Exception):
 
 def _make_request(year: int, country_code: str) -> Dict[str, Any]:
     """
-    Internal private helper function to send a GET request to the Nager.Date API.
+    Internal private helper function to send a GET request
+    to the Nager.Date API.
 
     Args:
         year: The year for which public holidays should be fetched.
@@ -53,7 +54,8 @@ def _make_request(year: int, country_code: str) -> Dict[str, Any]:
     try:
         # Make GET request with timeout from config
         response: Response = requests.get(
-            f"{Config.NAGER_DATE_BASE_URL}/{year}/{country_code}", timeout=Config.API_REQUEST_TIMEOUT
+            f"{Config.NAGER_DATE_BASE_URL}/{year}/{country_code}",
+            timeout=Config.API_REQUEST_TIMEOUT
         )
 
         # Raise exception for HTTP errors status codes
@@ -70,22 +72,23 @@ def fetch_public_holidays(year: int | None = None,
                           ) -> Dict[str, Any]:
     """
     Fetch public holidays for a specific year and country.
-    
+
     This is the main public function for fetching holiday data from the
     Nager.Date API. It returns raw JSON data that should be processed by
     the service layer.
-    
+
     Args:
         year: Year to fetch holidays for. Defaults to current year if None.
-        country_code: ISO two-letter country code (default from Config.DEFAULT_COUNTRY_CODE).
-        
+        country_code: ISO two-letter country code
+        (default from Config.DEFAULT_COUNTRY_CODE).
+
     Returns:
         List of dictionaries containing raw holiday data from the API.
         See _make_request() for the structure of each dictionary.
-        
+
     Raises:
         HolidayAPIError: If the API request fails
-        
+
     Note:
         This function returns raw API data. For structured Holiday objects,
         use the holiday_service.get_public_holidays() function instead.

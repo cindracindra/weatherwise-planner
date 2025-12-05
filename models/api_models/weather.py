@@ -27,7 +27,7 @@ class WeatherCode:
     label: Optional[str]
 
     def to_dict(self) -> dict:
-        
+
         return {
             "code": self.code,
             "icon": self.icon,

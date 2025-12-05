@@ -2,7 +2,8 @@
 Client for Open-Meteo weather API.
 
 This module provides functions to fetch weather data from the Open-Meteo API
-(https://open-meteo.com). It handles HTTP requests and returns raw JSON responses
+(https://open-meteo.com). It handles HTTP requests
+and returns raw JSON responses
 for current weather, hourly forecasts, and daily forecasts.
 """
 
@@ -21,14 +22,16 @@ class WeatherAPIError(Exception):
 
 def _make_request(params: dict) -> Dict[str, Any]:
     """
-    Internal private helper function to send a GET request to the Open-Meteo API.
+    Internal private helper function to send a GET request
+    to the Open-Meteo API.
 
     Args:
         params: Dictionary of query parameters to send with the request.
                Common parameters include:
                - latitude (float): Geographic coordinate
                - longitude (float): Geographic coordinate
-               - current (str): Comma-separated list of current weather variables
+               - current (str): Comma-separated list of
+                                current weather variables
                - hourly (str): Comma-separated list of hourly variables
                - daily (str): Comma-separated list of daily variables
                - timezone (str): Timezone identifier (e.g., "Europe/London")
@@ -42,7 +45,8 @@ def _make_request(params: dict) -> Dict[str, Any]:
         - daily: Dict of daily forecast data with time-series arrays
 
     Raises:
-        WeatherAPIError: If the HTTP request fails, times out, or returns an error status.
+        WeatherAPIError: If the HTTP request fails, times out,
+        or returns an error status.
 
     Example:
         >>> params = {
@@ -79,7 +83,8 @@ def fetch_current_weather() -> Dict[str, Any]:
     for the location specified in Config (defaults to London).
 
     Returns:
-        Dictionary containing current weather data with the following structure:
+        Dictionary containing current weather data
+        with the following structure:
         {
             'current': {
                 'temperature_2m': float,  # Temperature in Celsius
@@ -98,7 +103,8 @@ def fetch_current_weather() -> Dict[str, Any]:
         61
 
     Note:
-        This function returns raw API data. For processed data with icons and labels,
+        This function returns raw API data.
+        For processed data with icons and labels,
         use weather_service.get_current_weather() instead.
     """
     # Get location coordinates from config
@@ -127,7 +133,8 @@ def fetch_hourly_forecast_today() -> Dict[str, Any]:
     from the Open-Meteo API for the location specified in Config.
 
     Returns:
-        Dictionary containing hourly forecast data with the following structure:
+        Dictionary containing hourly forecast data
+        with the following structure:
         {
             'hourly': {
                 'time': List[str],           # ISO timestamp for each hour
@@ -199,7 +206,8 @@ def fetch_daily_forecast() -> Dict[str, Any]:
         >>> data['daily']['weather_code'][0]
         61
     Note:
-        This function fetches 16 days of weather codes to populate the calendar.
+        This function fetches 16 days of weather codes
+        to populate the calendar.
         For processed data, use weather_service.get_daily_forecast().
     """
     # Get location coordinates from config
@@ -212,7 +220,7 @@ def fetch_daily_forecast() -> Dict[str, Any]:
         "longitude": longitude,
         "daily": "weather_code",  # Only weather code, no temperature
         "timezone": Config.TIMEZONE,
-        "forecast_days": 16 
+        "forecast_days": 16
     }
 
     return _make_request(params)

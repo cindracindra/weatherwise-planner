@@ -125,7 +125,7 @@ class CalendarMonth:
         Returns:
             Dictionary with 'year', 'month', 'weeks', and 'current_day' keys.
             The 'weeks' value is a list of lists (week -> days).
-            
+
         Note:
             This structure is designed for easy consumption by frontend
             JavaScript code that renders the calendar grid.
