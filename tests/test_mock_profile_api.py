@@ -1,7 +1,7 @@
 import pytest
 from unittest.mock import patch, MagicMock
-from api.profile_api import get_profiles, create_profile, delete_profile
-from models.profile import Profile
+from database.profile import get_profiles, create_profile, delete_profile
+from models.db_models.profile import Profile
 
 
 # Test get_profiles
@@ -11,7 +11,7 @@ def test_get_profiles():
     mock_profile.id = 1
     mock_profile.name = "Test Profile"
 
-    with patch("api.profile_api.Session") as mock_session_class:
+    with patch("database.profile.Session") as mock_session_class:
         mock_session = mock_session_class.return_value.__enter__.return_value
         mock_session.execute.return_value.scalars.return_value.unique.return_value.all.return_value = [mock_profile]
 
@@ -24,18 +24,18 @@ def test_get_profiles():
 # Test create_profile
 
 def test_create_profile_success():
-    data = {"name": "New Profile"}
+    data = {"profile_name": "New Profile"}
 
     mock_profile_instance = MagicMock(spec=Profile)
     mock_profile_instance.id = 1
-    mock_profile_instance.name = data["name"]
+    mock_profile_instance.name = "New Profile"
 
-    with patch("api.profile_api.Session") as mock_session_class:
+    with patch("database.profile.Session") as mock_session_class:
         mock_session = mock_session_class.return_value.__enter__.return_value
         mock_session.add.return_value = None
         mock_session.commit.return_value = None
         mock_session.refresh.side_effect = lambda e: setattr(e, "id", 1)
-        with patch("api.profile_api.Profile", return_value=mock_profile_instance):
+        with patch("database.profile.Profile", return_value=mock_profile_instance):
             result, status = create_profile(data)
             assert status == 201
             assert result["id"] == 1
@@ -53,7 +53,7 @@ def test_create_profile_missing_name():
 def test_delete_profile_success():
     mock_profile_instance = MagicMock(spec=Profile)
 
-    with patch("api.profile_api.Session") as mock_session_class:
+    with patch("database.profile.Session") as mock_session_class:
         mock_session = mock_session_class.return_value.__enter__.return_value
         mock_session.get.return_value = mock_profile_instance
         mock_session.delete.return_value = None
@@ -64,7 +64,7 @@ def test_delete_profile_success():
         assert "deleted" in result["message"]
 
 def test_delete_profile_not_found():
-    with patch("api.profile_api.Session") as mock_session_class:
+    with patch("database.profile.Session") as mock_session_class:
         mock_session = mock_session_class.return_value.__enter__.return_value
         mock_session.get.return_value = None
 

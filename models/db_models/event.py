@@ -1,7 +1,7 @@
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 from datetime import datetime
 
-from models.base import Base
+from models.db_models.base import Base
 
 
 class Event(Base):
@@ -13,4 +13,4 @@ class Event(Base):
     end_time: Mapped[datetime]
     location: Mapped[str]
 
-    event_profile = relationship("Event_Profile", back_populates="event")
+    eventxprofile = relationship("EventXProfile", back_populates="event")
