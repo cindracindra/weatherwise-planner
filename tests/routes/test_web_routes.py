@@ -85,6 +85,19 @@ class TestHomepage:
                         response = client.get('/?isReqSucc=False')
                         assert response.status_code == 200
 
+    def test_homepage_invalid_profile_id(self, client, mock_profiles_response):
+        """Test homepage handles invalid profile_id gracefully."""
+        with patch('routes.web_routes.get_profiles', return_value=mock_profiles_response):
+            with patch('routes.web_routes.get_today_detail', return_value={"year": 2025, "month": 12, "day": 6}):
+                with patch('routes.web_routes.get_full_calendar', return_value=[]):
+                    with patch('routes.web_routes.get_hourly_forecast_today', return_value=[]):
+                        with patch('routes.web_routes.get_events_by_profileid_by_month', return_value=mock_profiles_response):
+                            # Use invalid profile_id
+                            response = client.get('/?profile_id=abc')
+                            assert response.status_code == 200
+                            # Should not fail, monthly_event_list will be empty
+                            assert b'Test Profile 1' in response.data
+
 
 # ========== Management Routes Tests ==========
 
@@ -200,6 +213,27 @@ class TestEventCRUDWebRoutes:
             })
             assert response.status_code == 302
             assert 'reqHttpCode=200' in response.location
+    
+    def test_web_delete_event_invalid_id(self, client):
+        """Test deleting event with non-integer event_id."""
+        with patch('routes.web_routes.delete_event_and_profile_association', return_value=(None, 400)):
+            response = client.post('/management/event/delete', data={
+                'profile_id': '1',
+                'event_id': 'abc'
+            })
+            assert response.status_code == 302
+            assert 'reqHttpCode=400' in response.location
+
+    def test_web_delete_event_not_found(self, client):
+        """Test deleting event that does not exist."""
+        mock_response = build_response(StatusCode.NOT_FOUND, {"error": "Event not found"})
+        with patch('routes.web_routes.delete_event_and_profile_association', return_value=(mock_response, 404)):
+            response = client.post('/management/event/delete', data={
+                'profile_id': '1',
+                'event_id': '999'
+            })
+            assert response.status_code == 302
+            assert 'reqHttpCode=404' in response.location
 
 
 # ========== Profile Management Web Routes Tests ==========
@@ -240,6 +274,15 @@ class TestProfileManagementWebRoutes:
             assert response.status_code == 302
             assert 'reqHttpCode=201' in response.location
 
+    def test_web_create_profile_invalid_data(self, client):
+        """Test creating profile with missing/invalid data."""
+        with patch('routes.web_routes.create_profile', return_value=(None, 400)):
+            response = client.post('/management/profile/create', data={
+                'profile_name': ''
+            })
+            assert response.status_code == 302
+            assert 'reqHttpCode=400' in response.location
+
     def test_web_delete_profile(self, client):
         """Test deleting profile from web form."""
         mock_response = build_response(StatusCode.OK, {
@@ -252,3 +295,22 @@ class TestProfileManagementWebRoutes:
             })
             assert response.status_code == 302
             assert 'reqHttpCode=200' in response.location
+
+    def test_web_delete_profile_invalid_id(self, client):
+        """Test deleting profile with invalid ID."""
+        with patch('routes.web_routes.delete_profile', return_value=(None, 400)):
+            response = client.post('/management/profile/delete', data={
+                'profile_id': 'abc'
+            })
+            assert response.status_code == 302
+            assert 'reqHttpCode=400' in response.location
+
+
+    def test_web_delete_profile_not_found(self, client):
+        """Test deleting profile that does not exist."""
+        with patch('routes.web_routes.delete_profile', return_value=(None, 404)):
+            response = client.post('/management/profile/delete', data={
+                'profile_id': '999'
+            })
+            assert response.status_code == 302
+            assert 'reqHttpCode=404' in response.location

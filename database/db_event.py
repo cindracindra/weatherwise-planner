@@ -54,7 +54,7 @@ def get_events() -> Tuple[Response, int]:
 def get_event_by_id(eventid: Any) -> Tuple[Response, int]:
     """Get a single event by ID."""
     validated_id = validate_id(eventid)
-    if not isinstance(validated_id, int):
+    if validated_id == StatusCode.BAD_REQUEST.value:
         return build_response(
             StatusCode.BAD_REQUEST, {"error": "'eventid' must be an integer."}
         )
@@ -141,7 +141,7 @@ def create_event(data: Any) -> Tuple[Response, int]:
 def update_event(eventid: Any, data: Any) -> Tuple[Response, int]:
     """Update an existing event."""
     validated_id = validate_id(eventid)
-    if not isinstance(validated_id, int):
+    if validated_id == StatusCode.BAD_REQUEST.value:
         return build_response(
             StatusCode.BAD_REQUEST, {"error": "'eventid' must be an integer."}
         )

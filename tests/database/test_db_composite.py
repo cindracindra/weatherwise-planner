@@ -7,7 +7,8 @@ from database.db_composite import (
     get_events_by_profileid,
     get_events_by_profileid_by_month,
     create_event_and_profile_association,
-    delete_event_and_profile_association
+    delete_event_and_profile_association,
+    _get_events_by_profile_query
 )
 from models.db_models.event import Event
 from models.db_models.eventxprofile import EventXProfile
@@ -77,6 +78,38 @@ def test_get_events_by_profileid_empty(app):
             assert result["data"]["events"] == []
 
 
+def test_get_events_by_profile_id_query_called_correctly(app):
+    """Test _get_events_by_profile_query is called with correct profile_id."""
+    with app.app_context():
+        with patch("database.db_composite.Session") as mock_session_class:
+            mock_session = mock_session_class.return_value.__enter__.return_value
+
+            with patch("database.db_composite._get_events_by_profile_query") as mock_query:
+                mock_query.return_value = "FAKE_STMT"
+                mock_session.execute.return_value.scalars.return_value.unique.return_value.all.return_value = []
+
+                get_events_by_profileid(123)
+
+                mock_query.assert_called_once_with(123)
+                mock_session.execute.assert_called_once_with("FAKE_STMT")
+
+
+def test_get_events_by_profile_id_query_called_correctly(app):
+    """Test _get_events_by_profile_query is called with correct profile_id."""
+    with app.app_context():
+        with patch("database.db_composite.Session") as mock_session_class:
+            mock_session = mock_session_class.return_value.__enter__.return_value
+
+            with patch("database.db_composite._get_events_by_profile_query") as mock_query:
+                mock_query.return_value = "FAKE_STMT"
+                mock_session.execute.return_value.scalars.return_value.unique.return_value.all.return_value = []
+
+                get_events_by_profileid(123)
+
+                mock_query.assert_called_once_with(123)
+                mock_session.execute.assert_called_once_with("FAKE_STMT")
+
+
 # ========== Tests for get_events_by_profileid_by_month ==========
 
 def test_get_events_by_profileid_by_month_success(app, mock_event):
@@ -106,6 +139,20 @@ def test_get_events_by_profileid_by_month_empty(app):
             
             assert status == 200
             assert result["data"]["events"] == []
+            
+
+def test_get_events_by_profile_id_by_month_query_filtering(app):
+    """Test _get_events_by_profile_query is called with correct filters."""
+    with app.app_context():
+        with patch("database.db_composite.Session") as mock_session_class:
+            mock_session = mock_session_class.return_value.__enter__.return_value
+
+            with patch("database.db_composite._get_events_by_profile_query") as mock_query:
+                mock_query.return_value = "FAKE_STMT"
+
+                get_events_by_profileid_by_month(10, 2025, 8)
+
+                mock_query.assert_called_once_with(10, year=2025, month=8)
 
 
 # ========== Tests for create_event_and_profile_association ==========
@@ -160,6 +207,30 @@ def test_create_event_and_profile_association_database_error(app):
             assert "error" in result["data"]
 
 
+def test_create_event_and_profile_association_transaction_flow(app, mock_event, mock_eventxprofile):
+    """Test create_event_and_profile_association transaction flow."""
+    with app.app_context():
+        with patch("database.db_composite.Session") as mock_session_class:
+            mock_session = mock_session_class.return_value.__enter__.return_value
+
+            with patch("database.db_composite.Event", return_value=mock_event), \
+                 patch("database.db_composite.EventXProfile", return_value=mock_eventxprofile):
+
+                create_event_and_profile_association(
+                    "Test Event",
+                    datetime(2025, 1, 1, 10),
+                    datetime(2025, 1, 1, 11),
+                    "Test Location",
+                    1
+                )
+
+                # verify order
+                mock_session.add.assert_any_call(mock_event)
+                mock_session.flush.assert_called_once()
+                mock_session.add.assert_any_call(mock_eventxprofile)
+                mock_session.commit.assert_called_once()
+
+
 # ========== Tests for delete_event_and_profile_association ==========
 
 def test_delete_event_and_profile_association_success(app, mock_event, mock_eventxprofile):
@@ -207,3 +278,27 @@ def test_delete_event_and_profile_association_database_error(app):
             assert status == 500
             assert result["statusCode"] == 500
             assert "error" in result["data"]
+
+
+def test_delete_event_and_profile_association_delete_order(app, mock_event, mock_eventxprofile):
+    with app.app_context():
+        with patch("database.db_composite.Session") as mock_session_class:
+            mock_session = mock_session_class.return_value.__enter__.return_value
+            mock_session.get.return_value = mock_event
+            mock_session.execute.return_value.scalars.return_value.all.return_value = [mock_eventxprofile]
+
+            delete_event_and_profile_association(1)
+
+            mock_session.delete.assert_any_call(mock_eventxprofile)
+            mock_session.delete.assert_any_call(mock_event)
+            
+
+def test_delete_event_and_profile_association_commit_called(app, mock_event, mock_eventxprofile):
+    with app.app_context():
+        with patch("database.db_composite.Session") as mock_session_class:
+            mock_session = mock_session_class.return_value.__enter__.return_value
+            mock_session.get.return_value = mock_event
+            mock_session.execute.return_value.scalars.return_value.all.return_value = [mock_eventxprofile]
+
+            delete_event_and_profile_association(1)
+            mock_session.commit.assert_called_once()
