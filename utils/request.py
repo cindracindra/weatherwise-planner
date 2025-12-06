@@ -40,10 +40,6 @@ def parse_datetime(value) -> datetime | StatusCode:
         return StatusCode.BAD_REQUEST.value
 
 
-def parse_datetime(value: datetime) -> datetime:
-    return value
-
-
 def validate_datetime_range(
     start_time: datetime, end_time: datetime
 ) -> None | StatusCode:
