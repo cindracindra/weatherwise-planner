@@ -3,7 +3,7 @@
    ======================= */
 body {
     font-family: Verdana, 'Gill Sans', sans-serif;
-    background-color: #ffffff;
+    background-color: #f1e9e1;
     color: #000000;
     width: 90%;
     margin: auto;
@@ -50,7 +50,7 @@ input[type="submit"] {
     padding: 5px 10px;
     border-radius: 4px;
     border: none;
-    background-color: #5d5757;
+    background-color: #535353;
     color: white;
     white-space: nowrap;
 }
@@ -70,7 +70,7 @@ input[type="submit"] {
 
 /* LEFT CALENDAR */
 .calendar-section__left {
-    background-color: rgb(255, 246, 237);
+    background-color: rgb(255, 255, 255);
     border-radius: 15px;
     padding: 20px;
 }
@@ -95,10 +95,10 @@ input[type="submit"] {
 }
 
 .calendar-section__button-form input[type="submit"] {
-    background-color: #5d5757;
+    background-color: #535353;
     border-radius: 5px;
     border: none;
-    color: white;
+    color: rgb(255, 255, 255);
     padding: 5px 40px;
 }
 
@@ -109,12 +109,11 @@ input[type="submit"] {
     width: 100%;
     border-collapse: collapse;
     table-layout: fixed;
-    border: 2px solid #262626;
+    color:rgb(71, 71, 71)
 }
 
 .calendar th {
-    background-color: #e8e7e7;
-    border: 1px solid #262626;
+    background-color: inherit;
     padding: 10px;
     font-size: 14px;
     font-weight: normal;
@@ -122,8 +121,8 @@ input[type="submit"] {
 }
 
 .calendar td {
-    background-color: #E3ECE2;
-    border: 1px solid #262626;
+    background-color: #b7d5ee;
+    border: 5px solid rgb(255, 255, 255);
     vertical-align: top;
     height: 100px;
     font-size: 14px;
@@ -142,7 +141,9 @@ input[type="submit"] {
 }
 
 .calendar-cell--today {
-    background-color: #f0f8ff;
+    border-radius: 5px;
+    border: 2px solid #c0ae52;
+    background-color: rgba(255, 235, 134, 0.774);
 }
 
 .calendar-cell__top-row {
@@ -171,23 +172,23 @@ input[type="submit"] {
 .calendar-cell__event-count-badge {
     background-color: inherit;
     font-size: 10px;
-    font-weight: bold;
-    color: #000000;
+    color: #5e5d5d;
     text-align: center;
 }
 
 .calendar-cell__event {
     font-size: 10px;
-    background-color: rgba(127, 206, 255, 0.6);
+    background-color: #31924e;
     border-radius: 3px;
     padding: 1px 3px;
     overflow: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;
+    color: white;
 }
 
 .calendar-cell__event--holiday {
-    background-color: rgba(255, 200, 200, 0.6);
+    background-color: #e64b4b;
 }
 
 /* =======================
@@ -195,7 +196,7 @@ input[type="submit"] {
    ======================= */
 
 .calendar-section__right {
-    background-color: rgb(255, 246, 237);
+    background-color: rgb(255, 255, 255);
     border-radius: 15px;
     padding: 20px;
     padding-top: 30px;
@@ -212,12 +213,13 @@ input[type="submit"] {
     width: 100%;
     height: 600px;
     overflow-y: auto;
+    color:rgb(71, 71, 71)
 }
 
 .calendar-section__hour-row {
     display: flex;
     align-items: center;
-    border-bottom: 1px solid #6e6e6e81;
+    border-bottom: 1px solid #7e7e7e;
     height: 40px;
 }
 
@@ -240,7 +242,7 @@ input[type="submit"] {
     top: calc(var(--start) * 41px + 2px);
     height: calc(var(--duration) * 41px - 5px);
     width: calc(100% - 130px);
-    background: rgba(127, 206, 255, 0.6);
+    background: #3cb15f83;
     border-radius: 5px;
     font-size: 10px;
     padding-left: 5px;
