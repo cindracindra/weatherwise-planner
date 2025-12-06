@@ -77,7 +77,6 @@ def build_daily_event_list(event_by_month):
 
         # Filter today event
         if start_dt.day == current_day:
-            
             # Compute integer+fraction hours
             start_int = start_dt.hour + start_dt.minute / 60
             end_int = end_dt.hour + end_dt.minute / 60
