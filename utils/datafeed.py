@@ -20,10 +20,10 @@ def _parse_datetime(dt):
     elif isinstance(dt, str):
         # First try ISO format with timezone (most common from APIs/databases)
         try:
-            return datetime.fromisoformat(dt.replace('Z', '+00:00'))
+            return datetime.fromisoformat(dt.replace("Z", "+00:00"))
         except (ValueError, AttributeError):
             pass
-        
+
         # Try multiple formats commonly returned by Flask/SQLAlchemy
         formats = [
             "%a, %d %b %Y %H:%M:%S %Z",  # 'Mon, 01 Dec 2025 09:00:00 GMT'
@@ -169,7 +169,7 @@ def group_all_events_by_full_date(event_by_profile):
         # Parse datetime strings to datetime objects if needed
         start_dt = _parse_datetime(e["start_time"])
         end_dt = _parse_datetime(e["end_time"])
-        
+
         # Convert string datetime fields to datetime objects for template use
         event_copy = e.copy()
         event_copy["start_time"] = start_dt
