@@ -39,6 +39,43 @@ def test_get_events(app):
             assert result["data"]["events"][0]["name"] == "Test Event"
 
 
+def test_get_event_by_id_success(app):
+    with app.app_context():
+        mock_event_instance = MagicMock(spec=Event)
+        mock_event_instance.id = 1
+        mock_event_instance.name = "Event 1"
+        mock_event_instance.start_time = datetime(2025, 12, 1, 10, 0)
+        mock_event_instance.end_time = datetime(2025, 12, 1, 12, 0)
+        mock_event_instance.location = "Location 1"
+
+        with patch("database.db_event.Session") as mock_session_class:
+            mock_session = mock_session_class.return_value.__enter__.return_value
+            mock_session.get.return_value = mock_event_instance
+
+            response, status = get_event_by_id(1)
+            result = response.get_json()
+            assert status == 200
+            assert result["data"]["id"] == 1
+            assert result["data"]["name"] == "Event 1"
+
+def test_get_event_by_id_not_found(app):
+    with app.app_context():
+        with patch("database.db_event.Session") as mock_session_class:
+            mock_session = mock_session_class.return_value.__enter__.return_value
+            mock_session.get.return_value = None
+
+            response, status = get_event_by_id(999)
+            result = response.get_json()
+            assert status == 404
+            assert "not found" in result["data"]["error"]
+
+def test_get_event_by_id_invalid(app):
+    with app.app_context():
+        response, status = get_event_by_id("abc")
+        result = response.get_json()
+        assert status == 400
+        assert "must be an integer" in result["data"]["error"]
+
 # Test create_event
 
 def test_create_event_success(app):
@@ -153,3 +190,83 @@ def test_delete_event_invalid_id(app):
         assert result["statusCode"] == 400
         assert result["statusMessage"] == "BAD_REQUEST"
         assert "must be an integer" in result["data"]["error"]
+
+
+# Test update_event
+
+def test_update_event_success(app):
+    with app.app_context():
+        mock_event_instance = MagicMock(spec=Event)
+        mock_event_instance.id = 1
+        mock_event_instance.name = "Old Name"
+        mock_event_instance.start_time = datetime(2025, 12, 1, 10, 0)
+        mock_event_instance.end_time = datetime(2025, 12, 1, 12, 0)
+        mock_event_instance.location = "Old Location"
+
+        update_data = {"name": "New Name", "location": "New Location"}
+
+        with patch("database.db_event.Session") as mock_session_class:
+            mock_session = mock_session_class.return_value.__enter__.return_value
+            mock_session.get.return_value = mock_event_instance
+            mock_session.commit.return_value = None
+            mock_session.refresh.return_value = None
+
+            response, status = update_event(1, update_data)
+            result = response.get_json()
+            assert status == 200
+            assert result["data"]["name"] == "New Name"
+            assert result["data"]["location"] == "New Location"
+
+def test_update_event_invalid_id(app):
+    with app.app_context():
+        response, status = update_event("abc", {"name": "Test"})
+        result = response.get_json()
+        assert status == 400
+        assert "must be an integer" in result["data"]["error"]
+
+def test_update_event_not_found(app):
+    with app.app_context():
+        with patch("database.db_event.Session") as mock_session_class:
+            mock_session = mock_session_class.return_value.__enter__.return_value
+            mock_session.get.return_value = None
+
+            response, status = update_event(999, {"name": "Test"})
+            result = response.get_json()
+            assert status == 404
+            assert "not found" in result["data"]["error"]
+
+def test_update_event_invalid_datetime(app):
+    with app.app_context():
+        mock_event_instance = MagicMock(spec=Event)
+        mock_event_instance.id = 1
+        mock_event_instance.start_time = datetime(2025, 12, 1, 10, 0)
+        mock_event_instance.end_time = datetime(2025, 12, 1, 12, 0)
+
+        update_data = {"start_time": "invalid-date"}
+
+        with patch("database.db_event.Session") as mock_session_class:
+            mock_session = mock_session_class.return_value.__enter__.return_value
+            mock_session.get.return_value = mock_event_instance
+
+            response, status = update_event(1, update_data)
+            result = response.get_json()
+            assert status == 400
+            assert "Invalid datetime format" in result["data"]["error"]
+
+def test_update_event_end_before_start(app):
+    with app.app_context():
+        mock_event_instance = MagicMock(spec=Event)
+        mock_event_instance.id = 1
+        mock_event_instance.start_time = datetime(2025, 12, 1, 10, 0)
+        mock_event_instance.end_time = datetime(2025, 12, 1, 12, 0)
+
+        update_data = {"start_time": "2025-12-01T14:00:00"}
+
+        with patch("database.db_event.Session") as mock_session_class:
+            mock_session = mock_session_class.return_value.__enter__.return_value
+            mock_session.get.return_value = mock_event_instance
+
+            response, status = update_event(1, update_data)
+            result = response.get_json()
+            assert status == 400
+            assert "End time must be after start time" in result["data"]["error"]

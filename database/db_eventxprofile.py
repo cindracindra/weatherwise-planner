@@ -58,11 +58,11 @@ def get_eventxprofiles() -> Tuple[Response, int]:
             StatusCode.INTERNAL_SERVER_ERROR, {"error": f"{str(e)}"}
         )
 
-
+    
 def get_eventxprofile_by_id(eventxprofileid: Any) -> Tuple[Response, int]:
-    """Get a single eventxprofile association by ID."""
+    """Get a single event-profile association by ID."""
     validated_id = validate_id(eventxprofileid)
-    if not isinstance(validated_id, int):
+    if validated_id == StatusCode.BAD_REQUEST.value:
         return build_response(
             StatusCode.BAD_REQUEST,
             {"error": "Field 'eventxprofileid' must be an integer."},

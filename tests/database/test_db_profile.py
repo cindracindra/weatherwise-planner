@@ -1,6 +1,6 @@
 import pytest
 from unittest.mock import patch, MagicMock
-from database.db_profile import get_profiles, create_profile, delete_profile
+from database.db_profile import get_profiles, create_profile, delete_profile, get_profile_by_id
 from models.db_models.profile import Profile
 from app import create_app
 
@@ -32,6 +32,42 @@ def test_get_profiles(app):
             assert len(result["data"]["profiles"]) == 1
             assert result["data"]["profiles"][0]["name"] == "Test Profile"
 
+# Test get_profile_by_id
+
+def test_get_profile_by_id_success(app):
+    with app.app_context():
+        mock_profile = MagicMock(spec=Profile)
+        mock_profile.id = 1
+        mock_profile.name = "Test Profile"
+
+        with patch("database.db_profile.Session") as mock_session_class:
+            mock_session = mock_session_class.return_value.__enter__.return_value
+            mock_session.get.return_value = mock_profile
+
+            response, status = get_profile_by_id(1)
+            result = response.get_json()
+            assert status == 200
+            assert result["statusCode"] == 200
+            assert result["data"]["id"] == 1
+            assert result["data"]["name"] == "Test Profile"
+
+def test_get_profile_by_id_not_found(app):
+    with app.app_context():
+        with patch("database.db_profile.Session") as mock_session_class:
+            mock_session = mock_session_class.return_value.__enter__.return_value
+            mock_session.get.return_value = None
+
+            response, status = get_profile_by_id(999)
+            result = response.get_json()
+            assert status == 404
+            assert "not found" in result["data"]["error"]
+
+def test_get_profile_by_id_invalid_id(app):
+    with app.app_context():
+        response, status = get_profile_by_id("abc")
+        result = response.get_json()
+        assert status == 400
+        assert "must be an integer" in result["data"]["error"]
 
 # Test create_profile
 

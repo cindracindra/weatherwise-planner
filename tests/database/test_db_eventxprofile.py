@@ -4,6 +4,7 @@ from database.db_eventxprofile import (
     get_eventxprofiles,
     create_eventxprofile,
     delete_eventxprofile,
+    get_eventxprofile_by_id
 )
 from models.db_models.event import Event
 from models.db_models.profile import Profile
@@ -41,6 +42,44 @@ def test_get_eventxprofiles(app):
             assert result["data"]["eventxprofiles"][0]["eventid"] == 1
             assert result["data"]["eventxprofiles"][0]["profileid"] == 2
 
+# Test get_event_profile_by_id
+
+def test_get_eventxprofile_by_id_success(app):
+    with app.app_context():
+        mock_ep = MagicMock(spec=EventXProfile)
+        mock_ep.id = 1
+        mock_ep.eventid = 10
+        mock_ep.profileid = 20
+
+        with patch("database.db_eventxprofile.Session") as mock_session_class:
+            mock_session = mock_session_class.return_value.__enter__.return_value
+            mock_session.get.return_value = mock_ep
+
+            response, status = get_eventxprofile_by_id(1)
+            result = response.get_json()
+            assert status == 200
+            assert result["statusCode"] == 200
+            assert result["data"]["id"] == 1
+            assert result["data"]["eventid"] == 10
+            assert result["data"]["profileid"] == 20
+
+def test_get_eventxprofile_by_id_not_found(app):
+    with app.app_context():
+        with patch("database.db_eventxprofile.Session") as mock_session_class:
+            mock_session = mock_session_class.return_value.__enter__.return_value
+            mock_session.get.return_value = None
+
+            response, status = get_eventxprofile_by_id(999)
+            result = response.get_json()
+            assert status == 404
+            assert "not found" in result["data"]["error"]
+
+def test_get_eventxprofile_by_id_invalid_id(app):
+    with app.app_context():
+        response, status = get_eventxprofile_by_id("abc")
+        result = response.get_json()
+        assert status == 400
+        assert "must be an integer" in result["data"]["error"]
 
 # Test create_eventxprofile
 

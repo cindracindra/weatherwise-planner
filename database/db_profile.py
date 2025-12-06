@@ -47,7 +47,7 @@ def get_profiles() -> Tuple[Response, int]:
 def get_profile_by_id(profileid: Any) -> Tuple[Response, int]:
     """Get a single profile by ID."""
     validated_id = validate_id(profileid)
-    if not isinstance(validated_id, int):
+    if validated_id == StatusCode.BAD_REQUEST.value:
         return build_response(
             StatusCode.BAD_REQUEST,
             {"error": "'profileid' must be an integer."},
