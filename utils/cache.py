@@ -68,7 +68,6 @@ def clear_cache() -> None:
 
     Useful for testing or when you need to force fresh data.
     """
-    global _cache
     _cache.clear()
 
 
