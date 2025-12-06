@@ -12,11 +12,13 @@ from utils.converters import (
     round_temperatures,
     weather_code_to_info,
 )
+from utils.cache import timed_cache
 from api import weather_api
 from models.api_models.weather import WeatherCode, WeatherReading
 from typing import List, Dict
 
 
+@timed_cache(seconds=1800)  # Cache for 30 minutes
 def get_current_weather() -> WeatherReading:
     """
     Get current weather conditions with icon and label.
@@ -54,6 +56,7 @@ def get_current_weather() -> WeatherReading:
     return WeatherReading(temperature=rounded_temp, weather_code=weather_code)
 
 
+@timed_cache(seconds=3600)  # Cache for 1 hour
 def get_hourly_forecast_today() -> List[WeatherReading]:
     """
     Get hourly weather forecast for today (24 hours).
@@ -94,6 +97,7 @@ def get_hourly_forecast_today() -> List[WeatherReading]:
 
 
 # Called internally by calendar_service.py
+@timed_cache(seconds=3600)  # Cache for 1 hour
 def get_daily_forecast() -> Dict[str, WeatherCode]:
     """
     Get daily weather forecast for the next 16 days.

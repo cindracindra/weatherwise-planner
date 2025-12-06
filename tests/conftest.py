@@ -1,6 +1,15 @@
 import pytest
 
 
+@pytest.fixture(autouse=True)
+def clear_cache_before_test():
+    """Clear cache before each test to prevent interference between tests."""
+    from utils.cache import clear_cache
+    clear_cache()
+    yield
+    clear_cache()
+
+
 @pytest.fixture
 def sample_weather_code_data():
     """Sample weather code icon data for testing."""
