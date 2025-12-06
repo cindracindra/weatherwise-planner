@@ -1,5 +1,5 @@
 -- Table: event_mock
-CREATE TABLE event_mock (
+CREATE TABLE event (
     id SERIAL PRIMARY KEY,
     name VARCHAR NOT NULL,
     start TIMESTAMP WITHOUT TIME ZONE NOT NULL,
@@ -8,13 +8,13 @@ CREATE TABLE event_mock (
 );
 
 -- Table: profile_mock
-CREATE TABLE profile_mock (
+CREATE TABLE profile (
     id SERIAL PRIMARY KEY,
     name VARCHAR NOT NULL
 );
 
 -- Table: event_profile_mock
-CREATE TABLE event_profile_mock (
+CREATE TABLE eventxprofile (
     id SERIAL PRIMARY KEY,
     eventid INTEGER NOT NULL,
     profileid INTEGER NOT NULL,
@@ -28,17 +28,17 @@ CREATE TABLE event_profile_mock (
 
 
 -- Sample Data Insertion
-INSERT INTO event_mock (name, start, "end", location) VALUES
+INSERT INTO event (name, start, "end", location) VALUES
 ('Tech Conference', '2025-12-01 09:00:00', '2025-12-01 17:00:00', 'London'),
 ('C++ Workshop', '2025-12-05 10:00:00', '2025-12-05 15:00:00', NULL),
 ('Music Concert', '2025-12-10 14:00:00', '2025-12-10 22:00:00', 'Manchester');
 
-INSERT INTO profile_mock (name) VALUES
+INSERT INTO profile (name) VALUES
 ('A Profile'),
 ('B Profile'),
 ('C Profile');
 
-INSERT INTO event_profile_mock (eventid, profileid) VALUES
+INSERT INTO eventxprofile (eventid, profileid) VALUES
 (1, 1), 
 (1, 2), 
 (2, 3);
