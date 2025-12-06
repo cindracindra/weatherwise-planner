@@ -71,9 +71,9 @@ class TestHomepage:
             with patch('routes.web_routes.get_today_detail', return_value={"year": 2025, "month": 12, "day": 6}):
                 with patch('routes.web_routes.get_full_calendar', return_value=[]):
                     with patch('routes.web_routes.get_hourly_forecast_today', return_value=[]):
-                        with patch('routes.web_routes.get_events_by_profile_id_by_month', return_value=mock_events_response):
+                        with patch('routes.web_routes.get_events_by_profileid_by_month', return_value=mock_events_response):
                             with patch('routes.web_routes.build_daily_event_list', return_value=[]):
-                                response = client.get('/?profile_id=1')
+                                response = client.get('/?profileid=1')
                                 assert response.status_code == 200
 
     def test_homepage_with_error_flash(self, client, mock_profiles_response):
@@ -93,7 +93,7 @@ class TestManagementRoutes:
 
     def test_reload_calendar(self, client):
         """Test calendar reload redirects correctly."""
-        response = client.get('/reload?profile_id=1')
+        response = client.get('/reload?profileid=1')
         assert response.status_code == 302
         assert '/?' in response.location
 
@@ -105,15 +105,15 @@ class TestManagementRoutes:
 
     def test_management_handle_form_with_profile(self, client):
         """Test management form handler with profile."""
-        response = client.get('/management?profile_id=1')
+        response = client.get('/management?profileid=1')
         assert response.status_code == 302
-        assert 'profile_id=1' in response.location
+        assert 'profileid=1' in response.location
 
     def test_web_management_page(self, client, mock_events_response):
         """Test event management page renders."""
-        with patch('routes.web_routes.get_events_by_profile_id', return_value=mock_events_response):
+        with patch('routes.web_routes.get_events_by_profileid', return_value=mock_events_response):
             with patch('routes.web_routes.group_all_events_by_full_date', return_value=[]):
-                response = client.get('/management/event?profile_id=1')
+                response = client.get('/management/event?profileid=1')
                 assert response.status_code == 200
 
     def test_web_management_with_selected_event(self, client, mock_events_response):
@@ -126,11 +126,11 @@ class TestManagementRoutes:
             "location": "Test Location"
         })
         
-        with patch('routes.web_routes.get_events_by_profile_id', return_value=mock_events_response):
+        with patch('routes.web_routes.get_events_by_profileid', return_value=mock_events_response):
             with patch('routes.web_routes.get_event_by_id', return_value=event_response):
                 with patch('routes.web_routes.group_all_events_by_full_date', return_value=[]):
                     with patch('routes.web_routes.parse_event_for_datepicker', return_value={}):
-                        response = client.get('/management/event?profile_id=1&selected_event_id=1')
+                        response = client.get('/management/event?profileid=1&selected_eventid=1')
                         assert response.status_code == 200
 
 
@@ -142,11 +142,11 @@ class TestEventCRUDWebRoutes:
     def test_web_load_event(self, client):
         """Test loading event for editing."""
         response = client.post('/management/event/load', data={
-            'profile_id': '1',
-            'event_id': '1'
+            'profileid': '1',
+            'eventid': '1'
         })
         assert response.status_code == 302
-        assert 'selected_event_id=1' in response.location
+        assert 'selected_eventid=1' in response.location
 
     def test_web_create_event(self, client):
         """Test creating event from web form."""
@@ -157,7 +157,7 @@ class TestEventCRUDWebRoutes:
         
         with patch('routes.web_routes.create_event_and_profile_association', return_value=mock_response):
             response = client.post('/management/event/create', data={
-                'profile_id': '1',
+                'profileid': '1',
                 'name': 'New Event',
                 'start_time': '2025-12-10T10:00',
                 'end_time': '12:00',
@@ -175,8 +175,8 @@ class TestEventCRUDWebRoutes:
         
         with patch('routes.web_routes.update_event', return_value=mock_response):
             response = client.post('/management/event/update', data={
-                'profile_id': '1',
-                'event_id': '1',
+                'profileid': '1',
+                'eventid': '1',
                 'name': 'Updated Event',
                 'start_time': '2025-12-10T10:00',
                 'end_time': '12:00',
@@ -195,8 +195,8 @@ class TestEventCRUDWebRoutes:
         
         with patch('routes.web_routes.delete_event_and_profile_association', return_value=mock_response):
             response = client.post('/management/event/delete', data={
-                'profile_id': '1',
-                'event_id': '1'
+                'profileid': '1',
+                'eventid': '1'
             })
             assert response.status_code == 302
             assert 'reqHttpCode=200' in response.location
@@ -235,7 +235,7 @@ class TestProfileManagementWebRoutes:
         
         with patch('routes.web_routes.create_profile', return_value=mock_response):
             response = client.post('/management/profile/create', data={
-                'profile_name': 'New Profile'
+                'name': 'New Profile'
             })
             assert response.status_code == 302
             assert 'reqHttpCode=201' in response.location
@@ -248,7 +248,7 @@ class TestProfileManagementWebRoutes:
         
         with patch('routes.web_routes.delete_profile', return_value=mock_response):
             response = client.post('/management/profile/delete', data={
-                'profile_id': '1'
+                'profileid': '1'
             })
             assert response.status_code == 302
             assert 'reqHttpCode=200' in response.location

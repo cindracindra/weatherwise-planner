@@ -55,29 +55,29 @@ Tests all Flask API routes to ensure proper HTTP request/response handling.
   - `test_delete_profile_not_found` - Returns 404 for non-existent profile
 
 #### TestEventProfileAPI (11 tests)
-- **GET /api/event-profiles**
-  - `test_get_event_profiles_success` - Returns list of all associations
-  - `test_get_event_profiles_empty` - Returns empty list when no associations exist
+- **GET /api/eventxprofiles**
+  - `test_get_eventxprofiles_success` - Returns list of all associations
+  - `test_get_eventxprofiles_empty` - Returns empty list when no associations exist
 
-- **GET /api/event-profiles/<id>**
-  - `test_get_event_profile_by_id_success` - Returns specific association by ID
-  - `test_get_event_profile_by_id_not_found` - Returns 404 for non-existent association
+- **GET /api/eventxprofiles/<id>**
+  - `test_get_eventxprofile_by_id_success` - Returns specific association by ID
+  - `test_get_eventxprofile_by_id_not_found` - Returns 404 for non-existent association
 
-- **POST /api/event-profiles**
-  - `test_create_event_profile_success` - Creates new association successfully
-  - `test_create_event_profile_missing_fields` - Validates required fields
-  - `test_create_event_profile_invalid_ids` - Validates integer IDs
-  - `test_create_event_profile_not_found` - Returns 404 when event or profile doesn't exist
+- **POST /api/eventxprofiles**
+  - `test_create_eventxprofile_success` - Creates new association successfully
+  - `test_create_eventxprofile_missing_fields` - Validates required fields
+  - `test_create_eventxprofile_invalid_ids` - Validates integer IDs
+  - `test_create_eventxprofile_not_found` - Returns 404 when event or profile doesn't exist
 
-- **DELETE /api/event-profiles/<id>**
-  - `test_delete_event_profile_success` - Deletes association successfully
-  - `test_delete_event_profile_not_found` - Returns 404 for non-existent association
-  - `test_delete_event_profile_invalid_id` - Handles invalid ID type
+- **DELETE /api/eventxprofiles/<id>**
+  - `test_delete_eventxprofile_success` - Deletes association successfully
+  - `test_delete_eventxprofile_not_found` - Returns 404 for non-existent association
+  - `test_delete_eventxprofile_invalid_id` - Handles invalid ID type
 
 #### TestAPIErrorHandling (6 tests)
 - `test_event_endpoint_no_json_body` - Handles missing JSON body for events
 - `test_profile_endpoint_no_json_body` - Handles missing JSON body for profiles
-- `test_event_profile_endpoint_no_json_body` - Handles missing JSON body for associations
+- `test_eventxprofile_endpoint_no_json_body` - Handles missing JSON body for associations
 - `test_invalid_json_format` - Handles malformed JSON
 - `test_nonexistent_endpoint` - Returns 404 for non-existent endpoints
 - `test_method_not_allowed` - Returns 405 for unsupported HTTP methods
@@ -94,17 +94,17 @@ Tests database layer CRUD operations for events using mocked database sessions.
 - `test_delete_event_not_found` - Delete non-existent event
 - `test_delete_event_invalid_id` - Delete with invalid ID
 
-### 3. `test_mock_event_profile_api.py` (8 tests)
-Tests database layer CRUD operations for event-profile associations using mocked database sessions.
+### 3. `test_mock_eventxprofile_api.py` (8 tests)
+Tests database layer CRUD operations for eventxprofile associations using mocked database sessions.
 
-- `test_get_event_profiles` - Get all associations
-- `test_create_event_profile_success` - Create association with valid data
-- `test_create_event_profile_missing_fields` - Validation for missing fields
-- `test_create_event_profile_invalid_ids` - Validation for invalid IDs
-- `test_create_event_profile_not_found` - Create with non-existent event/profile
-- `test_delete_event_profile_success` - Delete existing association
-- `test_delete_event_profile_not_found` - Delete non-existent association
-- `test_delete_event_profile_invalid_id` - Delete with invalid ID
+- `test_get_eventxprofiles` - Get all associations
+- `test_create_eventxprofile_success` - Create association with valid data
+- `test_create_eventxprofile_missing_fields` - Validation for missing fields
+- `test_create_eventxprofile_invalid_ids` - Validation for invalid IDs
+- `test_create_eventxprofile_not_found` - Create with non-existent event/profile
+- `test_delete_eventxprofile_success` - Delete existing association
+- `test_delete_eventxprofile_not_found` - Delete non-existent association
+- `test_delete_eventxprofile_invalid_id` - Delete with invalid ID
 
 ### 4. `test_mock_profile_api.py` (6 tests)
 Tests database layer CRUD operations for profiles using mocked database sessions.
@@ -217,7 +217,7 @@ Tests weather service functions.
 | API Routes (Flask endpoints) | ✅ Complete (40 tests) |
 | Database Layer - Events | ✅ Complete (8 tests) |
 | Database Layer - Profiles | ✅ Complete (6 tests) |
-| Database Layer - Event-Profile | ✅ Complete (8 tests) |
+| Database Layer - EventXProfile | ✅ Complete (8 tests) |
 | Utility Converters | ✅ Complete (12 tests) |
 | API Models | ✅ Complete (15 tests) |
 | Weather Service | ✅ Complete (4 tests) |

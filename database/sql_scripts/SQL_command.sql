@@ -13,7 +13,7 @@ CREATE TABLE profile (
     name VARCHAR NOT NULL
 );
 
--- Table: event_profile_mock
+-- Table: eventxprofile_mock
 CREATE TABLE eventxprofile (
     id SERIAL PRIMARY KEY,
     eventid INTEGER NOT NULL,

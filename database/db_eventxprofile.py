@@ -14,14 +14,14 @@ from utils.request import normalize_data, validate_id, validate_required_fields
 
 
 def _serialize_eventxprofile(
-    event_profile: EventXProfile, include_id: bool = False
+    eventxprofile: EventXProfile, include_id: bool = True
 ) -> Dict[str, Any]:
     result = {
-        "event_id": event_profile.eventid,
-        "profile_id": event_profile.profileid,
+        "eventid": eventxprofile.eventid,
+        "profileid": eventxprofile.profileid,
     }
     if include_id:
-        result["id"] = event_profile.id
+        result["id"] = eventxprofile.id
     return result
 
 
@@ -43,32 +43,32 @@ def _validate_integer_ids(
 
 
 def get_eventxprofiles() -> Tuple[Response, int]:
-    """Get all event-profile associations."""
+    """Get all eventxprofile associations."""
     try:
         stmt = select(EventXProfile)
         with Session(engine) as session:
-            event_profiles = session.execute(stmt).scalars().all()
-            data = [_serialize_eventxprofile(ep) for ep in event_profiles]
-        return build_response(StatusCode.OK, {"event_profiles": data})
+            eventxprofiles = session.execute(stmt).scalars().all()
+            data = [_serialize_eventxprofile(ep, include_id=True) for ep in eventxprofiles]
+        return build_response(StatusCode.OK, {"eventxprofiles": data})
     except Exception as e:
         return build_response(
             StatusCode.INTERNAL_SERVER_ERROR, {"error": f"{str(e)}"}
         )
 
 
-def get_eventxprofile_by_id(event_profile_id: Any) -> Tuple[Response, int]:
-    """Get a single event-profile association by ID."""
-    validated_id = validate_id(event_profile_id)
+def get_eventxprofile_by_id(eventxprofileid: Any) -> Tuple[Response, int]:
+    """Get a single eventxprofile association by ID."""
+    validated_id = validate_id(eventxprofileid)
     if not isinstance(validated_id, int):
         return build_response(
             StatusCode.BAD_REQUEST,
-            {"error": "Field 'event_profile_id' must be an integer."},
+            {"error": "Field 'eventxprofileid' must be an integer."},
         )
 
     try:
         with Session(engine) as session:
-            event_profile = session.get(EventXProfile, validated_id)
-            if not event_profile:
+            eventxprofile = session.get(EventXProfile, validated_id)
+            if not eventxprofile:
                 return build_response(
                     StatusCode.NOT_FOUND,
                     {
@@ -79,7 +79,7 @@ def get_eventxprofile_by_id(event_profile_id: Any) -> Tuple[Response, int]:
                 )
             return build_response(
                 StatusCode.OK,
-                _serialize_eventxprofile(event_profile, include_id=True),
+                _serialize_eventxprofile(eventxprofile, include_id=True),
             )
     except Exception as e:
         return build_response(
@@ -88,7 +88,7 @@ def get_eventxprofile_by_id(event_profile_id: Any) -> Tuple[Response, int]:
 
 
 def create_eventxprofile(data: Any) -> Tuple[Response, int]:
-    """Create a new event-profile association."""
+    """Create a new eventxprofile association."""
     try:
         data = normalize_data(data)
 
@@ -129,13 +129,13 @@ def create_eventxprofile(data: Any) -> Tuple[Response, int]:
                 )
 
             # Create the association
-            event_profile = EventXProfile(eventid=eventid, profileid=profileid)
-            session.add(event_profile)
+            eventxprofile = EventXProfile(eventid=eventid, profileid=profileid)
+            session.add(eventxprofile)
             session.commit()
-            session.refresh(event_profile)
+            session.refresh(eventxprofile)
             return build_response(
                 StatusCode.CREATED,
-                _serialize_eventxprofile(event_profile, include_id=True),
+                _serialize_eventxprofile(eventxprofile, include_id=True),
             )
     except Exception as e:
         return build_response(
@@ -143,19 +143,19 @@ def create_eventxprofile(data: Any) -> Tuple[Response, int]:
         )
 
 
-def delete_eventxprofile(event_profile_id: Any) -> Tuple[Response, int]:
-    """Delete an event-profile association by ID."""
-    validated_id = validate_id(event_profile_id)
+def delete_eventxprofile(eventxprofileid: Any) -> Tuple[Response, int]:
+    """Delete an eventxprofile association by ID."""
+    validated_id = validate_id(eventxprofileid)
     if validated_id == StatusCode.BAD_REQUEST.value:
         return build_response(
             StatusCode.BAD_REQUEST,
-            {"error": "Field 'event_profile_id' must be an integer."},
+            {"error": "Field 'eventxprofileid' must be an integer."},
         )
 
     try:
         with Session(engine) as session:
-            event_profile = session.get(EventXProfile, validated_id)
-            if not event_profile:
+            eventxprofile = session.get(EventXProfile, validated_id)
+            if not eventxprofile:
                 return build_response(
                     StatusCode.NOT_FOUND,
                     {
@@ -164,7 +164,7 @@ def delete_eventxprofile(event_profile_id: Any) -> Tuple[Response, int]:
                         """
                     },
                 )
-            session.delete(event_profile)
+            session.delete(eventxprofile)
             session.commit()
         return build_response(
             StatusCode.OK,

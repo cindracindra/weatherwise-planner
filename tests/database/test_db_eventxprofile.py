@@ -18,9 +18,9 @@ def app():
     return app
 
 
-# Test get_event_profiles
+# Test get_eventxprofiles
 
-def test_get_event_profiles(app):
+def test_get_eventxprofiles(app):
     with app.app_context():
         mock_ep = MagicMock(spec=EventXProfile)
         mock_ep.eventid = 1
@@ -34,15 +34,15 @@ def test_get_event_profiles(app):
             result = response.get_json()
             assert result["statusCode"] == 200
             assert result["statusMessage"] == "SUCCESS"
-            assert "event_profiles" in result["data"]
-            assert len(result["data"]["event_profiles"]) == 1
-            assert result["data"]["event_profiles"][0]["event_id"] == 1
-            assert result["data"]["event_profiles"][0]["profile_id"] == 2
+            assert "eventxprofiles" in result["data"]
+            assert len(result["data"]["eventxprofiles"]) == 1
+            assert result["data"]["eventxprofiles"][0]["eventid"] == 1
+            assert result["data"]["eventxprofiles"][0]["profileid"] == 2
 
 
-# Test create_event_profile
+# Test create_eventxprofile
 
-def test_create_event_profile_success(app):
+def test_create_eventxprofile_success(app):
     with app.app_context():
         data = {"eventid": 1, "profileid": 2}
 
@@ -68,10 +68,10 @@ def test_create_event_profile_success(app):
                 assert result["statusCode"] == 201
                 assert result["statusMessage"] == "CREATED"
                 assert result["data"]["id"] == 10
-                assert result["data"]["event_id"] == 1
-                assert result["data"]["profile_id"] == 2
+                assert result["data"]["eventid"] == 1
+                assert result["data"]["profileid"] == 2
 
-def test_create_event_profile_missing_fields(app):
+def test_create_eventxprofile_missing_fields(app):
     with app.app_context():
         data = {"eventid": 1}  # missing profileid
         response, status = create_eventxprofile(data)
@@ -81,7 +81,7 @@ def test_create_event_profile_missing_fields(app):
         assert result["statusMessage"] == "BAD_REQUEST"
         assert "Missing required fields" in result["data"]["error"]
 
-def test_create_event_profile_invalid_ids(app):
+def test_create_eventxprofile_invalid_ids(app):
     with app.app_context():
         data = {"eventid": "abc", "profileid": "xyz"}
         response, status = create_eventxprofile(data)
@@ -91,7 +91,7 @@ def test_create_event_profile_invalid_ids(app):
         assert result["statusMessage"] == "BAD_REQUEST"
         assert "must be integers" in result["data"]["error"]
 
-def test_create_event_profile_not_found(app):
+def test_create_eventxprofile_not_found(app):
     with app.app_context():
         data = {"eventid": 1, "profileid": 2}
 
@@ -107,9 +107,9 @@ def test_create_event_profile_not_found(app):
             assert "not found" in result["data"]["error"]
 
 
-# Test delete_event_profile
+# Test delete_eventxprofile
 
-def test_delete_event_profile_success(app):
+def test_delete_eventxprofile_success(app):
     with app.app_context():
         mock_ep_instance = MagicMock(spec=EventXProfile)
 
@@ -126,7 +126,7 @@ def test_delete_event_profile_success(app):
             assert result["statusMessage"] == "SUCCESS"
             assert "deleted" in result["data"]["message"]
 
-def test_delete_event_profile_not_found(app):
+def test_delete_eventxprofile_not_found(app):
     with app.app_context():
         with patch("database.db_eventxprofile.Session") as mock_session_class:
             mock_session = mock_session_class.return_value.__enter__.return_value
@@ -139,7 +139,7 @@ def test_delete_event_profile_not_found(app):
             assert result["statusMessage"] == "NOT_FOUND"
             assert "not found" in result["data"]["error"]
 
-def test_delete_event_profile_invalid_id(app):
+def test_delete_eventxprofile_invalid_id(app):
     with app.app_context():
         response, status = delete_eventxprofile("abc")
         result = response.get_json()

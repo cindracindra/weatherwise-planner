@@ -13,7 +13,7 @@
 
       <div class="header__right">
         <form action="/" method="get" class="header__home-form">
-          <input type="hidden" name="profile_id" value="{{ profile_id }}" />
+          <input type="hidden" name="profileid" value="{{ profileid }}" />
           <input type="submit" value="HOME" class="header__home-btn" />
         </form>
       </div>
@@ -41,7 +41,7 @@
       <div class="event-mgmt__list">
         <div class="event-mgmt__create">
           <form action="/management/event" method="get" class="event-create__form">
-            <input type="hidden" name="profile_id" value="{{ profile_id }}" />
+            <input type="hidden" name="profileid" value="{{ profileid }}" />
             <input type="submit" value="Create New Event" class="event-create__button"/>
           </form>
         </div>
@@ -52,8 +52,8 @@
             {% for event in day.daily_events %}
               <div class="event-item">
                 <form action="/management/event/load" method="post" class="event-item__form">
-                  <input type="hidden" name="profile_id" value="{{ profile_id }}" />
-                  <input type="hidden" name="event_id" value="{{ event.id  }}" />
+                  <input type="hidden" name="profileid" value="{{ profileid }}" />
+                  <input type="hidden" name="eventid" value="{{ event.id  }}" />
                   <button type="submit" class="event-item__button">
                     <span class="event-item__title">{{ event.name }}</span><br />
                     <span class="event-item__time">{{ event.start_time.strftime('%H:%M') }} - {{ event.end_time.strftime('%H:%M') }}</span>
@@ -61,8 +61,8 @@
                 </form>
 
                 <form action="/management/event/delete" method="post" class="event-item__delete-form">
-                  <input type="hidden" name="profile_id" value="{{ profile_id }}" />
-                  <input type="hidden" name="event_id" value="{{ event.id  }}" />
+                  <input type="hidden" name="profileid" value="{{ profileid }}" />
+                  <input type="hidden" name="eventid" value="{{ event.id  }}" />
                   <button type="submit" class="event-item__delete-btn" title="Delete event">X</button>
                 </form>
               </div>
@@ -76,8 +76,8 @@
         <div class="event-mgmt__load">
           {% if selected_event %}
             <form action="/management/event/update" method="post" class="event-details">
-              <input type="hidden" name="profile_id" value="{{ profile_id }}" />
-              <input type="hidden" name="event_id" value="{{ selected_event_id }}" />
+              <input type="hidden" name="profileid" value="{{ profileid }}" />
+              <input type="hidden" name="eventid" value="{{ selected_eventid }}" />
 
               <div class="event-details__row">
                 <img src="/static/images/icon-title.png" class="event-details__icon" />
@@ -101,7 +101,7 @@
             </form>
           {% else %}
             <form action="/management/event/create" method="post" class="event-details">
-              <input type="hidden" name="profile_id" value="{{ profile_id }}" />
+              <input type="hidden" name="profileid" value="{{ profileid }}" />
 
               <div class="event-details__row">
                 <img src="/static/images/icon-title.png" class="event-details__icon" />

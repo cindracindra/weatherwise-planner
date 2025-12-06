@@ -18,7 +18,7 @@ from utils.request import (
 # Helper functions
 
 
-def _serialize_event(event: Event, iso_format: bool = False) -> Dict[str, Any]:
+def _serialize_event(event: Event, iso_format: bool = True) -> Dict[str, Any]:
     return {
         "id": event.id,
         "name": event.name,
@@ -41,7 +41,7 @@ def get_events() -> Tuple[Response, int]:
         stmt = select(Event)
         with Session(engine) as session:
             events = session.execute(stmt).scalars().unique().all()
-            data = [_serialize_event(event) for event in events]
+            data = [_serialize_event(event, iso_format=True) for event in events]
         return build_response(StatusCode.OK, {"events": data})
     except Exception as e:
         return build_response(
@@ -49,12 +49,12 @@ def get_events() -> Tuple[Response, int]:
         )
 
 
-def get_event_by_id(event_id: Any) -> Tuple[Response, int]:
+def get_event_by_id(eventid: Any) -> Tuple[Response, int]:
     """Get a single event by ID."""
-    validated_id = validate_id(event_id)
+    validated_id = validate_id(eventid)
     if not isinstance(validated_id, int):
         return build_response(
-            StatusCode.BAD_REQUEST, {"error": "'event_id' must be an integer."}
+            StatusCode.BAD_REQUEST, {"error": "'eventid' must be an integer."}
         )
 
     try:
@@ -136,12 +136,12 @@ def create_event(data: Any) -> Tuple[Response, int]:
         )
 
 
-def update_event(event_id: Any, data: Any) -> Tuple[Response, int]:
+def update_event(eventid: Any, data: Any) -> Tuple[Response, int]:
     """Update an existing event."""
-    validated_id = validate_id(event_id)
+    validated_id = validate_id(eventid)
     if not isinstance(validated_id, int):
         return build_response(
-            StatusCode.BAD_REQUEST, {"error": "'event_id' must be an integer."}
+            StatusCode.BAD_REQUEST, {"error": "'eventid' must be an integer."}
         )
 
     try:
@@ -201,12 +201,12 @@ def update_event(event_id: Any, data: Any) -> Tuple[Response, int]:
         )
 
 
-def delete_event(event_id: Any) -> Tuple[Response, int]:
+def delete_event(eventid: Any) -> Tuple[Response, int]:
     """Delete an event by ID."""
-    validated_id = validate_id(event_id)
+    validated_id = validate_id(eventid)
     if validated_id == StatusCode.BAD_REQUEST.value:
         return build_response(
-            StatusCode.BAD_REQUEST, {"error": "'event_id' must be an integer."}
+            StatusCode.BAD_REQUEST, {"error": "'eventid' must be an integer."}
         )
 
     try:

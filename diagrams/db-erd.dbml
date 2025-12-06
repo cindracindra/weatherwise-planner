@@ -11,7 +11,7 @@ Table profile {
   name varchar
 }
 
-Table event_profile {
+Table eventxprofile {
   eventid integer [ref: > event.id]
   profileid integer [ref: > profile.id]
 }

@@ -4,8 +4,8 @@ import pytest
 from unittest.mock import patch, MagicMock
 from datetime import datetime
 from database.db_composite import (
-    get_events_by_profile_id,
-    get_events_by_profile_id_by_month,
+    get_events_by_profileid,
+    get_events_by_profileid_by_month,
     create_event_and_profile_association,
     delete_event_and_profile_association
 )
@@ -44,16 +44,16 @@ def mock_eventxprofile():
     return mock
 
 
-# ========== Tests for get_events_by_profile_id ==========
+# ========== Tests for get_events_by_profileid ==========
 
-def test_get_events_by_profile_id_success(app, mock_event):
-    """Test get_events_by_profile_id returns events successfully."""
+def test_get_events_by_profileid_success(app, mock_event):
+    """Test get_events_by_profileid returns events successfully."""
     with app.app_context():
         with patch("database.db_composite.Session") as mock_session_class:
             mock_session = mock_session_class.return_value.__enter__.return_value
             mock_session.execute.return_value.scalars.return_value.unique.return_value.all.return_value = [mock_event]
 
-            response, status = get_events_by_profile_id(1)
+            response, status = get_events_by_profileid(1)
             result = response.get_json()
             
             assert status == 200
@@ -63,30 +63,30 @@ def test_get_events_by_profile_id_success(app, mock_event):
             assert len(result["data"]["events"]) == 1
 
 
-def test_get_events_by_profile_id_empty(app):
-    """Test get_events_by_profile_id with no events."""
+def test_get_events_by_profileid_empty(app):
+    """Test get_events_by_profileid with no events."""
     with app.app_context():
         with patch("database.db_composite.Session") as mock_session_class:
             mock_session = mock_session_class.return_value.__enter__.return_value
             mock_session.execute.return_value.scalars.return_value.unique.return_value.all.return_value = []
 
-            response, status = get_events_by_profile_id(1)
+            response, status = get_events_by_profileid(1)
             result = response.get_json()
             
             assert status == 200
             assert result["data"]["events"] == []
 
 
-# ========== Tests for get_events_by_profile_id_by_month ==========
+# ========== Tests for get_events_by_profileid_by_month ==========
 
-def test_get_events_by_profile_id_by_month_success(app, mock_event):
-    """Test get_events_by_profile_id_by_month returns filtered events."""
+def test_get_events_by_profileid_by_month_success(app, mock_event):
+    """Test get_events_by_profileid_by_month returns filtered events."""
     with app.app_context():
         with patch("database.db_composite.Session") as mock_session_class:
             mock_session = mock_session_class.return_value.__enter__.return_value
             mock_session.execute.return_value.scalars.return_value.unique.return_value.all.return_value = [mock_event]
 
-            response, status = get_events_by_profile_id_by_month(1, 2025, 12)
+            response, status = get_events_by_profileid_by_month(1, 2025, 12)
             result = response.get_json()
             
             assert status == 200
@@ -94,14 +94,14 @@ def test_get_events_by_profile_id_by_month_success(app, mock_event):
             assert "events" in result["data"]
 
 
-def test_get_events_by_profile_id_by_month_empty(app):
-    """Test get_events_by_profile_id_by_month with no matching events."""
+def test_get_events_by_profileid_by_month_empty(app):
+    """Test get_events_by_profileid_by_month with no matching events."""
     with app.app_context():
         with patch("database.db_composite.Session") as mock_session_class:
             mock_session = mock_session_class.return_value.__enter__.return_value
             mock_session.execute.return_value.scalars.return_value.unique.return_value.all.return_value = []
 
-            response, status = get_events_by_profile_id_by_month(1, 2025, 1)
+            response, status = get_events_by_profileid_by_month(1, 2025, 1)
             result = response.get_json()
             
             assert status == 200

@@ -5,8 +5,8 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash
 from database.db_profile import get_profiles, create_profile, delete_profile
 from database.db_event import get_event_by_id, update_event
 from database.db_composite import (
-    get_events_by_profile_id,
-    get_events_by_profile_id_by_month,
+    get_events_by_profileid,
+    get_events_by_profileid_by_month,
     create_event_and_profile_association,
     delete_event_and_profile_association,
 )
@@ -36,7 +36,7 @@ def homepage():
     if isReqSucc == "False":
         flash("Select a profile to manage events.", "error")
 
-    profile_id = request.args.get("profile_id", "")
+    profileid = request.args.get("profileid", "")
     profile_response, status_code = get_profiles()
     profile_json = profile_response.get_json()
 
@@ -57,9 +57,9 @@ def homepage():
     hourly_forecast = get_hourly_forecast_today()
     hourly_forecast = [reading.to_dict() for reading in hourly_forecast]
 
-    if profile_id:
-        monthly_event_response, _ = get_events_by_profile_id_by_month(
-            profile_id, today["year"], today["month"]
+    if profileid:
+        monthly_event_response, _ = get_events_by_profileid_by_month(
+            profileid, today["year"], today["month"]
         )
         monthly_event_json = monthly_event_response.get_json()
 
@@ -85,7 +85,7 @@ def homepage():
         "index.html",
         calendar_matrix=calendar_matrix,
         today_detail=today,
-        profile_id=profile_id,
+        profileid=profileid,
         profile_list=profile_list,
         monthly_event_list=monthly_event_list,
         daily_event_list=daily_event_list,
@@ -96,33 +96,33 @@ def homepage():
 @web_bp.route("/reload", methods=["GET"])
 def reload_calendar():
     """Reload calendar page."""
-    profile_id = request.args.get("profile_id", "")
-    return redirect(url_for("web.homepage", profile_id=profile_id))
+    profileid = request.args.get("profileid", "")
+    return redirect(url_for("web.homepage", profileid=profileid))
 
 
 @web_bp.route("/management", methods=["GET"])
 def management_handle_form():
     """Handle management form submission."""
-    profile_id = request.args.get("profile_id", "")
+    profileid = request.args.get("profileid", "")
 
-    if not profile_id:
+    if not profileid:
         return redirect(url_for("web.homepage", isReqSucc=False))
     else:
-        return redirect(url_for("web.web_management", profile_id=profile_id))
+        return redirect(url_for("web.web_management", profileid=profileid))
 
 
 @web_bp.route("/management/event")
 def web_management():
     """Event management page."""
-    profile_id = request.args.get("profile_id", "")
+    profileid = request.args.get("profileid", "")
     code = safe_int(request.args.get("reqHttpCode"), 100)
-    selected_event_id = safe_int(request.args.get("selected_event_id"), 0)
+    selected_eventid = safe_int(request.args.get("selected_eventid"), 0)
 
     all_event = []
     selected_event = None
 
-    if profile_id:
-        event_response, _ = get_events_by_profile_id(profile_id)
+    if profileid:
+        event_response, _ = get_events_by_profileid(profileid)
         event_json = event_response.get_json()
 
         # Handle database errors gracefully
@@ -137,8 +137,8 @@ def web_management():
             event_data = event_json["data"]
             all_event = group_all_events_by_full_date(event_data)
 
-        if selected_event_id:
-            event_response, status_code = get_event_by_id(selected_event_id)
+        if selected_eventid:
+            event_response, status_code = get_event_by_id(selected_eventid)
             response_json = event_response.get_json()
             # Check if the response was successful (statusCode 200)
             if response_json.get("statusCode") == 200:
@@ -153,23 +153,23 @@ def web_management():
 
         return render_template(
             "management.html",
-            profile_id=profile_id,
+            profileid=profileid,
             all_event=all_event,
             selected_event=selected_event,
-            selected_event_id=selected_event_id,
+            selected_eventid=selected_eventid,
         )
 
 
 @web_bp.route("/management/event/load", methods=["POST"])
 def web_load_event():
     """Load event for editing."""
-    profile_id = request.form.get("profile_id", "")
-    event_id = safe_int(request.form.get("event_id", ""))
+    profileid = request.form.get("profileid", "")
+    eventid = safe_int(request.form.get("eventid", ""))
     return redirect(
         url_for(
             "web.web_management",
-            profile_id=profile_id,
-            selected_event_id=event_id,
+            profileid=profileid,
+            selected_eventid=eventid,
         )
     )
 
@@ -177,7 +177,7 @@ def web_load_event():
 @web_bp.route("/management/event/create", methods=["POST"])
 def web_create_event():
     """Create new event from web form."""
-    profile_id = request.form.get("profile_id", "")
+    profileid = request.form.get("profileid", "")
     data = request.form
 
     time_data = parse_incoming_start_and_end_time(
@@ -190,11 +190,11 @@ def web_create_event():
         time_data["start_time"],
         time_data["end_time"],
         data["location"],
-        profile_id,
+        profileid,
     )
     return redirect(
         url_for(
-            "web.web_management", reqHttpCode=status, profile_id=profile_id
+            "web.web_management", reqHttpCode=status, profileid=profileid
         )
     )
 
@@ -202,8 +202,8 @@ def web_create_event():
 @web_bp.route("/management/event/update", methods=["POST"])
 def web_update_event():
     """Update existing event from web form."""
-    profile_id = request.form.get("profile_id", "")
-    event_id = safe_int(request.form.get("event_id", ""))
+    profileid = request.form.get("profileid", "")
+    eventid = safe_int(request.form.get("eventid", ""))
     data = request.form.to_dict()
 
     time_data = parse_incoming_start_and_end_time(
@@ -214,10 +214,10 @@ def web_update_event():
     data["start_time"] = time_data["start_time"]
     data["end_time"] = time_data["end_time"]
 
-    result, status = update_event(event_id, data)
+    result, status = update_event(eventid, data)
     return redirect(
         url_for(
-            "web.web_management", reqHttpCode=status, profile_id=profile_id
+            "web.web_management", reqHttpCode=status, profileid=profileid
         )
     )
 
@@ -225,12 +225,12 @@ def web_update_event():
 @web_bp.route("/management/event/delete", methods=["POST"])
 def web_delete_event():
     """Delete event from web form."""
-    profile_id = request.form.get("profile_id", "")
-    event_id = safe_int(request.form.get("event_id", ""))
-    result, status = delete_event_and_profile_association(event_id)
+    profileid = request.form.get("profileid", "")
+    eventid = safe_int(request.form.get("eventid", ""))
+    result, status = delete_event_and_profile_association(eventid)
     return redirect(
         url_for(
-            "web.web_management", reqHttpCode=status, profile_id=profile_id
+            "web.web_management", reqHttpCode=status, profileid=profileid
         )
     )
 
@@ -274,6 +274,6 @@ def web_create_profile():
 @web_bp.route("/management/profile/delete", methods=["POST"])
 def web_delete_profile():
     """Delete profile from web form."""
-    profile_id = request.form.get("profile_id", "")
-    result, status = delete_profile(profile_id)
+    profileid = request.form.get("profileid", "")
+    result, status = delete_profile(profileid)
     return redirect(url_for("web.web_profile", reqHttpCode=status))

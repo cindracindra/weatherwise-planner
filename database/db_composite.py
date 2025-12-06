@@ -43,20 +43,20 @@ def _serialize_eventxprofile(eventxprofile: EventXProfile) -> Dict[str, Any]:
     """
     return {
         "id": eventxprofile.id,
-        "event_id": eventxprofile.eventid,
-        "profile_id": eventxprofile.profileid,
+        "eventid": eventxprofile.eventid,
+        "profileid": eventxprofile.profileid,
     }
 
 
 def _get_events_by_profile_query(
-    profile_id: int, year: int = None, month: int = None, day: int = None
+    profileid: int, year: int = None, month: int = None, day: int = None
 ):
     """
     Build a SQLAlchemy query to get events by profile ID with
     optional date filters.
 
     Args:
-        profile_id: The profile ID to filter events
+        profileid: The profile ID to filter events
         year: Optional year filter
         month: Optional month filter (1-12)
         day: Optional day filter (1-31)
@@ -64,7 +64,7 @@ def _get_events_by_profile_query(
     Returns:
         SQLAlchemy select statement
     """
-    conditions = [EventXProfile.profileid == profile_id]
+    conditions = [EventXProfile.profileid == profileid]
 
     if year is not None:
         conditions.append(extract("year", Event.start_time) == year)
@@ -101,36 +101,36 @@ def _execute_events_query(stmt) -> List[Dict[str, Any]]:
 # Main functions
 
 
-def get_events_by_profile_id(profile_id: int) -> Tuple[Response, int]:
+def get_events_by_profileid(profileid: int) -> Tuple[Response, int]:
     """
     Get all events for a specific profile.
 
     Args:
-        profile_id: The profile ID to filter events
+        profileid: The profile ID to filter events
 
     Returns:
         Dictionary containing list of events
     """
-    stmt = _get_events_by_profile_query(profile_id)
+    stmt = _get_events_by_profile_query(profileid)
     data = _execute_events_query(stmt)
     return build_response(StatusCode.OK, {"events": data})
 
 
-def get_events_by_profile_id_by_month(
-    profile_id: int, year: int, month: int
+def get_events_by_profileid_by_month(
+    profileid: int, year: int, month: int
 ) -> Tuple[Response, int]:
     """
     Get events for a specific profile filtered by year and month.
 
     Args:
-        profile_id: The profile ID to filter events
+        profileid: The profile ID to filter events
         year: Year (e.g., 2025)
         month: Month (1-12)
 
     Returns:
         Dictionary containing list of events for the specified month
     """
-    stmt = _get_events_by_profile_query(profile_id, year=year, month=month)
+    stmt = _get_events_by_profile_query(profileid, year=year, month=month)
     data = _execute_events_query(stmt)
     return build_response(StatusCode.OK, {"events": data})
 
@@ -140,7 +140,7 @@ def create_event_and_profile_association(
     start_time: datetime,
     end_time: datetime,
     location: str,
-    profile_id: int,
+    profileid: int,
 ) -> tuple[Response, int]:
     """
     Create an event and its corresponding EventXProfile entry in
@@ -151,7 +151,7 @@ def create_event_and_profile_association(
         start_time: Event start time (datetime object)
         end_time: Event end time (datetime object)
         location: Event location
-        profile_id: The profile ID to associate with the event
+        profileid: The profile ID to associate with the event
 
     Returns:
         Tuple of (data dictionary, HTTP status code)
@@ -172,7 +172,7 @@ def create_event_and_profile_association(
 
             # Create the EventXProfile entry
             eventxprofile = EventXProfile(
-                eventid=new_event.id, profileid=profile_id
+                eventid=new_event.id, profileid=profileid
             )
 
             # Add and commit both
@@ -194,14 +194,14 @@ def create_event_and_profile_association(
 
 
 def delete_event_and_profile_association(
-    event_id: int,
+    eventid: int,
 ) -> tuple[Response, int]:
     """
     Delete an event and all its corresponding EventXProfile entries
     in a single transaction.
 
     Args:
-        event_id: The ID of the event to delete
+        eventid: The ID of the event to delete
 
     Returns:
         Tuple of (data dictionary, HTTP status code)
@@ -209,12 +209,12 @@ def delete_event_and_profile_association(
     try:
         with Session(engine) as session:
             # Find the event
-            event = session.get(Event, event_id)
+            event = session.get(Event, eventid)
 
             if not event:
                 return build_response(
                     StatusCode.NOT_FOUND,
-                    {"error": f"Event with id {event_id} not found."},
+                    {"error": f"Event with id {eventid} not found."},
                 )
 
             # Store event data before deletion
@@ -222,7 +222,7 @@ def delete_event_and_profile_association(
 
             # Find and delete all EventXProfile entries for this event
             stmt = select(EventXProfile).where(
-                EventXProfile.eventid == event_id
+                EventXProfile.eventid == eventid
             )
             eventxprofiles = session.execute(stmt).scalars().all()
 
