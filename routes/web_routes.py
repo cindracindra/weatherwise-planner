@@ -42,7 +42,8 @@ def homepage():
     # Handle database errors gracefully
     if profile_json.get("statusCode") != 200:
         flash(
-            f'Database error: {profile_json.get("data", {}).get("error", "Unknown error")}',
+            f'Database error: {
+                profile_json.get("data", {}).get("error", "Unknown error")}',
             "error",
         )
         profile_list = []
@@ -64,7 +65,8 @@ def homepage():
         # Handle database errors gracefully
         if monthly_event_json.get("statusCode") != 200:
             flash(
-                f'Could not load events: {monthly_event_json.get("data", {}).get("error", "Unknown error")}',
+                f'Could not load events: {
+                    monthly_event_json.get("data", {}).get("error", "Unknown error")}',
                 "error",
             )
             monthly_event_list = []
@@ -124,7 +126,8 @@ def web_management():
         # Handle database errors gracefully
         if event_json.get("statusCode") != 200:
             flash(
-                f'Could not load events: {event_json.get("data", {}).get("error", "Unknown error")}',
+                f'Could not load events: {
+                    event_json.get("data", {}).get("error", "Unknown error")}',
                 "error",
             )
             all_event = []
@@ -225,7 +228,8 @@ def web_profile():
     # Handle database errors gracefully
     if profile_json.get("statusCode") != 200:
         flash(
-            f'Database error: {profile_json.get("data", {}).get("error", "Unknown error")}',
+            f'Database error: {
+                profile_json.get("data", {}).get("error", "Unknown error")}',
             "error",
         )
         profile_list = []
