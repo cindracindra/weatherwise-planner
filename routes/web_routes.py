@@ -15,6 +15,7 @@ from services.datetime_service import get_today_detail
 from services.weather_service import get_hourly_forecast_today
 from utils.datafeed import (
     build_daily_event_list,
+    monthly_events_grouped,
     group_all_events_by_full_date,
     parse_event_for_datepicker
 )
@@ -49,9 +50,11 @@ def homepage():
         )
         monthly_event_data = monthly_event_response.get_json()["data"]
         daily_event_list = build_daily_event_list(monthly_event_data)
+        monthly_event_list = monthly_events_grouped(monthly_event_data)
     else:
         monthly_event_data = {}
         daily_event_list = []
+        monthly_event_list = []
 
     return render_template(
         "index.html",
@@ -59,7 +62,7 @@ def homepage():
         today_detail=today,
         profile_id=profile_id,
         profile_list=profile_data["profiles"],
-        monthly_event_list=monthly_event_data.get("events", []),
+        monthly_event_list=monthly_event_list,
         daily_event_list=daily_event_list,
         hourly_forecast=hourly_forecast,
     )

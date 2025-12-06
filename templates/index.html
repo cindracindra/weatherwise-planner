@@ -143,12 +143,10 @@
             </div>
           {% endfor %}
 
-          {% for daily in daily_event_list %}
-            {% for event in daily.daily_events %}
-              <div class="calendar-section__event-block" style="--start: {{ event.start_int }}; --duration: {{ event.duration }};">
-                {{ event.name }}
-              </div>
-            {% endfor %}
+          {% for event in daily_event_list %}
+            <div class="calendar-section__event-block" style="--start: {{ event.start_int }}; --duration: {{ event.duration }};">
+              {{ event.name }}
+            </div>
           {% endfor %}
         </div>
       </section>
