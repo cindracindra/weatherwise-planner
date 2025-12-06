@@ -38,14 +38,13 @@
 
     <section class="event-mgmt">
       <!-- LEFT COLUMN: EVENT LIST -->
-      <div class="event-mgmt__create">
-        <form action="/management/event" method="get" class="event-create__form">
-          <input type="hidden" name="profile_id" value="{{ profile_id }}" />
-          <input type="submit" value="Create New Event" />
-        </form>
-      </div>
-      
       <div class="event-mgmt__list">
+        <div class="event-mgmt__create">
+          <form action="/management/event" method="get" class="event-create__form">
+            <input type="hidden" name="profile_id" value="{{ profile_id }}" />
+            <input type="submit" value="Create New Event" class="event-create__button"/>
+          </form>
+        </div>
         {% for day in all_event %}
           <div class="event-list">
             <div class="event-list__day">{{ day.full_date }}</div>
@@ -90,7 +89,7 @@
                 <!-- Start -->
                 <input type="datetime-local" name="start_time" class="event-details__input" value="{{ selected_event.start_time}}" />-
                 <!-- End -->
-                <input type="datetime-local" name="end_time" class="event-details__input" value="{{ selected_event.end_time}}" />
+                <input type="time" name="end_time" class="event-details__input" value="{{ selected_event.end_time }}" />
               </div>
 
               <div class="event-details__row">
@@ -114,7 +113,7 @@
                 <!-- Start -->
                 <input type="datetime-local" name="start_time" class="event-details__input" required/>-
                 <!-- End -->
-                <input type="datetime-local" name="end_time" class="event-details__input" required/>
+                <input type="time" name="end_time" class="event-details__input" required/>
               </div>
 
               <div class="event-details__row">

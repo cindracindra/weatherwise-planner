@@ -58,6 +58,7 @@ input[type="submit"] {
 .event-mgmt__list {
     height: 600px;
     overflow-y: auto;
+    grid-template-rows: 1fr 2fr;
 }
 
 .event-mgmt__details {
@@ -71,6 +72,11 @@ input[type="submit"] {
 .event-create__form {
     display: flex;
     justify-content: flex-end;
+}
+
+
+.event-create__button {
+    display: flex;
     margin-bottom: 20px;
     margin-right: 5px;
     border-radius: 4px;
