@@ -11,6 +11,9 @@ import requests
 from requests import Response
 from config import Config
 from typing import Dict, Any
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class WeatherAPIError(Exception):
@@ -69,7 +72,8 @@ def _make_request(params: dict) -> Dict[str, Any]:
 
         # Parse and return JSON response
         return response.json()
-
+    except requests.exceptions.Timeout as e:
+        raise
     except requests.RequestException as e:
         # Wrap all requests exceptions in our custom exception
         raise WeatherAPIError(f"Weather API request failed: {e}") from e
@@ -121,8 +125,14 @@ def fetch_current_weather() -> Dict[str, Any]:
         "current": ",".join(current),
         "timezone": Config.TIMEZONE
     }
-
-    return _make_request(params)
+    try:
+        return _make_request(params)
+    except requests.exceptions.Timeout:
+        logger.warning(f"Current weather API timeout")
+        return {"current": {"temperature_2m": None, "weather_code": None}}
+    except WeatherAPIError as e:
+        logger.error(f"Failed to fetch current weather: {e}")
+        return {"current": {"temperature_2m": None, "weather_code": None}}
 
 
 def fetch_hourly_forecast_today() -> Dict[str, Any]:
@@ -175,7 +185,14 @@ def fetch_hourly_forecast_today() -> Dict[str, Any]:
         "forecast_days": 1,  # Only today
     }
 
-    return _make_request(params)
+    try:
+        return _make_request(params)
+    except requests.exceptions.Timeout:
+        logger.warning(f"Hourly forecast API timeout")
+        return {"hourly": {"temperature_2m": [], "weather_code": []}}
+    except WeatherAPIError as e:
+        logger.error(f"Hourly forecast API error: {e}")
+        return {"hourly": {"temperature_2m": [], "weather_code": []}}
 
 
 def fetch_daily_forecast() -> Dict[str, Any]:
@@ -223,4 +240,11 @@ def fetch_daily_forecast() -> Dict[str, Any]:
         "forecast_days": 16
     }
 
-    return _make_request(params)
+    try:
+        return _make_request(params)
+    except requests.exceptions.Timeout:
+        logger.warning(f"Daily forecast API timeout")
+        return {"daily": {"time": [], "weather_code": []}}
+    except WeatherAPIError as e:
+        logger.error(f"Daily forecast API error: {e}")
+        return {"daily": {"time": [], "weather_code": []}}
