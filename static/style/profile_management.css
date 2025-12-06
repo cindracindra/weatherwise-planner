@@ -38,7 +38,7 @@ body {
 
 .profile-mgmt__create,
 .profile-mgmt__delete {
-    background-color: rgb(255, 246, 237);
+    background-color:  #f1e9e1;
     border-radius: 15px;
     padding: 20px;
     font-size: 14px;
