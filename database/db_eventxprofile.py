@@ -58,7 +58,6 @@ def get_eventxprofiles() -> Tuple[Response, int]:
             StatusCode.INTERNAL_SERVER_ERROR, {"error": f"{str(e)}"}
         )
 
-    
 def get_eventxprofile_by_id(eventxprofileid: Any) -> Tuple[Response, int]:
     """Get a single event-profile association by ID."""
     validated_id = validate_id(eventxprofileid)
