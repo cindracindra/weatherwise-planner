@@ -1,9 +1,10 @@
 """
 Calendar service - Business logic for calendar generation.
 
-This module provides functions for building monthly calendar grids that combine
-date information with holidays and weather data. It orchestrates data from
-holiday_service and weather_service to create rich CalendarMonth objects for
+This module provides functions for building monthly calendar
+grids that combine date information with holidays and weather
+data. It orchestrates data from holiday_service and weather_service
+to create rich CalendarMonth objects for
 display in the application.
 
 The calendar generation follows a multi-layer approach:
@@ -83,7 +84,8 @@ def get_calendar_with_holidays(year: int, month: int) -> CalendarMonth:
 
     Creates a CalendarMonth object with all days populated with their
     corresponding holiday data. Days with no holidays have empty holiday lists.
-    The current day is also marked for highlighting if displaying current month.
+    The current day is also marked for highlighting if displaying
+    current month.
 
     Args:
         year: Year for the calendar (4-digit integer)
@@ -122,10 +124,9 @@ def get_calendar_with_holidays(year: int, month: int) -> CalendarMonth:
 
     current_day = get_current_day_if_matches(year, month)
 
-    return CalendarMonth(year=year,
-                         month=month,
-                         weeks=weeks,
-                         current_day=current_day)
+    return CalendarMonth(
+        year=year, month=month, weeks=weeks, current_day=current_day
+    )
 
 
 def get_calendar_with_weather(year: int, month: int) -> CalendarMonth:

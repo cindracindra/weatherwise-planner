@@ -1,9 +1,10 @@
 import calendar
 from datetime import datetime
 
+
 def get_today_detail():
     now = datetime.now()
-    
+
     today_detail = {
         "day": int(now.day),
         "month": int(now.month),
@@ -11,5 +12,5 @@ def get_today_detail():
         "day_name": calendar.day_name[now.weekday()],
         "month_name": calendar.month_name[now.month],
     }
-    
+
     return today_detail

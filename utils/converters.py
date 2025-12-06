@@ -15,6 +15,6 @@ def weather_code_to_info(code: int) -> Tuple[Optional[str], Optional[str]]:
     code_str = str(code)
     info = code_data.get(code_str, {})
     if info:
-        return info['icon'], info['label']
-    
+        return info["icon"], info["label"]
+
     return None, None

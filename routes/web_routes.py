@@ -2,9 +2,9 @@
 
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 
-from database.profile import get_profiles, create_profile, delete_profile
-from database.event import get_event_by_id, update_event
-from database.event_composite import (
+from database.db_profile import get_profiles, create_profile, delete_profile
+from database.db_event import get_event_by_id, update_event
+from database.db_composite import (
     get_events_by_profile_id,
     get_events_by_profile_id_by_month,
     create_event_and_profile_association,
@@ -34,7 +34,8 @@ def homepage():
         flash('Select a profile to manage events.', 'error')
 
     profile_id = request.args.get("profile_id", "")
-    profile_list = get_profiles()
+    profile_response, _ = get_profiles()
+    profile_data = profile_response.get_json()["data"]
 
     today = get_today_detail()
     calendar_matrix = get_full_calendar(today["year"], today["month"])
@@ -43,12 +44,13 @@ def homepage():
     hourly_forecast = [reading.to_dict() for reading in hourly_forecast]
 
     if profile_id:
-        monthly_event_list = get_events_by_profile_id_by_month(
+        monthly_event_response, _ = get_events_by_profile_id_by_month(
             profile_id, today["year"], today["month"]
         )
-        daily_event_list = build_daily_event_list(monthly_event_list)
+        monthly_event_data = monthly_event_response.get_json()["data"]
+        daily_event_list = build_daily_event_list(monthly_event_data)
     else:
-        monthly_event_list = []
+        monthly_event_data = {}
         daily_event_list = []
 
     return render_template(
@@ -56,8 +58,8 @@ def homepage():
         calendar_matrix=calendar_matrix,
         today_detail=today,
         profile_id=profile_id,
-        profile_list=profile_list["profiles"],
-        monthly_event_list=monthly_event_list,
+        profile_list=profile_data["profiles"],
+        monthly_event_list=monthly_event_data.get("events", []),
         daily_event_list=daily_event_list,
         hourly_forecast=hourly_forecast,
     )
@@ -92,13 +94,16 @@ def web_management():
     selected_event = None
 
     if profile_id:
-        event_by_profile = get_events_by_profile_id(profile_id)
-        all_event = group_all_events_by_full_date(event_by_profile)
+        event_response, _ = get_events_by_profile_id(profile_id)
+        event_data = event_response.get_json()["data"]
+        all_event = group_all_events_by_full_date(event_data)
 
         if selected_event_id:
-            event = get_event_by_id(selected_event_id)
-            if event and len(event) > 0:
-                selected_event = parse_event_for_datepicker(event[0])
+            event_response, _ = get_event_by_id(selected_event_id)
+            response_json = event_response.get_json()
+            event = response_json["data"]
+            if event and not event.get("error"):
+                selected_event = parse_event_for_datepicker(event)
 
         # Handle flash messages
         if code in [200, 201]:
@@ -162,8 +167,7 @@ def web_delete_event():
     """Delete event from web form."""
     profile_id = request.form.get("profile_id", "")
     event_id = safe_int(request.form.get("event_id", ""))
-    result = delete_event_and_profile_association(event_id)
-    status = 200 if result.get("success") else 404
+    result, status = delete_event_and_profile_association(event_id)
     return redirect(url_for(
         "web.web_management",
         reqHttpCode=status,
@@ -174,7 +178,8 @@ def web_delete_event():
 def web_profile():
     """Profile management page."""
     code = safe_int(request.args.get("reqHttpCode"), 100)
-    profile_list = get_profiles()
+    profile_response, _ = get_profiles()
+    profile_data = profile_response.get_json()["data"]
 
     if code in [200, 201]:
         flash('Profile successfully created/deleted', 'success')
@@ -183,7 +188,7 @@ def web_profile():
 
     return render_template(
         "management_profile.html",
-        profile_list=profile_list["profiles"])
+        profile_list=profile_data["profiles"])
 
 
 @web_bp.route("/management/profile/create", methods=["POST"])

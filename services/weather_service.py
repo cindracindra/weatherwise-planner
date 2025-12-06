@@ -1,15 +1,16 @@
 """
 Weather service - Business logic for weather data.
 
-This module provides functions for retrieving and processing weather information.
-It transforms raw API data into structured WeatherReading and WeatherCode objects
-with human-readable labels and icons.
+This module provides functions for retrieving and processing
+weather information.It transforms raw API data into structured
+WeatherReading and WeatherCode objects with human-readable
+labels and icons.
 """
 
 from utils.converters import (
     round_temperature,
     round_temperatures,
-    weather_code_to_info
+    weather_code_to_info,
 )
 from api import weather_api
 from models.api_models.weather import WeatherCode, WeatherReading
@@ -50,10 +51,7 @@ def get_current_weather() -> WeatherReading:
     weather_code = WeatherCode(code=code, icon=icon, label=label)
 
     # Return structured weather reading
-    return WeatherReading(
-        temperature=rounded_temp,
-        weather_code=weather_code
-    )
+    return WeatherReading(temperature=rounded_temp, weather_code=weather_code)
 
 
 def get_hourly_forecast_today() -> List[WeatherReading]:
@@ -90,10 +88,7 @@ def get_hourly_forecast_today() -> List[WeatherReading]:
 
         # Create weather reading for this hour
         hourly_forecast.append(
-            WeatherReading(
-                temperature=temp,
-                weather_code=weather_code
-            )
+            WeatherReading(temperature=temp, weather_code=weather_code)
         )
     return hourly_forecast
 
@@ -103,14 +98,15 @@ def get_daily_forecast() -> Dict[str, WeatherCode]:
     """
     Get daily weather forecast for the next 16 days.
 
-    Fetches daily forecast data from Open-Meteo API and processes it into
-    a dictionary mapping date strings to WeatherCode objects. This function
-    is used internally by calendar_service to add weather icons to calendar days.
+    Fetches daily forecast data from Open-Meteo API and processes
+    it into a dictionary mapping date strings to WeatherCode objects.
+    This function is used internally by calendar_service to add weather
+    icons to calendar days.
 
     Returns:
-        Dictionary mapping ISO date strings (YYYY-MM-DD) to WeatherCode objects.
-        Each WeatherCode contains the weather condition code, icon, and label
-        for that day.
+        Dictionary mapping ISO date strings (YYYY-MM-DD) to WeatherCode
+        objects. Each WeatherCode contains the weather condition code,
+        icon, and label for that day.
     """
     data = weather_api.fetch_daily_forecast()
 
@@ -122,8 +118,8 @@ def get_daily_forecast() -> Dict[str, WeatherCode]:
 
     for date_str, code in zip(dates, codes):
         icon, label = weather_code_to_info(code)
-        weather_codes[date_str] = WeatherCode(code=code,
-                                              icon=icon,
-                                              label=label)
+        weather_codes[date_str] = WeatherCode(
+            code=code, icon=icon, label=label
+        )
 
     return weather_codes

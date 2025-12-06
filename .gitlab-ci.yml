@@ -9,8 +9,8 @@ python-formatting:
   before_script:
     - pip install flake8
   script:
-    - flake8 app.py api/*.py models/*
-  allow_failure: true # Temporarily allow formatting failures
+    - flake8 app.py database/*.py routes/*.py services/*.py utils/*.py models/**/*.py
+  allow_failure: false # Changed: Formatting must pass
 
 python-tests:
   stage: test
@@ -28,7 +28,7 @@ python-tests:
     paths:
       - coverage.xml
     expire_in: 30 days
-  allow_failure: true # Temporarily allow test failures
+  allow_failure: false # Changed: Tests must pass before deployment
 
 deploy-to-impaas:
   stage: deploy

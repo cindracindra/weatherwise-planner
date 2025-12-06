@@ -2,7 +2,8 @@ from datetime import datetime, timezone
 from collections import defaultdict
 
 
-# ===================== homepage ===================== 
+# ===================== homepage =====================
+
 
 def build_daily_event_list(event_by_profile):
     """
@@ -35,9 +36,9 @@ def build_daily_event_list(event_by_profile):
 
         # Filter today event
         if (
-            start_dt.year == current_year and
-            start_dt.month == current_month and
-            start_dt.day == current_day
+            start_dt.year == current_year
+            and start_dt.month == current_month
+            and start_dt.day == current_day
         ):
             # Compute integer+fraction hours
             start_int = start_dt.hour + start_dt.minute / 60
@@ -45,18 +46,21 @@ def build_daily_event_list(event_by_profile):
 
             duration = end_int - start_int
 
-            daily_events.append({
-                "id": event["id"],
-                "name": event["name"],
-                "start_time": start_dt.isoformat().replace("+00:00", "Z"),
-                "end_time": end_dt.isoformat().replace("+00:00", "Z"),
-                "location": event["location"],
-                "start_int": start_int,
-                "end_int": end_int,
-                "duration": duration
-            })
+            daily_events.append(
+                {
+                    "id": event["id"],
+                    "name": event["name"],
+                    "start_time": start_dt.isoformat().replace("+00:00", "Z"),
+                    "end_time": end_dt.isoformat().replace("+00:00", "Z"),
+                    "location": event["location"],
+                    "start_int": start_int,
+                    "end_int": end_int,
+                    "duration": duration,
+                }
+            )
 
     return daily_events
+
 
 def monthly_events_grouped(event_by_profile):
     """
@@ -93,14 +97,13 @@ def monthly_events_grouped(event_by_profile):
 
     # Convert dict → sorted list by day number
     result = [
-        {"day": day, "daily_events": days[day]}
-        for day in sorted(days.keys())
+        {"day": day, "daily_events": days[day]} for day in sorted(days.keys())
     ]
 
     return result
 
 
-# ===================== event management page ===================== 
+# ===================== event management page =====================
 
 
 def group_all_events_by_full_date(event_by_profile):
@@ -130,7 +133,7 @@ def group_all_events_by_full_date(event_by_profile):
         {"full_date": date, "daily_events": daily_groups[date]}
         for date in sorted(
             daily_groups.keys(),
-            key=lambda d: datetime.strptime(d, "%A, %d %B %Y")
+            key=lambda d: datetime.strptime(d, "%A, %d %B %Y"),
         )
     ]
 
@@ -141,9 +144,10 @@ def parse_event_for_datepicker(selected_event: dict) -> dict:
     """
     Takes a selected_event dict and returns a new dict with:
       - original fields preserved
-      - start_time_local and end_time_local formatted for <input type="datetime-local">
-        (YYYY-MM-DDTHH:MM)
+      - start_time_local and end_time_local formatted for
+        <input type="datetime-local"> (YYYY-MM-DDTHH:MM)
     """
+
     def to_datetime_local(value: str) -> str:
         if not value:
             return ""
@@ -152,7 +156,11 @@ def parse_event_for_datepicker(selected_event: dict) -> dict:
 
     parsed_event = selected_event.copy()
 
-    parsed_event['start_time'] = to_datetime_local(selected_event.get('start_time'))
-    parsed_event['end_time'] = to_datetime_local(selected_event.get('end_time'))
+    parsed_event["start_time"] = to_datetime_local(
+        selected_event.get("start_time")
+    )
+    parsed_event["end_time"] = to_datetime_local(
+        selected_event.get("end_time")
+    )
 
     return parsed_event
