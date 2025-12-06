@@ -36,7 +36,8 @@ def parse_datetime(value: str) -> datetime | StatusCode:
     except (ValueError, TypeError, AttributeError):
         return StatusCode.BAD_REQUEST.value
 
-def parse_datetime(value: datetime) -> datetime
+
+def parse_datetime(value: datetime) -> datetime:
     return value
 
 
