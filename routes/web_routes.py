@@ -18,6 +18,7 @@ from utils.datafeed import (
     monthly_events_grouped,
     group_all_events_by_full_date,
     parse_event_for_datepicker,
+    parse_incoming_start_and_end_time,
 )
 from utils.helpers import safe_int
 
@@ -178,10 +179,16 @@ def web_create_event():
     """Create new event from web form."""
     profile_id = request.form.get("profile_id", "")
     data = request.form
+
+    time_data = parse_incoming_start_and_end_time(
+        data["start_time"],
+        data["end_time"]
+    )
+
     result, status = create_event_and_profile_association(
         data["name"],
-        data["start_time"],
-        data["end_time"],
+        time_data["start_time"],
+        time_data["end_time"],
         data["location"],
         profile_id,
     )
@@ -197,7 +204,16 @@ def web_update_event():
     """Update existing event from web form."""
     profile_id = request.form.get("profile_id", "")
     event_id = safe_int(request.form.get("event_id", ""))
-    data = request.form
+    data = request.form.to_dict()
+
+    time_data = parse_incoming_start_and_end_time(
+        data["start_time"],
+        data["end_time"]
+    )
+
+    data["start_time"] = time_data["start_time"]
+    data["end_time"] = time_data["end_time"]
+
     result, status = update_event(event_id, data)
     return redirect(
         url_for(

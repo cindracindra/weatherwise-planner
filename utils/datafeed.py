@@ -208,13 +208,46 @@ def parse_event_for_datepicker(selected_event: dict) -> dict:
         dt = _parse_datetime(value)
         return dt.strftime("%Y-%m-%dT%H:%M")
 
+    def to_time_local(value) -> str:
+        if not value:
+            return ""
+        # Parse the datetime (handles both strings and datetime objects)
+        dt = _parse_datetime(value)
+        return dt.strftime("%H:%M")
+
     parsed_event = selected_event.copy()
 
     parsed_event["start_time"] = to_datetime_local(
         selected_event.get("start_time")
     )
-    parsed_event["end_time"] = to_datetime_local(
+    parsed_event["end_time"] = to_time_local(
         selected_event.get("end_time")
     )
 
     return parsed_event
+
+
+def parse_incoming_start_and_end_time(
+    start_dt_str: str,
+    end_time_str: str
+) -> dict:
+    """
+    Takes:
+        start_dt_str: "YYYY-MM-DDTHH:MM"  (datetime-local format)
+        end_time_str: "HH:MM"             (time input)
+
+    Returns:
+        dict with keys:
+            'start_time': datetime object
+            'end_time': datetime object
+    """
+
+    start_dt = datetime.strptime(start_dt_str, "%Y-%m-%dT%H:%M")
+
+    end_h, end_m = end_time_str.split(":")
+    end_dt = start_dt.replace(hour=int(end_h), minute=int(end_m))
+
+    return {
+        "start_time": start_dt,
+        "end_time": end_dt
+    }

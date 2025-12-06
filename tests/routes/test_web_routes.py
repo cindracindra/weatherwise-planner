@@ -159,8 +159,8 @@ class TestEventCRUDWebRoutes:
             response = client.post('/management/event/create', data={
                 'profile_id': '1',
                 'name': 'New Event',
-                'start_time': '2025-12-10T10:00:00',
-                'end_time': '2025-12-10T12:00:00',
+                'start_time': '2025-12-10T10:00',
+                'end_time': '12:00',
                 'location': 'Test Location'
             })
             assert response.status_code == 302
@@ -177,7 +177,10 @@ class TestEventCRUDWebRoutes:
             response = client.post('/management/event/update', data={
                 'profile_id': '1',
                 'event_id': '1',
-                'name': 'Updated Event'
+                'name': 'Updated Event',
+                'start_time': '2025-12-10T10:00',
+                'end_time': '12:00',
+                'location': 'Test Location'
             })
             assert response.status_code == 302
             assert 'reqHttpCode=200' in response.location
