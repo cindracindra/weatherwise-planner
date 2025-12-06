@@ -47,9 +47,9 @@ def _parse_datetime(dt):
 # ===================== homepage =====================
 
 
-def build_daily_event_list(event_by_profile):
+def build_daily_event_list(event_by_month):
     """
-    Convert event_by_profile → daily_event_list for the current day.
+    Convert event_by_month → daily_event_list for the current day.
     Adds start_int, end_int, and duration to each event.
     expected return [
     {
@@ -65,11 +65,9 @@ def build_daily_event_list(event_by_profile):
     ]
     """
     now = datetime.now(timezone.utc)
-    current_year = now.year
-    current_month = now.month
     current_day = now.day
 
-    events = event_by_profile.get("events", [])
+    events = event_by_month.get("events", [])
     daily_events = []
 
     for event in events:
@@ -78,11 +76,8 @@ def build_daily_event_list(event_by_profile):
         end_dt = _parse_datetime(event["end_time"])
 
         # Filter today event
-        if (
-            start_dt.year == current_year
-            and start_dt.month == current_month
-            and start_dt.day == current_day
-        ):
+        if start_dt.day == current_day:
+            
             # Compute integer+fraction hours
             start_int = start_dt.hour + start_dt.minute / 60
             end_int = end_dt.hour + end_dt.minute / 60
@@ -105,10 +100,9 @@ def build_daily_event_list(event_by_profile):
     return daily_events
 
 
-def monthly_events_grouped(event_by_profile):
+def monthly_events_grouped(event_by_month):
     """
-    Convert event_by_profile → monthly_event_list
-    using *current year* and *current month* automatically.
+    Convert event_by_month → monthly_event_list grouped by day.
 
     Output format:
     [
@@ -117,20 +111,12 @@ def monthly_events_grouped(event_by_profile):
     ]
     """
 
-    now = datetime.now(timezone.utc)
-    current_year = now.year
-    current_month = now.month
-
-    events = event_by_profile.get("events", [])
+    events = event_by_month.get("events", [])
     days = {}
 
     for event in events:
         # Parse datetime strings to datetime objects if needed
         start_dt = _parse_datetime(event["start_time"])
-
-        # Only include events happening this month
-        if start_dt.year != current_year or start_dt.month != current_month:
-            continue
 
         day = start_dt.day
 
