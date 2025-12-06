@@ -66,7 +66,8 @@ def homepage():
         if monthly_event_json.get("statusCode") != 200:
             flash(
                 f'Could not load events: {
-                    monthly_event_json.get("data", {}).get("error", "Unknown error")}',
+                    monthly_event_json.get(
+                        "data", {}).get("error", "Unknown error")}',
                 "error",
             )
             monthly_event_list = []
