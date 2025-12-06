@@ -55,7 +55,7 @@ def _make_request(year: int, country_code: str) -> Dict[str, Any]:
         # Make GET request with timeout from config
         response: Response = requests.get(
             f"{Config.NAGER_DATE_BASE_URL}/{year}/{country_code}",
-            timeout=Config.API_REQUEST_TIMEOUT
+            timeout=Config.API_TIMEOUT
         )
 
         # Raise exception for HTTP errors status codes

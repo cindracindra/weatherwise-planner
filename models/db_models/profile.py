@@ -1,6 +1,6 @@
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 
-from models.base import Base
+from models.db_models.base import Base
 
 
 class Profile(Base):
@@ -9,4 +9,4 @@ class Profile(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str]
 
-    event_profile = relationship("Event_Profile", back_populates="profile")
+    eventxprofile = relationship("EventXProfile", back_populates="profile")

@@ -16,7 +16,9 @@ from models.api_models.holiday import Holiday
 
 
 @lru_cache(maxsize=1)
-def get_public_holidays(year: int = 2025, country_code: str = "GB") -> Dict[date, List[str]]:
+def get_public_holidays(
+    year: int = 2025, country_code: str = "GB"
+) -> Dict[date, List[str]]:
     """
     Get all public holidays for a year, organized by date.
 
