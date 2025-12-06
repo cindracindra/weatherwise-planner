@@ -30,7 +30,10 @@ def validate_required_fields(
     return None
 
 
-def parse_datetime(value: str) -> datetime | StatusCode:
+def parse_datetime(value) -> datetime | StatusCode:
+    if isinstance(value, datetime):
+        return value
+
     try:
         return datetime.fromisoformat(value)
     except (ValueError, TypeError, AttributeError):
