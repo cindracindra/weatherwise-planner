@@ -226,14 +226,16 @@ def parse_event_for_datepicker(selected_event: dict) -> dict:
 
     return parsed_event
 
-from datetime import datetime
 
-def parse_incoming_start_and_end_time(start_dt_str: str, end_time_str: str) -> dict:
+def parse_incoming_start_and_end_time(
+    start_dt_str: str,
+    end_time_str: str
+) -> dict:
     """
     Takes:
         start_dt_str: "YYYY-MM-DDTHH:MM"  (datetime-local format)
         end_time_str: "HH:MM"             (time input)
-    
+
     Returns:
         dict with keys:
             'start_time': datetime object
@@ -249,4 +251,3 @@ def parse_incoming_start_and_end_time(start_dt_str: str, end_time_str: str) -> d
         "start_time": start_dt,
         "end_time": end_dt
     }
-

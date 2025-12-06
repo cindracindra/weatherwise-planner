@@ -212,7 +212,7 @@ def web_update_event():
     )
 
     data["start_time"] = time_data["start_time"]
-    data["end_time"] =  time_data["end_time"]
+    data["end_time"] = time_data["end_time"]
 
     result, status = update_event(event_id, data)
     return redirect(
