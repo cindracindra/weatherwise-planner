@@ -41,7 +41,9 @@ def get_events() -> Tuple[Response, int]:
         stmt = select(Event)
         with Session(engine) as session:
             events = session.execute(stmt).scalars().unique().all()
-            data = [_serialize_event(event, iso_format=True) for event in events]
+            data = [
+                _serialize_event(event, iso_format=True) for event in events
+            ]
         return build_response(StatusCode.OK, {"events": data})
     except Exception as e:
         return build_response(

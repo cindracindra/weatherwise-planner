@@ -48,7 +48,10 @@ def get_eventxprofiles() -> Tuple[Response, int]:
         stmt = select(EventXProfile)
         with Session(engine) as session:
             eventxprofiles = session.execute(stmt).scalars().all()
-            data = [_serialize_eventxprofile(ep, include_id=True) for ep in eventxprofiles]
+            data = [
+                _serialize_eventxprofile(ep, include_id=True)
+                for ep in eventxprofiles
+            ]
         return build_response(StatusCode.OK, {"eventxprofiles": data})
     except Exception as e:
         return build_response(

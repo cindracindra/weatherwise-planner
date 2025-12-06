@@ -23,6 +23,7 @@ def app():
 def test_get_eventxprofiles(app):
     with app.app_context():
         mock_ep = MagicMock(spec=EventXProfile)
+        mock_ep.id = 10
         mock_ep.eventid = 1
         mock_ep.profileid = 2
 
@@ -36,6 +37,7 @@ def test_get_eventxprofiles(app):
             assert result["statusMessage"] == "SUCCESS"
             assert "eventxprofiles" in result["data"]
             assert len(result["data"]["eventxprofiles"]) == 1
+            assert result["data"]["eventxprofiles"][0]["id"] == 10
             assert result["data"]["eventxprofiles"][0]["eventid"] == 1
             assert result["data"]["eventxprofiles"][0]["profileid"] == 2
 
