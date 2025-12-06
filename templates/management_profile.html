@@ -41,7 +41,7 @@
       <div class="profile-mgmt__create">
         Create New Profile
         <form action="/management/profile/create" method="post" class="profile-item__create-form">
-          <input type="text" name="profile_name" class="profile-create__input" placeholder="profile name" maxlength="15" required/>
+          <input type="text" name="name" class="profile-create__input" placeholder="profile name" maxlength="15" required/>
           <button type="submit" class="profile-create__button">Create</button>
         </form>
       </div>
@@ -50,10 +50,10 @@
       <div class="profile-mgmt__delete">
         Delete Profile
         <form action="/management/profile/delete" method="post" class="profile-item__delete-form">
-          <select name="profile_id" class="profile-item__select" required>
+          <select name="profileid" class="profile-item__select" required>
             <option value="">Select profile </option>
             {% for profile in profile_list %}
-              <option value="{{ profile.id }}" {% if profile.id|string == profile_id|string %}selected{% endif %}>{{ profile.name }}</option>
+              <option value="{{ profile.id }}" {% if profile.id|string == profileid|string %}selected{% endif %}>{{ profile.name }}</option>
             {% endfor %}
           </select>
           <button type="submit" class="profile-delete__button">Delete</button>

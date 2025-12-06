@@ -19,7 +19,7 @@
                 <mxCell id="21" value="event" style="swimlane;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=26;fillColor=default;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;html=1;swimlaneFillColor=#FFFFFF;" parent="1" vertex="1">
                     <mxGeometry x="200" y="400" width="80" height="52" as="geometry"/>
                 </mxCell>
-                <mxCell id="25" value="event_profile" style="swimlane;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=26;fillColor=default;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;html=1;swimlaneFillColor=#FFFFFF;" parent="1" vertex="1">
+                <mxCell id="25" value="eventxprofile" style="swimlane;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=26;fillColor=default;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;html=1;swimlaneFillColor=#FFFFFF;" parent="1" vertex="1">
                     <mxGeometry x="300" y="400" width="80" height="52" as="geometry"/>
                 </mxCell>
                 <mxCell id="26" value="profile" style="swimlane;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=26;fillColor=default;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;html=1;swimlaneFillColor=#FFFFFF;" parent="1" vertex="1">

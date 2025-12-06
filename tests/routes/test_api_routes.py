@@ -177,7 +177,7 @@ class TestProfileAPI:
 
     def test_create_profile_success(self, client):
         """Test POST /api/profiles creates new profile."""
-        profile_data = {"profile_name": "New Profile"}
+        profile_data = {"name": "New Profile"}
         
         with client.application.app_context():
             mock_response = build_response(StatusCode.CREATED, {
@@ -205,68 +205,68 @@ class TestProfileAPI:
                 assert data["statusCode"] == 200
 
 
-# ========== Event-Profile Association API Tests ==========
+# ========== EventXProfile Association API Tests ==========
 
 class TestEventProfileAPI:
-    """Test cases for Event-Profile association API endpoints."""
+    """Test cases for EventXProfile association API endpoints."""
 
-    def test_get_event_profiles_success(self, client):
-        """Test GET /api/event-profiles returns all associations."""
+    def test_get_eventxprofiles_success(self, client):
+        """Test GET /api/eventxprofiles returns all associations."""
         with client.application.app_context():
             mock_response = build_response(StatusCode.OK, {
-                "event_profiles": [
-                    {"event_id": 1, "profile_id": 1},
-                    {"event_id": 2, "profile_id": 1}
+                "eventxprofiles": [
+                    {"eventid": 1, "profileid": 1},
+                    {"eventid": 2, "profileid": 1}
                 ]
             })
             
             with patch('routes.api_routes.get_eventxprofiles', return_value=mock_response):
-                response = client.get('/api/event-profiles')
+                response = client.get('/api/eventxprofiles')
                 assert response.status_code == 200
                 data = response.get_json()
-                assert len(data["data"]["event_profiles"]) == 2
+                assert len(data["data"]["eventxprofiles"]) == 2
 
-    def test_get_event_profile_by_id_success(self, client):
-        """Test GET /api/event-profiles/<id> returns specific association."""
+    def test_get_eventxprofile_by_id_success(self, client):
+        """Test GET /api/eventxprofiles/<id> returns specific association."""
         with client.application.app_context():
             mock_response = build_response(StatusCode.OK, {
                 "id": 1,
-                "event_id": 1,
-                "profile_id": 1
+                "eventid": 1,
+                "profileid": 1
             })
             
             with patch('routes.api_routes.get_eventxprofile_by_id', return_value=mock_response):
-                response = client.get('/api/event-profiles/1')
+                response = client.get('/api/eventxprofiles/1')
                 assert response.status_code == 200
                 data = response.get_json()
-                assert data["data"]["event_id"] == 1
+                assert data["data"]["eventid"] == 1
 
-    def test_create_event_profile_success(self, client):
-        """Test POST /api/event-profiles creates new association."""
+    def test_create_eventxprofile_success(self, client):
+        """Test POST /api/eventxprofiles creates new association."""
         association_data = {"eventid": 1, "profileid": 1}
         
         with client.application.app_context():
             mock_response = build_response(StatusCode.CREATED, {
                 "id": 1,
-                "event_id": 1,
-                "profile_id": 1
+                "eventid": 1,
+                "profileid": 1
             })
             
             with patch('routes.api_routes.create_eventxprofile', return_value=mock_response):
-                response = client.post('/api/event-profiles', json=association_data)
+                response = client.post('/api/eventxprofiles', json=association_data)
                 assert response.status_code == 201
                 data = response.get_json()
                 assert data["statusCode"] == 201
 
-    def test_delete_event_profile_success(self, client):
-        """Test DELETE /api/event-profiles/<id> deletes association."""
+    def test_delete_eventxprofile_success(self, client):
+        """Test DELETE /api/eventxprofiles/<id> deletes association."""
         with client.application.app_context():
             mock_response = build_response(StatusCode.OK, {
                 "message": "EventXProfile 1 deleted."
             })
             
             with patch('routes.api_routes.delete_eventxprofile', return_value=mock_response):
-                response = client.delete('/api/event-profiles/1')
+                response = client.delete('/api/eventxprofiles/1')
                 assert response.status_code == 200
                 data = response.get_json()
                 assert data["statusCode"] == 200
@@ -278,7 +278,7 @@ class TestEventProfileAPI:
 #     def test_get_event_by_id_invalid_id(self, client):
 #         """Test GET /api/events/<id> with invalid ID type."""
 #         mock_error = (
-#             {"error": "Field 'event_id' must be an integer."},
+#             {"error": "Field 'eventid' must be an integer."},
 #             StatusCode.BAD_REQUEST.value
 #         )
 
@@ -596,90 +596,90 @@ class TestEventProfileAPI:
 #             assert "not found" in data["error"].lower()
 
 
-# # ========== Event-Profile API Tests ==========
+# # ========== EventXProfile API Tests ==========
 
 # class TestEventProfileAPI:
-#     """Test cases for Event-Profile association API endpoints."""
+#     """Test cases for EventXProfile association API endpoints."""
 
-#     def test_get_event_profiles_success(self, client):
-#         """Test GET /api/event-profiles returns all associations."""
+#     def test_get_eventxprofiles_success(self, client):
+#         """Test GET /api/eventxprofiles returns all associations."""
 #         mock_associations = {
-#             "event_profiles": [
-#                 {"event_id": 1, "profile_id": 1},
-#                 {"event_id": 2, "profile_id": 1},
-#                 {"event_id": 1, "profile_id": 2}
+#             "eventxprofiles": [
+#                 {"eventid": 1, "profileid": 1},
+#                 {"eventid": 2, "profileid": 1},
+#                 {"eventid": 1, "profileid": 2}
 #             ]
 #         }
 
 #         with patch('routes.api_routes.get_eventxprofiles', return_value=mock_associations):
-#             response = client.get('/api/event-profiles')
+#             response = client.get('/api/eventxprofiles')
 #             assert response.status_code == 200
 #             data = response.get_json()
-#             assert "event_profiles" in data
-#             assert len(data["event_profiles"]) == 3
+#             assert "eventxprofiles" in data
+#             assert len(data["eventxprofiles"]) == 3
 
-#     def test_get_event_profiles_empty(self, client):
-#         """Test GET /api/event-profiles returns empty list when no associations exist."""
-#         mock_associations = {"event_profiles": []}
+#     def test_get_eventxprofiles_empty(self, client):
+#         """Test GET /api/eventxprofiles returns empty list when no associations exist."""
+#         mock_associations = {"eventxprofiles": []}
 
 #         with patch('routes.api_routes.get_eventxprofiles', return_value=mock_associations):
-#             response = client.get('/api/event-profiles')
+#             response = client.get('/api/eventxprofiles')
 #             assert response.status_code == 200
 #             data = response.get_json()
-#             assert "event_profiles" in data
-#             assert len(data["event_profiles"]) == 0
+#             assert "eventxprofiles" in data
+#             assert len(data["eventxprofiles"]) == 0
 
-#     def test_get_event_profile_by_id_success(self, client):
-#         """Test GET /api/event-profiles/<id> returns specific association."""
+#     def test_get_eventxprofile_by_id_success(self, client):
+#         """Test GET /api/eventxprofiles/<id> returns specific association."""
 #         mock_association = (
-#             {"id": 1, "event_id": 1, "profile_id": 1},
+#             {"id": 1, "eventid": 1, "profileid": 1},
 #             StatusCode.OK.value
 #         )
 
 #         with patch('routes.api_routes.get_eventxprofile_by_id', return_value=mock_association):
-#             response = client.get('/api/event-profiles/1')
+#             response = client.get('/api/eventxprofiles/1')
 #             assert response.status_code == 200
 #             data = response.get_json()
 #             assert data["id"] == 1
-#             assert data["event_id"] == 1
-#             assert data["profile_id"] == 1
+#             assert data["eventid"] == 1
+#             assert data["profileid"] == 1
 
-#     def test_get_event_profile_by_id_not_found(self, client):
-#         """Test GET /api/event-profiles/<id> returns 404 when association doesn't exist."""
+#     def test_get_eventxprofile_by_id_not_found(self, client):
+#         """Test GET /api/eventxprofiles/<id> returns 404 when association doesn't exist."""
 #         mock_error = (
 #             {"error": "EventXProfile with id 999 not found."},
 #             StatusCode.NOT_FOUND.value
 #         )
 
 #         with patch('routes.api_routes.get_eventxprofile_by_id', return_value=mock_error):
-#             response = client.get('/api/event-profiles/999')
+#             response = client.get('/api/eventxprofiles/999')
 #             assert response.status_code == 404
 #             data = response.get_json()
 #             assert "error" in data
 #             assert "not found" in data["error"].lower()
 
-#     def test_create_event_profile_success(self, client):
-#         """Test POST /api/event-profiles creates a new association."""
+#     def test_create_eventxprofile_success(self, client):
+#         """Test POST /api/eventxprofiles creates a new association."""
 #         association_data = {
 #             "eventid": 1,
 #             "profileid": 1
 #         }
 
 #         mock_response = (
-#             {"id": 1, "event_id": 1, "profile_id": 1},
+#             {"id": 1, "eventid": 1, "profileid": 1},
 #             StatusCode.CREATED.value
 #         )
 
 #         with patch('routes.api_routes.create_eventxprofile', return_value=mock_response):
-#             response = client.post('/api/event-profiles', json=association_data)
+#             response = client.post('/api/eventxprofiles', json=association_data)
 #             assert response.status_code == 201
 #             data = response.get_json()
 #             assert data["id"] == 1
-#             assert data["event_id"] == 1
-#             assert data["profile_id"] == 1
+#             assert data["eventid"] == 1
+#             assert data["profileid"] == 1
 
-#     def test_create_event_profile_missing_fields(self, client):
-#         """Test POST /api/event-profiles with missing required fields."""
+#     def test_create_eventxprofile_missing_fields(self, client):
+#         """Test POST /api/eventxprofiles with missing required fields."""
 #         association_data = {"eventid": 1}  # Missing profileid
 
 #         mock_error = (
@@ -688,14 +688,14 @@ class TestEventProfileAPI:
 #         )
 
 #         with patch('routes.api_routes.create_eventxprofile', return_value=mock_error):
-#             response = client.post('/api/event-profiles', json=association_data)
+#             response = client.post('/api/eventxprofiles', json=association_data)
 #             assert response.status_code == 400
 #             data = response.get_json()
 #             assert "error" in data
 #             assert "Missing required fields" in data["error"]
 
-#     def test_create_event_profile_invalid_ids(self, client):
-#         """Test POST /api/event-profiles with invalid ID types."""
+#     def test_create_eventxprofile_invalid_ids(self, client):
+#         """Test POST /api/eventxprofiles with invalid ID types."""
 #         association_data = {
 #             "eventid": "not-a-number",
 #             "profileid": 1
@@ -707,14 +707,14 @@ class TestEventProfileAPI:
 #         )
 
 #         with patch('routes.api_routes.create_eventxprofile', return_value=mock_error):
-#             response = client.post('/api/event-profiles', json=association_data)
+#             response = client.post('/api/eventxprofiles', json=association_data)
 #             assert response.status_code == 400
 #             data = response.get_json()
 #             assert "error" in data
 #             assert "must be integers" in data["error"]
 
-#     def test_create_event_profile_not_found(self, client):
-#         """Test POST /api/event-profiles when event or profile doesn't exist."""
+#     def test_create_eventxprofile_not_found(self, client):
+#         """Test POST /api/eventxprofiles when event or profile doesn't exist."""
 #         association_data = {
 #             "eventid": 999,
 #             "profileid": 999
@@ -726,49 +726,49 @@ class TestEventProfileAPI:
 #         )
 
 #         with patch('routes.api_routes.create_eventxprofile', return_value=mock_error):
-#             response = client.post('/api/event-profiles', json=association_data)
+#             response = client.post('/api/eventxprofiles', json=association_data)
 #             assert response.status_code == 404
 #             data = response.get_json()
 #             assert "error" in data
 #             assert "not found" in data["error"].lower()
 
-#     def test_delete_event_profile_success(self, client):
-#         """Test DELETE /api/event-profiles/<id> deletes an association."""
+#     def test_delete_eventxprofile_success(self, client):
+#         """Test DELETE /api/eventxprofiles/<id> deletes an association."""
 #         mock_response = (
 #             {"message": "EventXProfile 1 deleted."},
 #             StatusCode.OK.value
 #         )
 
 #         with patch('routes.api_routes.delete_eventxprofile', return_value=mock_response):
-#             response = client.delete('/api/event-profiles/1')
+#             response = client.delete('/api/eventxprofiles/1')
 #             assert response.status_code == 200
 #             data = response.get_json()
 #             assert "message" in data
 #             assert "deleted" in data["message"].lower()
 
-#     def test_delete_event_profile_not_found(self, client):
-#         """Test DELETE /api/event-profiles/<id> with non-existent association."""
+#     def test_delete_eventxprofile_not_found(self, client):
+#         """Test DELETE /api/eventxprofiles/<id> with non-existent association."""
 #         mock_error = (
 #             {"error": "EventXProfile with id 999 not found."},
 #             StatusCode.NOT_FOUND.value
 #         )
 
 #         with patch('routes.api_routes.delete_eventxprofile', return_value=mock_error):
-#             response = client.delete('/api/event-profiles/999')
+#             response = client.delete('/api/eventxprofiles/999')
 #             assert response.status_code == 404
 #             data = response.get_json()
 #             assert "error" in data
 #             assert "not found" in data["error"].lower()
 
-#     def test_delete_event_profile_invalid_id(self, client):
-#         """Test DELETE /api/event-profiles/<id> with invalid ID type."""
+#     def test_delete_eventxprofile_invalid_id(self, client):
+#         """Test DELETE /api/eventxprofiles/<id> with invalid ID type."""
 #         mock_error = (
-#             {"error": "Field 'event_profile_id' must be an integer."},
+#             {"error": "Field 'eventxprofileid' must be an integer."},
 #             StatusCode.BAD_REQUEST.value
 #         )
 
 #         with patch('routes.api_routes.delete_eventxprofile', return_value=mock_error):
-#             response = client.delete('/api/event-profiles/abc')
+#             response = client.delete('/api/eventxprofiles/abc')
 #             # Flask will return 404 for invalid int in route
 #             assert response.status_code == 404
 
@@ -790,9 +790,9 @@ class TestEventProfileAPI:
 #         # Flask returns 415 Unsupported Media Type when no JSON body is provided
 #         assert response.status_code in [400, 415, 500]
 
-#     def test_event_profile_endpoint_no_json_body(self, client):
-#         """Test POST /api/event-profiles without JSON body."""
-#         response = client.post('/api/event-profiles')
+#     def test_eventxprofile_endpoint_no_json_body(self, client):
+#         """Test POST /api/eventxprofiles without JSON body."""
+#         response = client.post('/api/eventxprofiles')
 #         # Flask returns 415 Unsupported Media Type when no JSON body is provided
 #         assert response.status_code in [400, 415, 500]
 

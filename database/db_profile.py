@@ -44,13 +44,13 @@ def get_profiles() -> Tuple[Response, int]:
         )
 
 
-def get_profile_by_id(profile_id: Any) -> Tuple[Response, int]:
+def get_profile_by_id(profileid: Any) -> Tuple[Response, int]:
     """Get a single profile by ID."""
-    validated_id = validate_id(profile_id)
+    validated_id = validate_id(profileid)
     if not isinstance(validated_id, int):
         return build_response(
             StatusCode.BAD_REQUEST,
-            {"error": "'profile_id' must be an integer."},
+            {"error": "'profileid' must be an integer."},
         )
 
     try:
@@ -74,7 +74,7 @@ def create_profile(data: Any) -> Tuple[Response, int]:
         data = normalize_data(data)
 
         # Validate required fields
-        required_fields = ["profile_name"]
+        required_fields = ["name"]
         field_error = validate_required_fields(data, required_fields)
         if field_error is not None:
             missing = [
@@ -89,7 +89,7 @@ def create_profile(data: Any) -> Tuple[Response, int]:
 
         # Create profile
         with Session(engine) as session:
-            profile = Profile(name=data["profile_name"])
+            profile = Profile(name=data["name"])
             session.add(profile)
             session.commit()
             session.refresh(profile)
@@ -102,13 +102,13 @@ def create_profile(data: Any) -> Tuple[Response, int]:
         )
 
 
-def delete_profile(profile_id: Any) -> Tuple[Response, int]:
+def delete_profile(profileid: Any) -> Tuple[Response, int]:
     """Delete a profile by ID."""
-    validated_id = validate_id(profile_id)
+    validated_id = validate_id(profileid)
     if validated_id == StatusCode.BAD_REQUEST.value:
         return build_response(
             StatusCode.BAD_REQUEST,
-            {"error": "'profile_id' must be an integer."},
+            {"error": "'profileid' must be an integer."},
         )
 
     try:

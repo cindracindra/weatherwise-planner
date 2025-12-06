@@ -37,7 +37,7 @@ def test_get_profiles(app):
 
 def test_create_profile_success(app):
     with app.app_context():
-        data = {"profile_name": "New Profile"}
+        data = {"name": "New Profile"}
 
         mock_profile_instance = MagicMock(spec=Profile)
         mock_profile_instance.id = 1

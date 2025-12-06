@@ -8,7 +8,7 @@
 
 - today_detail=today >> DONE via get_today_detail()
 
-- profile_id=profile_id >> DONE via html args
+- profileid=profileid >> DONE via html args
 
 - profile_list=profile_list["profiles"] >> DONE via get_profiles()
 
@@ -41,7 +41,7 @@ expected return [
 
 ## Event Management page 
 
-- profile_id=profile_id >> DONE via html args
+- profileid=profileid >> DONE via html args
 
 - all_event=all_event >> PENDING, need interim function
 expected return [
