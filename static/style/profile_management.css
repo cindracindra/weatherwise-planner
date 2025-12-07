@@ -5,7 +5,9 @@ body {
     width: 90%;
 }
 
-/* ---------- HEADER ---------- */
+/* =======================
+   1. HEADER
+   ======================= */
 
 .header {
     display: flex;
@@ -26,7 +28,10 @@ body {
     color: white;
 }
 
-/* ---------- PAGE LAYOUT ---------- */
+
+/* =======================
+   2. PAGE LAYOUT
+   ======================= */
 
 .profile-mgmt {
     display: grid;
@@ -64,4 +69,59 @@ body {
     border: none;
     background-color: #5d5757;
     color: white;
+}
+
+/* =======================
+   3. ERROR MESSAGE CONTAINER
+   ======================= */
+
+.flash-message-container {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1000;
+    width: 90%;
+    max-width: 400px;
+}
+
+.flash-toggle {
+    display: none;
+}
+
+.notification {
+    padding: 15px;
+    margin-bottom: 10px;
+    border-radius: 4px;
+    color: #fff;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: opacity 0.3s ease-in-out;
+}
+
+.is-error {
+    background-color: #f44336;
+}
+
+.is-success {
+    background-color: #4CAF50;
+}
+
+.delete-btn {
+    font-size: 24px;
+    font-weight: bold;
+    line-height: 1;
+    cursor: pointer;
+    margin-left: 15px;
+    opacity: 0.8;
+}
+
+.flash-toggle:not(:checked)+.notification {
+    opacity: 0;
+    visibility: hidden;
+    height: 0;
+    padding: 0;
+    margin: 0;
 }
