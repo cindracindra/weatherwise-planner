@@ -30,15 +30,54 @@ We welcome any and all contributions to this project. Please follow the steps li
 
 ## Visuals
 
-[Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.]
+### Landing Page
+<img src="./diagrams/landing_page.png" alt="Landing Page" width="500">
+The landing page presents the monthly calendar with weather icons and event badges displayed on each day. Next to the calendar, the daily timetable shows all events for that day along with hourly temperature data. A profile selection dropdown and a persistent navigation bar are also visible, supporting smooth transitions across the application.
+
+### Event Management Page
+<img src="./diagrams/event_management_page.png" alt="Event Management Page" width="500">
+The event management page displays a list of all events on the left, allowing users to select an event for editing. On the right, the form for creating or updating events is shown, enabling full modification of event details. Flash messages will appear at the top of the page, providing feedback on the success or failure of user actions.
+
+### Profile Management Page
+<img src="./diagrams/profile_managment_page.png" alt="Profile Management Page" width="500">
+The profile management page lists all existing profiles and provides a form for creating new ones. Users can add or delete profiles directly from this interface. Flash messages will confirm the results of profile operations, ensuring clear and immediate feedback.
 
 ## Installation
 
 [Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.]
 
-## Usage
+## User Guide
 
-[Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.]
+This application consists of three main pages, accessible through the persistent navigation bar at the top of the interface:
+
+### 1. Landing Page (/)
+
+- Landing page displays a monthly calendar with event badges and weather icons for each day.
+- Profile dropdown at the top allows users to filter events by profile, automatically updating both the calendar and the daily timetable.
+- Manage Profiles navigation button routes the user to the Profile Management Page, where they can create and delete profiles.
+- Manage Events navigation button routes the user to the Event Management Page, where they can create, edit, and delete events; this button is only accessible once a profile has been selected.
+
+### 2. Event Management Page (/management/event)
+
+- The left panel lists all events booked under the selected profile.
+- Users can edit an event by clicking it in the left panel, which populates the form on the right panel; changes can then be updated and submitted.
+- The Create Event button opens an empty form with all necessary fields to create a new event.
+- Each event in the list has a Delete button to remove it from the system.
+- Flash messages appear at the top of the page after creating, updating, or deleting an event to provide feedback on the action.
+
+### 3. Profile Management Page (/management/profile)
+
+- Users can create new profiles using the Create Profile form.
+- A selected profile can be deleted from the dropdown list using the Delete Profile button.
+- Flash messages appear at the top of the page to confirm the success or failure of all profile operations.
+
+#### Navigation Summary: 
+
+Home → Returns to the landing page
+Manage Events → Open the event management interface
+Manage Profiles → Open the profile management interface
+
+The application is fully server-rendered; each action reloads the page to reflect updated data. Profile selection is preserved automatically across pages.
 
 ## Support
 
