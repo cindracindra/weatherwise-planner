@@ -87,14 +87,14 @@
               <div class="event-details__row">
                 <img src="/static/images/icon-time.png" class="event-details__icon" />
                 <!-- Start -->
-                <input type="datetime-local" name="start_time" class="event-details__input" value="{{ selected_event.start_time}}" />-
+                <input type="datetime-local" name="start_time" class="event-details__input" value="{{ selected_event.start_time}}" required/>-
                 <!-- End -->
-                <input type="time" name="end_time" class="event-details__input" value="{{ selected_event.end_time }}" />
+                <input type="time" name="end_time" class="event-details__input" value="{{ selected_event.end_time }}" required/>
               </div>
 
               <div class="event-details__row">
                 <img src="/static/images/icon-location.png" class="event-details__icon" />
-                <input type="text" name="location" class="event-details__input" placeholder="Location" value="{{ selected_event.location }}" />
+                <input type="text" name="location" class="event-details__input" placeholder="Location" value="{{ selected_event.location }}" required/>
               </div>
 
               <input type="submit" value="Update Event" class="event-details__submit" />
