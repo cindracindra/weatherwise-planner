@@ -12,7 +12,7 @@
 
 - profile_list=profile_list["profiles"] >> DONE via get_profiles()
 
-- monthly_event_list=monthly_event_list >> PENDING, need interim function
+- monthly_event_list=monthly_event_list >> DONE via monthly_events_grouped(event_by_month)
 expected return [
     {
         "day": 27, 
@@ -24,7 +24,7 @@ expected return [
     }
 ]
 
-- daily_event_list=daily_event_list >> PENDING, need interim function
+- daily_event_list=daily_event_list >> DONE via build_daily_event_list(event_by_month)
 expected return [
     {
         "id": 1, # database
@@ -43,7 +43,7 @@ expected return [
 
 - profileid=profileid >> DONE via html args
 
-- all_event=all_event >> PENDING, need interim function
+- all_event=all_event >> DONE via group_all_events_by_full_date(event_by_profile)
 expected return [
     { 
         "full_date": "Thursday, 27 December 2025", 
@@ -55,7 +55,7 @@ expected return [
     }
 ]
 
-- selected_event=selected_event >> PENDING, need interim function
+- selected_event=selected_event >> DONE via get_event_by_id(selected_eventid) and  parse_event_for_datepicker(selected_event)
 expected return [
     {
         "id": 1, # database
