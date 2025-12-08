@@ -68,7 +68,7 @@ The event management page displays a list of all events on the left, allowing us
 
 ### Profile Management Page
 
-<img src="./diagrams/profile_managment_page.png" alt="Profile Management Page" width="500">
+<img src="./diagrams/profile_management_page.png" alt="Profile Management Page" width="500">
 
 The profile management page lists all existing profiles and provides a form for creating new ones. Users can add or delete profiles directly from this interface. Flash messages will confirm the results of profile operations, ensuring clear and immediate feedback.
 
@@ -105,18 +105,6 @@ Manage Profiles → Open the profile management interface
 
 The application is fully server-rendered; each action reloads the page to reflect updated data. Profile selection is preserved automatically across pages.
 
-## Support
-
-Please raise any issues or bugs detected via our issue tracker [here](https://gitlab.doc.ic.ac.uk/msc-software-systems-engineering/sse-tp1/-/issues).
-
-## Roadmap
-
-- [ ] Monthly Calendar Overview
-- [ ] Real-time Weather Feed on Calendar
-- [ ] Event Management (Create & Delete)
-- [ ] Event Management (Update)
-- [ ] Display Events on Calendar
-
 ## API Endpoints
 
 All API routes are prefixed with `/api`.
@@ -136,6 +124,21 @@ All API routes are prefixed with `/api`.
 | `/api/event-profiles/<id>` | GET    | Get association by ID |
 | `/api/event-profiles`      | POST   | Create association    |
 | `/api/event-profiles/<id>` | DELETE | Delete association    |
+
+## Support
+
+Please raise any issues or bugs detected via our issue tracker [here](https://gitlab.doc.ic.ac.uk/msc-software-systems-engineering/sse-tp1/-/issues).
+
+## Roadmap
+
+- [x] Monthly Calendar Overview
+- [x] Display Real-time Weather on Calendar
+- [x] Display Holidays on Calendar
+- [x] Display Events on Calendar
+- [x] Event Management (Query, Create, Update, & Delete)
+- [x] Profile Management (Query, Create & Delete)
+- [x] EventXProfile Management (Query, Create & Delete)
+- [x] API Support for Event, Profile, EventXProfile
 
 ## Contributing
 
