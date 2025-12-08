@@ -75,9 +75,7 @@ def get_eventxprofile_by_id(eventxprofileid: Any) -> Tuple[Response, int]:
                 return build_response(
                     StatusCode.NOT_FOUND,
                     {
-                        "error": f"""
-                        EventXProfile with id {validated_id} not found.
-                        """
+                        "error": f"Object with id {validated_id} not found."
                     },
                 )
             return build_response(
@@ -162,9 +160,7 @@ def delete_eventxprofile(eventxprofileid: Any) -> Tuple[Response, int]:
                 return build_response(
                     StatusCode.NOT_FOUND,
                     {
-                        "error": f"""
-                        EventXProfile with id {validated_id} not found.
-                        """
+                        "error": f"Object with id {validated_id} not found."
                     },
                 )
             session.delete(eventxprofile)
