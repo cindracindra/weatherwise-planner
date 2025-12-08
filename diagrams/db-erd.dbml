@@ -1,8 +1,8 @@
 Table event {
   id integer [primary key]
   name varchar
-  start datetime
-  end datetime
+  start_time datetime
+  end_time datetime
   location varchar
 }
 
@@ -12,6 +12,7 @@ Table profile {
 }
 
 Table eventxprofile {
+  id integer [primary key]
   eventid integer [ref: > event.id]
   profileid integer [ref: > profile.id]
 }
