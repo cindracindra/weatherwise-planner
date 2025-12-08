@@ -157,6 +157,12 @@ def create_event_and_profile_association(
         Tuple of (data dictionary, HTTP status code)
     """
     try:
+        if end_time <= start_time:
+            return build_response(
+                StatusCode.BAD_REQUEST,
+                {"error": "end_time must be later than start_time"},
+            )
+
         with Session(engine) as session:
             # Create the event
             new_event = Event(
