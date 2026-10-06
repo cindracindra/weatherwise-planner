@@ -112,3 +112,28 @@ class TestGetDailyForecast:
         assert isinstance(result["2025-12-01"], WeatherCode)
         assert result["2025-12-01"].code == 0
         assert result["2025-12-01"].icon == "clear-day.svg"
+
+    def test_get_daily_forecast_skips_days_without_code(
+        self,
+        mocker,
+        sample_weather_code_data
+    ):
+        """Days with no weather code are left out, not given a None icon."""
+        mocker.patch(
+            'services.weather_service.weather_api.fetch_daily_forecast',
+            return_value={
+                "daily": {
+                    "time": ["2026-10-20", "2026-10-21"],
+                    "weather_code": [3, None]
+                }
+            }
+        )
+        mocker.patch(
+            'utils.converters._load_code_icons',
+            return_value=sample_weather_code_data
+        )
+
+        result = get_daily_forecast()
+
+        assert list(result) == ["2026-10-20"]
+        assert result["2026-10-20"].icon == "cloudy.svg"

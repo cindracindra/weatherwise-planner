@@ -1,5 +1,5 @@
 """
-Event Calendar Flask Application
+WeatherWise Planner Flask Application
 
 This is the main application file using Flask factory pattern with Blueprints.
 """

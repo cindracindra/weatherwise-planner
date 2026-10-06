@@ -122,6 +122,10 @@ def get_daily_forecast() -> Dict[str, WeatherCode]:
 
     for date_str, code in zip(dates, codes):
         icon, label = weather_code_to_info(code)
+        # The last forecast day can come back without a code; skip it
+        # rather than render a broken icon
+        if icon is None:
+            continue
         weather_codes[date_str] = WeatherCode(
             code=code, icon=icon, label=label
         )
