@@ -1,8 +1,10 @@
-# SSE TP1 - Event Calendar
+# WeatherWise Planner
+
+> **Origin:** This project began as the [SSE TP1 Event Calendar](https://github.com/cindracindra/event-calendar-imperial-group-project), a group project for the Imperial College London MSc Software Systems Engineering, built by De Jun Tan, Cindra, Richard Lee and Timothy Ho. The group's final state is preserved at tag [`v1-group-project`](https://github.com/cindracindra/weatherwise-planner/tree/v1-group-project). All work after that tag is developed independently by Cindra.
 
 ## Name
 
-Event Calendar Web Application
+WeatherWise Planner (formerly Event Calendar Web Application)
 
 [Web Application](https://event-calendar.impaas.uk/)
 [GitLab Repository](https://gitlab.doc.ic.ac.uk/msc-software-systems-engineering/sse-tp1)
