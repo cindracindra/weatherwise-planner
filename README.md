@@ -164,6 +164,10 @@ Thank you for contributing to this project!
 - Richard Lee (rl1625)
 - Timothy Ho (tyh25)
 
+## License
+
+Released under the [MIT License](LICENSE). The original group-project code (up to tag `v1-group-project`) is copyright its four authors; later changes are copyright Cindra.
+
 ## Project status
 
 Active
