@@ -72,7 +72,7 @@ def _make_request(params: dict) -> Dict[str, Any]:
 
         # Parse and return JSON response
         return response.json()
-    except requests.exceptions.Timeout as e:
+    except requests.exceptions.Timeout:
         raise
     except requests.RequestException as e:
         # Wrap all requests exceptions in our custom exception
@@ -128,7 +128,7 @@ def fetch_current_weather() -> Dict[str, Any]:
     try:
         return _make_request(params)
     except requests.exceptions.Timeout:
-        logger.warning(f"Current weather API timeout")
+        logger.warning("Current weather API timeout")
         return {"current": {"temperature_2m": None, "weather_code": None}}
     except WeatherAPIError as e:
         logger.error(f"Failed to fetch current weather: {e}")
@@ -188,7 +188,7 @@ def fetch_hourly_forecast_today() -> Dict[str, Any]:
     try:
         return _make_request(params)
     except requests.exceptions.Timeout:
-        logger.warning(f"Hourly forecast API timeout")
+        logger.warning("Hourly forecast API timeout")
         return {"hourly": {"temperature_2m": [], "weather_code": []}}
     except WeatherAPIError as e:
         logger.error(f"Hourly forecast API error: {e}")
@@ -243,7 +243,7 @@ def fetch_daily_forecast() -> Dict[str, Any]:
     try:
         return _make_request(params)
     except requests.exceptions.Timeout:
-        logger.warning(f"Daily forecast API timeout")
+        logger.warning("Daily forecast API timeout")
         return {"daily": {"time": [], "weather_code": []}}
     except WeatherAPIError as e:
         logger.error(f"Daily forecast API error: {e}")

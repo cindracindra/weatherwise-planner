@@ -6,8 +6,7 @@
 
 WeatherWise Planner (formerly Event Calendar Web Application)
 
-[Web Application](https://event-calendar.impaas.uk/)
-[GitLab Repository](https://gitlab.doc.ic.ac.uk/msc-software-systems-engineering/sse-tp1)
+[![CI](https://github.com/cindracindra/weatherwise-planner/actions/workflows/ci.yml/badge.svg)](https://github.com/cindracindra/weatherwise-planner/actions/workflows/ci.yml)
 
 ## Description
 
@@ -129,7 +128,7 @@ All API routes are prefixed with `/api`.
 
 ## Support
 
-Please raise any issues or bugs detected via our issue tracker [here](https://gitlab.doc.ic.ac.uk/msc-software-systems-engineering/sse-tp1/-/issues).
+Please raise any issues or bugs via the [issue tracker](https://github.com/cindracindra/weatherwise-planner/issues).
 
 ## Roadmap
 
@@ -142,20 +141,20 @@ Please raise any issues or bugs detected via our issue tracker [here](https://gi
 - [x] EventXProfile Management (Query, Create & Delete)
 - [x] API Support for Event, Profile, EventXProfile
 
+## Development
+
+```bash
+python -m venv .venv && source .venv/bin/activate
+pip install -r requirements-dev.txt
+flake8 .
+pytest tests/
+```
+
+Every push to `main` and every pull request runs lint and tests via [GitHub Actions](https://github.com/cindracindra/weatherwise-planner/actions).
+
 ## Contributing
 
-All contributors to this project should follow the following ways-of-working to ensure effective communication and collaboration.
-
-- Create a new issue, task, or incident on our issue tracker [here](https://gitlab.doc.ic.ac.uk/msc-software-systems-engineering/sse-tp1/-/issues).
-- Populate the ticket with the appropriate information and tag.
-- Assign the ticket for someone to work on (this can also be done by Owners and Maintainers).
-- From the ticket, create a new merge request. This also creates a new branch and you can make any changes there.
-- Perform the relevant tests to ensure the new changes do not break existing functionality or intorduce new bugs.
-- Once completed, create a pull/merge request to master branch.
-- Assign a verified Owner or Maintainer to approve your pull/merge request.
-- Once approved, your changes will be deployed via the automated deployment pipeline.
-
-Thank you for contributing to this project!
+Issues and pull requests are welcome. Please open an [issue](https://github.com/cindracindra/weatherwise-planner/issues) first to discuss larger changes, and make sure `flake8 .` and `pytest` pass before opening a pull request.
 
 ## Authors
 

@@ -1,0 +1,3 @@
+[flake8]
+# tests/ predates linting; clean up separately
+exclude = .git,__pycache__,venv,.venv,tests
