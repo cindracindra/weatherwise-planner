@@ -8,6 +8,8 @@ WeatherWise Planner (formerly Event Calendar Web Application)
 
 [![CI](https://github.com/cindracindra/weatherwise-planner/actions/workflows/ci.yml/badge.svg)](https://github.com/cindracindra/weatherwise-planner/actions/workflows/ci.yml)
 
+**Live demo:** https://weatherwise-planner.onrender.com (free hosting, so the first load after a quiet spell can take up to a minute)
+
 ## Description
 
 Event Calendar is a WebApp built to provide scheduling and planning capabilities for individuals. Users would be able to plan activities and events in advance using real-time weather and environmental data for improved productivity and time management.
