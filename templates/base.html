@@ -47,6 +47,14 @@
       </div>
     </header>
 
+    {% if current_user.is_authenticated and current_user.is_demo %}
+      <div class="demo-banner">
+        <div class="wrap demo-banner__inner">
+          You're exploring a demo calendar. Changes are kept until you sign out, and deleted within a day.
+        </div>
+      </div>
+    {% endif %}
+
     <div class="wrap flash-stack" role="status">
       {%- with messages = get_flashed_messages(with_categories=true) -%}
         {%- for category, message in messages -%}

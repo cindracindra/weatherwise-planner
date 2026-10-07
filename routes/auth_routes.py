@@ -11,18 +11,19 @@ from utils.auth import (
     dev_login_enabled, get_or_create_dev_user, google_client,
     google_configured, is_safe_next, upsert_google_user,
 )
+from utils.demo import create_demo_user, delete_demo_user
 
 auth_bp = Blueprint("auth", __name__)
 
 
-def _start_session(user, next_url=None):
+def _start_session(user, next_url=None, lasting=True):
     """Sign `user` in on a fresh session and send them on their way."""
     # A fresh session on sign-in, so nothing from before carries over
     session.clear()
     login_user(user)
-    # Keep the session for PERMANENT_SESSION_LIFETIME (30 days), renewed
-    # on every visit, instead of ending when the browser closes
-    session.permanent = True
+    # Real accounts keep the session for PERMANENT_SESSION_LIFETIME
+    # (30 days), renewed on every visit; a demo's ends with the browser
+    session.permanent = lasting
     if is_safe_next(next_url):
         return redirect(next_url)
     return redirect(url_for("web.homepage"))
@@ -106,10 +107,24 @@ def login_dev():
     return _start_session(get_or_create_dev_user(), request.form.get("next"))
 
 
+@auth_bp.route("/login/demo", methods=["POST"])
+def login_demo():
+    """Try the demo: a fresh throwaway account with sample events."""
+    return _start_session(create_demo_user(), lasting=False)
+
+
 @auth_bp.route("/logout", methods=["POST"])
 def logout():
-    """Sign out: forget the user and clear the session."""
+    """Sign out: forget the user and clear the session. A demo account is
+    deleted on the spot, as nobody can sign back into it."""
+    is_demo = getattr(current_user, "is_demo", False)
+    demo_id = current_user.id if is_demo else None
     logout_user()
     session.clear()
-    flash("You're signed out.", "success")
+    if demo_id is not None:
+        delete_demo_user(demo_id)
+        flash("Thanks for trying WeatherWise. The demo calendar is deleted.",
+              "success")
+    else:
+        flash("You're signed out.", "success")
     return redirect(url_for("auth.login"))

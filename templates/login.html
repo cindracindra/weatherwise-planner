@@ -23,6 +23,12 @@
           <p class="signin__note">Google sign-in isn't set up here: GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET are missing.</p>
         {% endif %}
 
+        <form action="{{ url_for('auth.login_demo') }}" method="post">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="btn">Try the demo</button>
+        </form>
+        <p class="signin__note">No account needed. You get a fresh sample calendar, deleted when you sign out or within a day.</p>
+
         {% if dev_login %}
           <form action="{{ url_for('auth.login_dev') }}" method="post">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
