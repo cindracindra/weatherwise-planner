@@ -245,14 +245,6 @@ select {
   view-transition-name: nav-indicator;
 }
 
-.profile-switcher {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  margin-left: auto;
-  color: var(--muted);
-}
-
 /* ---------- Controls ---------- */
 
 .btn {
@@ -892,48 +884,6 @@ select {
   gap: 4px;
   color: var(--muted);
   font-size: var(--step--1);
-}
-
-/* Profiles */
-
-.person {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 12px 8px 12px 12px;
-  border-radius: var(--radius);
-  transition: background-color 200ms;
-}
-
-.person:hover {
-  background: var(--raise);
-}
-
-.person__initial {
-  display: grid;
-  place-items: center;
-  width: 44px;
-  height: 44px;
-  border-radius: 12px;
-  background: var(--raise-hover);
-  color: var(--text);
-  font-size: var(--step-1);
-}
-
-.person__name {
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  font-size: var(--step-1);
-  font-weight: 600;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.person__actions {
-  display: flex;
-  align-items: center;
-  gap: 4px;
 }
 
 .empty-note {

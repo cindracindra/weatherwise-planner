@@ -1,316 +1,135 @@
-"""
-Test cases for web routes.
+"""Tests for the web pages and their forms, scoped to the current account."""
 
-These tests verify that the Flask web routes properly handle requests,
-render templates, and interact with database functions correctly.
-"""
+from types import SimpleNamespace
+from unittest.mock import patch
 
 import pytest
-from unittest.mock import patch, MagicMock
-from flask import url_for
+
 from app import create_app
-from utils.response import build_response, StatusCode
+from utils.response import StatusCode, build_response
+
+USER = 7
+EVENT = {
+    "id": 5, "name": "Lunch with Sam",
+    "start_time": "2025-12-06T12:30:00", "end_time": "2025-12-06T13:30:00",
+    "location": "Borough Market",
+}
+
+
+def events():
+    """A successful get_events() result (needs the app context)."""
+    return build_response(StatusCode.OK, {"events": [EVENT]})
 
 
 @pytest.fixture
 def client():
-    """Create a test client for the Flask app."""
     app = create_app()
-    app.config['TESTING'] = True
-    app.config['SERVER_NAME'] = 'localhost'
-    with app.test_client() as client:
-        with app.app_context():
+    app.config["TESTING"] = True
+    with app.test_client() as client, app.app_context():
+        with patch("routes.web_routes.current_user_id", return_value=USER), \
+             patch("routes.web_routes.get_today_detail",
+                   return_value={"year": 2025, "month": 12, "day": 6, "hour": 9}), \
+             patch("routes.web_routes.get_full_calendar", return_value=[]), \
+             patch("routes.web_routes.get_hourly_forecast_today", return_value=[]):
             yield client
 
 
-@pytest.fixture
-def mock_profiles_response():
-    """Mock profiles response."""
-    return build_response(StatusCode.OK, {
-        "profiles": [
-            {"id": 1, "name": "Test Profile 1"},
-            {"id": 2, "name": "Test Profile 2"}
-        ]
-    })
+# ---------- Home ----------
+
+def test_homepage_shows_this_months_events(client):
+    # One week holding the 6th, so the event has a day cell to appear in
+    day = SimpleNamespace(day=6, weather=None, holidays=[])
+    blank = SimpleNamespace(day=0, weather=None, holidays=[])
+    week = SimpleNamespace(days=[blank] * 6 + [day])
+    calendar = SimpleNamespace(weeks=[week])
+    with patch("routes.web_routes.get_events", return_value=events()) as get, \
+         patch("routes.web_routes.get_full_calendar", return_value=calendar):
+        response = client.get("/")
+    assert response.status_code == 200
+    get.assert_called_once_with(USER, 2025, 12)
+    assert b"Lunch with Sam" in response.data
 
 
-@pytest.fixture
-def mock_events_response():
-    """Mock events response."""
-    return build_response(StatusCode.OK, {
-        "events": [
-            {
-                "id": 1,
-                "name": "Test Event",
-                "start_time": "2025-12-10T10:00:00",
-                "end_time": "2025-12-10T12:00:00",
-                "location": "Test Location"
-            }
-        ]
-    })
+def test_homepage_survives_a_database_error(client):
+    failed = build_response(StatusCode.INTERNAL_SERVER_ERROR, {"error": "db down"})
+    with patch("routes.web_routes.get_events", return_value=failed):
+        response = client.get("/", follow_redirects=True)
+    assert response.status_code == 200
+    assert b"Could not load events: db down" in response.data
 
 
-# ========== Homepage Tests ==========
-
-class TestHomepage:
-    """Test cases for homepage route."""
-
-    def test_homepage_no_profile(self, client, mock_profiles_response):
-        """Test homepage renders without selected profile."""
-        with patch('routes.web_routes.get_profiles', return_value=mock_profiles_response):
-            with patch('routes.web_routes.get_today_detail', return_value={"year": 2025, "month": 12, "day": 6}):
-                with patch('routes.web_routes.get_full_calendar', return_value=[]):
-                    with patch('routes.web_routes.get_hourly_forecast_today', return_value=[]):
-                        response = client.get('/')
-                        assert response.status_code == 200
-                        assert b'Test Profile 1' in response.data
-
-    def test_homepage_with_profile(self, client, mock_profiles_response, mock_events_response):
-        """Test homepage renders with selected profile."""
-        with patch('routes.web_routes.get_profiles', return_value=mock_profiles_response):
-            with patch('routes.web_routes.get_today_detail', return_value={"year": 2025, "month": 12, "day": 6}):
-                with patch('routes.web_routes.get_full_calendar', return_value=[]):
-                    with patch('routes.web_routes.get_hourly_forecast_today', return_value=[]):
-                        with patch('routes.web_routes.get_events_by_profileid_by_month', return_value=mock_events_response):
-                            with patch('routes.web_routes.build_daily_event_list', return_value=[]):
-                                response = client.get('/?profileid=1')
-                                assert response.status_code == 200
-
-    def test_homepage_with_error_flash(self, client, mock_profiles_response):
-        """Test homepage displays error flash message."""
-        with patch('routes.web_routes.get_profiles', return_value=mock_profiles_response):
-            with patch('routes.web_routes.get_today_detail', return_value={"year": 2025, "month": 12, "day": 6}):
-                with patch('routes.web_routes.get_full_calendar', return_value=[]):
-                    with patch('routes.web_routes.get_hourly_forecast_today', return_value=[]):
-                        response = client.get('/?isReqSucc=False')
-                        assert response.status_code == 200
-
-    def test_homepage_invalid_profile_id(self, client, mock_profiles_response):
-        """Test homepage handles invalid profile_id gracefully."""
-        with patch('routes.web_routes.get_profiles', return_value=mock_profiles_response):
-            with patch('routes.web_routes.get_today_detail', return_value={"year": 2025, "month": 12, "day": 6}):
-                with patch('routes.web_routes.get_full_calendar', return_value=[]):
-                    with patch('routes.web_routes.get_hourly_forecast_today', return_value=[]):
-                        with patch('routes.web_routes.get_events_by_profileid_by_month', return_value=mock_profiles_response):
-                            # Use invalid profile_id
-                            response = client.get('/?profile_id=abc')
-                            assert response.status_code == 200
-                            # Should not fail, monthly_event_list will be empty
-                            assert b'Test Profile 1' in response.data
+def test_reload_redirects_home(client):
+    response = client.get("/reload")
+    assert response.status_code == 302
+    assert response.location.endswith("/")
 
 
-# ========== Management Routes Tests ==========
+# ---------- Events page ----------
 
-class TestManagementRoutes:
-    """Test cases for management routes."""
-
-    def test_reload_calendar(self, client):
-        """Test calendar reload redirects correctly."""
-        response = client.get('/reload?profileid=1')
-        assert response.status_code == 302
-        assert '/?' in response.location
-
-    def test_management_handle_form_no_profile(self, client):
-        """Test management form handler without profile."""
-        response = client.get('/management')
-        assert response.status_code == 302
-        assert 'isReqSucc=False' in response.location
-
-    def test_management_handle_form_with_profile(self, client):
-        """Test management form handler with profile."""
-        response = client.get('/management?profileid=1')
-        assert response.status_code == 302
-        assert 'profileid=1' in response.location
-
-    def test_web_management_page(self, client, mock_events_response):
-        """Test event management page renders."""
-        with patch('routes.web_routes.get_events_by_profileid', return_value=mock_events_response):
-            with patch('routes.web_routes.group_all_events_by_full_date', return_value=[]):
-                response = client.get('/management/event?profileid=1')
-                assert response.status_code == 200
-
-    def test_web_management_with_selected_event(self, client, mock_events_response):
-        """Test event management page with selected event."""
-        event_response = build_response(StatusCode.OK, {
-            "id": 1,
-            "name": "Test Event",
-            "start_time": "2025-12-10T10:00:00",
-            "end_time": "2025-12-10T12:00:00",
-            "location": "Test Location"
-        })
-        
-        with patch('routes.web_routes.get_events_by_profileid', return_value=mock_events_response):
-            with patch('routes.web_routes.get_event_by_id', return_value=event_response):
-                with patch('routes.web_routes.group_all_events_by_full_date', return_value=[]):
-                    with patch('routes.web_routes.parse_event_for_datepicker', return_value={}):
-                        response = client.get('/management/event?profileid=1&selected_eventid=1')
-                        assert response.status_code == 200
+def test_events_page_lists_events(client):
+    with patch("routes.web_routes.get_events", return_value=events()) as get:
+        response = client.get("/management/event")
+    assert response.status_code == 200
+    get.assert_called_once_with(USER)
+    assert b"Lunch with Sam" in response.data
 
 
-# ========== Event CRUD Web Routes Tests ==========
-
-class TestEventCRUDWebRoutes:
-    """Test cases for event CRUD web routes."""
-
-    def test_web_load_event(self, client):
-        """Test loading event for editing."""
-        response = client.post('/management/event/load', data={
-            'profileid': '1',
-            'eventid': '1'
-        })
-        assert response.status_code == 302
-        assert 'selected_eventid=1' in response.location
-
-    def test_web_create_event(self, client):
-        """Test creating event from web form."""
-        mock_response = build_response(StatusCode.CREATED, {
-            "event": {"id": 1},
-            "eventxprofile": {"id": 1}
-        })
-        
-        with patch('routes.web_routes.create_event_and_profile_association', return_value=mock_response):
-            response = client.post('/management/event/create', data={
-                'profileid': '1',
-                'name': 'New Event',
-                'start_time': '2025-12-10T10:00',
-                'end_time': '12:00',
-                'location': 'Test Location'
-            })
-            assert response.status_code == 302
-            assert 'reqHttpCode=201' in response.location
-
-    def test_web_update_event(self, client):
-        """Test updating event from web form."""
-        mock_response = build_response(StatusCode.OK, {
-            "id": 1,
-            "name": "Updated Event"
-        })
-        
-        with patch('routes.web_routes.update_event', return_value=mock_response):
-            response = client.post('/management/event/update', data={
-                'profileid': '1',
-                'eventid': '1',
-                'name': 'Updated Event',
-                'start_time': '2025-12-10T10:00',
-                'end_time': '12:00',
-                'location': 'Test Location'
-            })
-            assert response.status_code == 302
-            assert 'reqHttpCode=200' in response.location
-
-    def test_web_delete_event(self, client):
-        """Test deleting event from web form."""
-        mock_response = build_response(StatusCode.OK, {
-            "deleted_event": {"id": 1},
-            "deleted_eventxprofiles": [],
-            "count": 0
-        })
-        
-        with patch('routes.web_routes.delete_event_and_profile_association', return_value=mock_response):
-            response = client.post('/management/event/delete', data={
-                'profileid': '1',
-                'eventid': '1'
-            })
-            assert response.status_code == 302
-            assert 'reqHttpCode=200' in response.location
-    
-    def test_web_delete_event_invalid_id(self, client):
-        """Test deleting event with non-integer event_id."""
-        with patch('routes.web_routes.delete_event_and_profile_association', return_value=(None, 400)):
-            response = client.post('/management/event/delete', data={
-                'profile_id': '1',
-                'event_id': 'abc'
-            })
-            assert response.status_code == 302
-            assert 'reqHttpCode=400' in response.location
-
-    def test_web_delete_event_not_found(self, client):
-        """Test deleting event that does not exist."""
-        mock_response = build_response(StatusCode.NOT_FOUND, {"error": "Event not found"})
-        with patch('routes.web_routes.delete_event_and_profile_association', return_value=(mock_response, 404)):
-            response = client.post('/management/event/delete', data={
-                'profile_id': '1',
-                'event_id': '999'
-            })
-            assert response.status_code == 302
-            assert 'reqHttpCode=404' in response.location
+def test_events_page_loads_selected_event(client):
+    one = build_response(StatusCode.OK, EVENT)
+    with patch("routes.web_routes.get_events", return_value=events()), \
+         patch("routes.web_routes.get_event_by_id", return_value=one) as get_one:
+        response = client.get("/management/event?selected_eventid=5")
+    get_one.assert_called_once_with(5, USER)
+    assert b"Change event" in response.data
 
 
-# ========== Profile Management Web Routes Tests ==========
-
-class TestProfileManagementWebRoutes:
-    """Test cases for profile management web routes."""
-
-    def test_web_profile_page(self, client, mock_profiles_response):
-        """Test profile management page renders."""
-        with patch('routes.web_routes.get_profiles', return_value=mock_profiles_response):
-            response = client.get('/management/profile')
-            assert response.status_code == 200
-            assert b'Test Profile 1' in response.data
-
-    def test_web_profile_page_with_success(self, client, mock_profiles_response):
-        """Test profile page with success flash message."""
-        with patch('routes.web_routes.get_profiles', return_value=mock_profiles_response):
-            response = client.get('/management/profile?reqHttpCode=201')
-            assert response.status_code == 200
-
-    def test_web_profile_page_with_error(self, client, mock_profiles_response):
-        """Test profile page with error flash message."""
-        with patch('routes.web_routes.get_profiles', return_value=mock_profiles_response):
-            response = client.get('/management/profile?reqHttpCode=400')
-            assert response.status_code == 200
-
-    def test_web_create_profile(self, client):
-        """Test creating profile from web form."""
-        mock_response = build_response(StatusCode.CREATED, {
-            "id": 1,
-            "name": "New Profile"
-        })
-        
-        with patch('routes.web_routes.create_profile', return_value=mock_response):
-            response = client.post('/management/profile/create', data={
-                'name': 'New Profile'
-            })
-            assert response.status_code == 302
-            assert 'reqHttpCode=201' in response.location
-
-    def test_web_create_profile_invalid_data(self, client):
-        """Test creating profile with missing/invalid data."""
-        with patch('routes.web_routes.create_profile', return_value=(None, 400)):
-            response = client.post('/management/profile/create', data={
-                'profile_name': ''
-            })
-            assert response.status_code == 302
-            assert 'reqHttpCode=400' in response.location
-
-    def test_web_delete_profile(self, client):
-        """Test deleting profile from web form."""
-        mock_response = build_response(StatusCode.OK, {
-            "message": "Profile 1 deleted."
-        })
-        
-        with patch('routes.web_routes.delete_profile', return_value=mock_response):
-            response = client.post('/management/profile/delete', data={
-                'profileid': '1'
-            })
-            assert response.status_code == 302
-            assert 'reqHttpCode=200' in response.location
-
-    def test_web_delete_profile_invalid_id(self, client):
-        """Test deleting profile with invalid ID."""
-        with patch('routes.web_routes.delete_profile', return_value=(None, 400)):
-            response = client.post('/management/profile/delete', data={
-                'profile_id': 'abc'
-            })
-            assert response.status_code == 302
-            assert 'reqHttpCode=400' in response.location
+def test_load_event_redirects_with_selection(client):
+    response = client.post("/management/event/load", data={"eventid": "5"})
+    assert response.status_code == 302
+    assert "selected_eventid=5" in response.location
 
 
-    def test_web_delete_profile_not_found(self, client):
-        """Test deleting profile that does not exist."""
-        with patch('routes.web_routes.delete_profile', return_value=(None, 404)):
-            response = client.post('/management/profile/delete', data={
-                'profile_id': '999'
-            })
-            assert response.status_code == 302
-            assert 'reqHttpCode=404' in response.location
+# ---------- Forms ----------
+
+FORM = {"name": "Picnic", "start_time": "2026-10-18T12:00",
+        "end_time": "15:00", "location": "Hyde Park"}
+
+
+def test_create_event_for_current_user(client):
+    created = build_response(StatusCode.CREATED, {"id": 9})
+    with patch("routes.web_routes.create_event", return_value=created) as create:
+        response = client.post("/management/event/create", data=FORM)
+    assert "reqHttpCode=201" in response.location
+    data, user = create.call_args[0]
+    assert user == USER
+    assert data["start_time"].hour == 12 and data["end_time"].hour == 15
+
+
+def test_create_event_with_bad_time_does_not_crash(client):
+    with patch("routes.web_routes.create_event") as create:
+        response = client.post("/management/event/create",
+                               data={**FORM, "start_time": ""})
+    assert "reqHttpCode=400" in response.location
+    create.assert_not_called()
+
+
+def test_update_event_for_current_user(client):
+    ok = build_response(StatusCode.OK, {"id": 5})
+    with patch("routes.web_routes.update_event", return_value=ok) as update:
+        response = client.post("/management/event/update",
+                               data={**FORM, "eventid": "5"})
+    assert "reqHttpCode=200" in response.location
+    eventid, _, user = update.call_args[0]
+    assert (eventid, user) == (5, USER)
+
+
+def test_delete_event_for_current_user(client):
+    ok = build_response(StatusCode.OK, {})
+    with patch("routes.web_routes.delete_event", return_value=ok) as delete:
+        response = client.post("/management/event/delete", data={"eventid": "5"})
+    assert "reqHttpCode=200" in response.location
+    delete.assert_called_once_with(5, USER)
+
+
+def test_profile_pages_are_gone(client):
+    assert client.get("/management/profile").status_code == 404

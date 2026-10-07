@@ -66,7 +66,7 @@
           {% endfor %}
         </ol>
 
-        {% if profileid and daily_event_list %}
+        {% if daily_event_list %}
           {#- Lay events along the hours; short ones still get room for their name -#}
           {% set ns = namespace(lanes=[], placed=[], lane=none) %}
           {% for event in daily_event_list|sort(attribute="start_int") %}
@@ -96,31 +96,9 @@
         {% endif %}
       </div>
 
-      {% if profileid and not daily_event_list %}
+      {% if not daily_event_list %}
         <p class="note">Nothing planned today.</p>
       {% endif %}
-    </section>
-  {% endif %}
-
-  {% if not profileid %}
-    <!-- No profile chosen yet -->
-    <section class="choose" aria-labelledby="choose-title">
-      <div class="choose__figure">
-        <div data-hairline-host="vane"></div>
-        <p class="choose__read num" data-hairline-read="vane" aria-hidden="true"></p>
-      </div>
-      <div class="choose__body">
-        <h2 id="choose-title" class="section-title display">Choose a profile</h2>
-        <p class="choose__lede">Your events appear along the day and in the month once you pick whose plans to show.</p>
-        {% if profile_list %}
-          <ul class="choose__list">
-            {% for profile in profile_list %}
-              <li><a href="{{ url_for('web.homepage', profileid=profile.id) }}" class="btn">{{ profile.name }}</a></li>
-            {% endfor %}
-          </ul>
-        {% endif %}
-        <a href="{{ url_for('web.web_profile') }}" class="choose__new">{{ icon("plus") }}New profile</a>
-      </div>
     </section>
   {% endif %}
 
@@ -130,15 +108,11 @@
       <h2 id="month-title" class="section-title display">{{ today_detail.month_name }} {{ today_detail.year }}</h2>
       <div class="actions">
         <form action="{{ url_for('web.reload_calendar') }}" method="get">
-          <input type="hidden" name="profileid" value="{{ profileid }}">
           <button type="submit" class="btn btn--square" title="Refresh forecast">
             {{ icon("arrows-clockwise") }}<span class="sr-only">Refresh forecast</span>
           </button>
         </form>
-        <form action="{{ url_for('web.management_handle_form') }}" method="get">
-          <input type="hidden" name="profileid" value="{{ profileid }}">
-          <button type="submit" class="btn btn--primary">{{ icon("plus") }}Add event</button>
-        </form>
+        <a href="{{ url_for('web.web_management') }}" class="btn btn--primary">{{ icon("plus") }}Add event</a>
       </div>
     </div>
 
@@ -191,11 +165,6 @@
 
 {% block scripts %}
   <script src="{{ url_for('static', filename='js/weather-motion.js') }}" defer></script>
-  {% if not profileid %}
-    <script src="{{ url_for('static', filename='hairline/kernel.js') }}"></script>
-    <script src="{{ url_for('static', filename='hairline/host.js') }}"></script>
-    <script type="module" src="{{ url_for('static', filename='hairline/vane.js') }}"></script>
-  {% endif %}
   <script>
     (function () {
       var strip = document.querySelector("[data-strip]");

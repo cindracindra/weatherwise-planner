@@ -19,16 +19,15 @@
 
     <header class="masthead">
       <div class="wrap masthead__inner">
-        <a href="{{ url_for('web.homepage', profileid=profileid or None) }}" class="brand">
+        <a href="{{ url_for('web.homepage') }}" class="brand">
           {{ icon("cloud-sun") }}WeatherWise
         </a>
 
         <nav class="nav" aria-label="Main">
           {% for key, label, endpoint in [
                ("calendar", "Calendar", "web.homepage"),
-               ("events", "Events", "web.management_handle_form"),
-               ("profiles", "Profiles", "web.web_profile")] %}
-            <a href="{{ url_for(endpoint, profileid=profileid or None) }}" class="nav__link"
+               ("events", "Events", "web.web_management")] %}
+            <a href="{{ url_for(endpoint) }}" class="nav__link"
                {% if active == key %}aria-current="page"{% endif %}>
               {{ label }}
               {% if active == key %}<span class="nav__indicator" aria-hidden="true"></span>{% endif %}
@@ -36,19 +35,6 @@
           {% endfor %}
         </nav>
 
-        {% if profile_list is defined %}
-          <form action="{{ url_for('web.homepage') }}" method="get" class="profile-switcher">
-            <label for="profile-switcher" class="sr-only">Showing events for</label>
-            {{ icon("users-three") }}
-            <select id="profile-switcher" name="profileid" class="select select--inline" data-autosubmit>
-              <option value="">Choose a profile</option>
-              {% for profile in profile_list %}
-                <option value="{{ profile.id }}" {% if profile.id|string == profileid|string %}selected{% endif %}>{{ profile.name }}</option>
-              {% endfor %}
-            </select>
-            <noscript><button type="submit" class="btn">Show</button></noscript>
-          </form>
-        {% endif %}
       </div>
     </header>
 

@@ -29,7 +29,6 @@
             {% set selected = event.id|string == selected_eventid|string %}
             <div class="agenda-row {% if selected %}agenda-row--selected{% endif %}">
               <form action="{{ url_for('web.web_load_event') }}" method="post">
-                <input type="hidden" name="profileid" value="{{ profileid }}">
                 <input type="hidden" name="eventid" value="{{ event.id }}">
                 <button type="submit" class="agenda-row__open" {% if selected %}aria-current="true"{% endif %}>
                   <span class="agenda-row__time num">{{ event.start_time.strftime('%H:%M') }}-{{ event.end_time.strftime('%H:%M') }}</span>
@@ -42,7 +41,6 @@
 
               <form action="{{ url_for('web.web_delete_event') }}" method="post"
                     data-confirm="Delete &quot;{{ event.name }}&quot;? This can't be undone.">
-                <input type="hidden" name="profileid" value="{{ profileid }}">
                 <input type="hidden" name="eventid" value="{{ event.id }}">
                 <button type="submit" class="btn btn--quiet btn--square btn--danger" title="Delete {{ event.name }}">
                   {{ icon("trash") }}<span class="sr-only">Delete {{ event.name }}</span>
@@ -60,7 +58,6 @@
 
       <form action="{{ url_for('web.web_update_event') if selected_event else url_for('web.web_create_event') }}"
             method="post" class="form">
-        <input type="hidden" name="profileid" value="{{ profileid }}">
         {% if selected_event %}
           <input type="hidden" name="eventid" value="{{ selected_eventid }}">
         {% endif %}
@@ -93,7 +90,7 @@
         <div class="actions">
           <button type="submit" class="btn btn--primary">{{ "Save changes" if selected_event else "Add event" }}</button>
           {% if selected_event %}
-            <a href="{{ url_for('web.web_management', profileid=profileid) }}" class="btn btn--quiet">Cancel</a>
+            <a href="{{ url_for('web.web_management') }}" class="btn btn--quiet">Cancel</a>
           {% endif %}
         </div>
       </form>
