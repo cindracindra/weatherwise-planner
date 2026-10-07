@@ -21,3 +21,12 @@
 {% macro hhmm(value) -%}
   {{- value[11:16] if value[4:5] == "-" else value[17:22] -}}
 {%- endmacro %}
+
+{#- Which motion the hero weather gets: rain, snow, cloudy or clear -#}
+{% macro sky_kind(code) -%}
+  {%- if code is none or code in [2, 3, 45, 48] -%}cloudy
+  {%- elif code in [0, 1] -%}clear
+  {%- elif code in [71, 73, 75, 77, 85, 86] -%}snow
+  {%- else -%}rain
+  {%- endif -%}
+{%- endmacro %}

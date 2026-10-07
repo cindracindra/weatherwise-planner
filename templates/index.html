@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_macros.html" import icon, weather_glyph, hhmm %}
+{% from "_macros.html" import icon, weather_glyph, sky_kind, hhmm %}
 {% set active = "calendar" %}
 
 {% set now_hour = today_detail.hour if today_detail.hour is defined else none %}
@@ -9,15 +9,17 @@
 
 {% block content %}
   <!-- Today -->
-  <section class="today" aria-labelledby="today-title">
+  <section class="today" aria-labelledby="today-title" data-wind-zone>
     <h1 id="today-title" class="today__date" data-enter="0">
       {{ today_detail.day_name }} {{ today_detail.day }} {{ today_detail.month_name }}, London
     </h1>
 
     {% if now_reading and now_reading.temperature is not none %}
       <div class="today__now">
-        <span class="today__glyph" data-enter="1">
-          {{ icon(weather_glyph(now_reading.weather_code.code, now_hour)) }}
+        {% set kind = sky_kind(now_reading.weather_code.code) %}
+        {#- Rain and snow are drawn falling, so the icon is the bare cloud -#}
+        <span class="today__glyph" data-enter="1" data-sky="{{ kind }}">
+          {{ icon("cloud" if kind in ["rain", "snow"] else weather_glyph(now_reading.weather_code.code, now_hour)) }}
         </span>
         <div>
           <p class="today__temp display num" data-enter="2">{{ now_reading.temperature }}°</p>
@@ -188,6 +190,7 @@
 {% endblock %}
 
 {% block scripts %}
+  <script src="{{ url_for('static', filename='js/weather-motion.js') }}" defer></script>
   {% if not profileid %}
     <script src="{{ url_for('static', filename='hairline/kernel.js') }}"></script>
     <script src="{{ url_for('static', filename='hairline/host.js') }}"></script>

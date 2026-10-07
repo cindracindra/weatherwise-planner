@@ -491,8 +491,24 @@ select {
   margin-top: 16px;
 }
 
+.today__glyph {
+  position: relative;
+  color: var(--accent);
+}
+
+/* Rain and snow, drawn by static/js/weather-motion.js */
+.today__weather-canvas {
+  position: absolute;
+  top: 0;
+  left: -25%;
+  pointer-events: none;
+}
+
 .today__glyph .icon {
+  position: relative;
+  z-index: 1;
   display: block;
+  will-change: transform;
   font-size: clamp(5rem, 12vw, 8.5rem);
   color: var(--accent);
 }
