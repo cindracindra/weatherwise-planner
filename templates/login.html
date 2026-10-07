@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% from "_macros.html" import icon %}
+
+{% block title %}Sign in | {% endblock %}
+
+{% block content %}
+  <section class="choose signin" aria-labelledby="signin-title">
+    <div class="choose__figure">
+      <div data-hairline-host="vane"></div>
+      <p class="choose__read num" data-hairline-read="vane" aria-hidden="true"></p>
+    </div>
+    <div class="choose__body">
+      <h1 id="signin-title" class="page-head__title display">Plan around the weather</h1>
+      <p class="choose__lede">Your calendar with London's hourly forecast beside it. Sign in to see your events.</p>
+
+      <div class="signin__actions">
+        <button type="button" class="btn btn--primary" disabled
+                title="Google sign-in arrives in the next step">
+          Sign in with Google
+        </button>
+
+        {% if dev_login %}
+          <form action="{{ url_for('auth.login_dev') }}" method="post">
+            <input type="hidden" name="next" value="{{ next }}">
+            <button type="submit" class="btn">{{ icon("code") }}Continue as local developer</button>
+          </form>
+          <p class="signin__note">The local developer sign-in only appears on your own machine.</p>
+        {% endif %}
+      </div>
+    </div>
+  </section>
+{% endblock %}
+
+{% block scripts %}
+  <script src="{{ url_for('static', filename='hairline/kernel.js') }}"></script>
+  <script src="{{ url_for('static', filename='hairline/host.js') }}"></script>
+  <script type="module" src="{{ url_for('static', filename='hairline/vane.js') }}"></script>
+{% endblock %}

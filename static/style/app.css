@@ -245,6 +245,18 @@ select {
   view-transition-name: nav-indicator;
 }
 
+.account {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.account__name {
+  color: var(--muted);
+  font-size: var(--step--1);
+}
+
 /* ---------- Controls ---------- */
 
 .btn {
@@ -669,6 +681,30 @@ select {
 
 .choose__new:hover {
   text-decoration: underline;
+}
+
+/* ---------- Sign in ---------- */
+
+.signin {
+  min-height: 70dvh;
+  padding-top: 48px;
+}
+
+.signin__actions {
+  display: grid;
+  justify-items: start;
+  gap: 12px;
+  margin-top: 28px;
+}
+
+.signin__note {
+  color: var(--faint);
+  font-size: var(--step--1);
+}
+
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 
 /* ---------- Month ---------- */

@@ -1,14 +1,18 @@
 from datetime import datetime
 from typing import Optional
 
+from flask_login import UserMixin
 from sqlalchemy import func
 from sqlalchemy.orm import Mapped, mapped_column
 
 from models.db_models.base import Base
 
 
-class AppUser(Base):
-    """A person who signs in. Named app_user because "user" is reserved."""
+class AppUser(UserMixin, Base):
+    """A person who signs in. Named app_user because "user" is reserved.
+
+    UserMixin adds what Flask-Login needs: is_authenticated, get_id(), ...
+    """
 
     __tablename__ = "app_user"
 

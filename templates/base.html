@@ -23,18 +23,26 @@
           {{ icon("cloud-sun") }}WeatherWise
         </a>
 
-        <nav class="nav" aria-label="Main">
-          {% for key, label, endpoint in [
-               ("calendar", "Calendar", "web.homepage"),
-               ("events", "Events", "web.web_management")] %}
-            <a href="{{ url_for(endpoint) }}" class="nav__link"
-               {% if active == key %}aria-current="page"{% endif %}>
-              {{ label }}
-              {% if active == key %}<span class="nav__indicator" aria-hidden="true"></span>{% endif %}
-            </a>
-          {% endfor %}
-        </nav>
+        {% if current_user.is_authenticated %}
+          <nav class="nav" aria-label="Main">
+            {% for key, label, endpoint in [
+                 ("calendar", "Calendar", "web.homepage"),
+                 ("events", "Events", "web.web_management")] %}
+              <a href="{{ url_for(endpoint) }}" class="nav__link"
+                 {% if active == key %}aria-current="page"{% endif %}>
+                {{ label }}
+                {% if active == key %}<span class="nav__indicator" aria-hidden="true"></span>{% endif %}
+              </a>
+            {% endfor %}
+          </nav>
 
+          <div class="account">
+            <span class="account__name">{{ current_user.name }}</span>
+            <form action="{{ url_for('auth.logout') }}" method="post">
+              <button type="submit" class="btn btn--quiet">Sign out</button>
+            </form>
+          </div>
+        {% endif %}
       </div>
     </header>
 
