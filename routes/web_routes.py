@@ -259,7 +259,9 @@ def web_profile():
         flash("Unable to create/delete profile", "error")
 
     return render_template(
-        "management_profile.html", profile_list=profile_list
+        "management_profile.html",
+        profile_list=profile_list,
+        profileid=request.args.get("profileid", ""),
     )
 
 

@@ -1,131 +1,116 @@
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style/event_management.css') }}" />
-    <title>WeatherWise Planner</title>
-  </head>
+{% extends "base.html" %}
+{% from "_macros.html" import icon %}
+{% set active = "events" %}
 
-  <body>
-    <header class="header">
-      <div class="header__left">
-        <h1 class="header__title">Manage your events here!</h1>
+{% block title %}Events · {% endblock %}
+
+{% block content %}
+  <div class="page-header">
+    <div>
+      <h1 class="page-header__title">Events</h1>
+      <p class="page-header__subtitle">Pick an event to edit it, or add a new one.</p>
+    </div>
+    {% if selected_event %}
+      <a href="{{ url_for('web.web_management', profileid=profileid) }}" class="btn btn--primary">
+        {{ icon("plus", "icon--sm") }} New event
+      </a>
+    {% endif %}
+  </div>
+
+  <div class="split">
+    <!-- Event list -->
+    <section class="card" aria-labelledby="list-title">
+      <div class="card__header">
+        <h2 id="list-title" class="card__title">All events</h2>
       </div>
 
-      <div class="header__right">
-        <form action="/" method="get" class="header__home-form">
-          <input type="hidden" name="profileid" value="{{ profileid }}" />
-          <input type="submit" value="HOME" class="header__home-btn" />
-        </form>
-      </div>
-    </header>
+      {% if not all_event %}
+        <div class="empty">
+          {{ icon("calendar") }}
+          <p class="empty__title">No events yet</p>
+          <p>Use the form to add your first one.</p>
+        </div>
+      {% endif %}
 
-    <!-- ERROR MESSAGE SECTION -->
-    <div class="flash-message-container">
-      {% with messages=get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-          {% for category, message in messages %}
-            <input type="checkbox" id="flash-toggle-{{ loop.index }}" class="flash-toggle" checked />
+      {% for day in all_event %}
+        <div class="date-group">
+          <h3 class="date-group__label">{{ day.full_date }}</h3>
 
-            <div class="notification is-{{ category }}" role="alert">
-              <strong>{{ category|capitalize }}:</strong> {{ message }}
+          {% for event in day.daily_events %}
+            <div class="event-row {% if event.id|string == selected_eventid|string %}event-row--selected{% endif %}">
+              <form action="{{ url_for('web.web_load_event') }}" method="post" class="event-row__main">
+                <input type="hidden" name="profileid" value="{{ profileid }}">
+                <input type="hidden" name="eventid" value="{{ event.id }}">
+                <button type="submit" class="event-row__open">
+                  <span class="event-row__name">{{ event.name }}</span>
+                  <span class="event-row__meta tabular">
+                    {{ event.start_time.strftime('%H:%M') }}–{{ event.end_time.strftime('%H:%M') }}{% if event.location %} · {{ event.location }}{% endif %}
+                  </span>
+                </button>
+              </form>
 
-              <label for="flash-toggle-{{ loop.index }}" class="delete-btn">&times;</label>
+              <form action="{{ url_for('web.web_delete_event') }}" method="post" class="event-row__actions"
+                    data-confirm="Delete “{{ event.name }}”? This can't be undone.">
+                <input type="hidden" name="profileid" value="{{ profileid }}">
+                <input type="hidden" name="eventid" value="{{ event.id }}">
+                <button type="submit" class="btn btn--ghost btn--icon btn--danger" title="Delete {{ event.name }}">
+                  {{ icon("trash", "icon--sm") }}<span class="sr-only">Delete {{ event.name }}</span>
+                </button>
+              </form>
             </div>
           {% endfor %}
-        {% endif %}
-      {% endwith %}
-    </div>
-
-    <section class="event-mgmt">
-      <!-- LEFT COLUMN: EVENT LIST -->
-      <div class="event-mgmt__list">
-        <div class="event-mgmt__create">
-          <form action="/management/event" method="get" class="event-create__form">
-            <input type="hidden" name="profileid" value="{{ profileid }}" />
-            <input type="submit" value="Create New Event" class="event-create__button"/>
-          </form>
         </div>
-        {% for day in all_event %}
-          <div class="event-list">
-            <div class="event-list__day">{{ day.full_date }}</div>
+      {% endfor %}
+    </section>
 
-            {% for event in day.daily_events %}
-              <div class="event-item">
-                <form action="/management/event/load" method="post" class="event-item__form">
-                  <input type="hidden" name="profileid" value="{{ profileid }}" />
-                  <input type="hidden" name="eventid" value="{{ event.id  }}" />
-                  <button type="submit" class="event-item__button">
-                    <span class="event-item__title">{{ event.name }}</span><br />
-                    <span class="event-item__time">{{ event.start_time.strftime('%H:%M') }} - {{ event.end_time.strftime('%H:%M') }}</span>
-                  </button>
-                </form>
-
-                <form action="/management/event/delete" method="post" class="event-item__delete-form">
-                  <input type="hidden" name="profileid" value="{{ profileid }}" />
-                  <input type="hidden" name="eventid" value="{{ event.id  }}" />
-                  <button type="submit" class="event-item__delete-btn" title="Delete event">X</button>
-                </form>
-              </div>
-            {% endfor %}
-          </div>
-        {% endfor %}
+    <!-- Create / edit form -->
+    <section class="card" aria-labelledby="form-title">
+      <div class="card__header">
+        <h2 id="form-title" class="card__title">{{ "Edit event" if selected_event else "New event" }}</h2>
       </div>
 
-      <!-- RIGHT COLUMN: SELECTED EVENT DETAILS -->
-      <div class="event-mgmt__details">
-        <div class="event-mgmt__load">
+      <form action="{{ url_for('web.web_update_event') if selected_event else url_for('web.web_create_event') }}"
+            method="post" class="form-grid">
+        <input type="hidden" name="profileid" value="{{ profileid }}">
+        {% if selected_event %}
+          <input type="hidden" name="eventid" value="{{ selected_eventid }}">
+        {% endif %}
+
+        <div class="field">
+          <label for="name" class="field__label">Event name</label>
+          <input id="name" type="text" name="name" class="input" maxlength="30" required
+                 value="{{ selected_event.name if selected_event else '' }}" placeholder="e.g. Picnic in Hyde Park">
+        </div>
+
+        <div class="form-row">
+          <div class="field">
+            <label for="start_time" class="field__label">Starts</label>
+            <input id="start_time" type="datetime-local" name="start_time" class="input" required
+                   value="{{ selected_event.start_time if selected_event else '' }}">
+          </div>
+          <div class="field">
+            <label for="end_time" class="field__label">Ends</label>
+            <input id="end_time" type="time" name="end_time" class="input" required
+                   value="{{ selected_event.end_time if selected_event else '' }}">
+          </div>
+        </div>
+        <p class="field__hint">Events end on the same day they start.</p>
+
+        <div class="field">
+          <label for="location" class="field__label">Location</label>
+          <input id="location" type="text" name="location" class="input" required
+                 value="{{ selected_event.location if selected_event else '' }}" placeholder="e.g. London">
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn btn--primary">
+            {{ "Save changes" if selected_event else "Create event" }}
+          </button>
           {% if selected_event %}
-            <form action="/management/event/update" method="post" class="event-details">
-              <input type="hidden" name="profileid" value="{{ profileid }}" />
-              <input type="hidden" name="eventid" value="{{ selected_eventid }}" />
-
-              <div class="event-details__row">
-                <img src="/static/images/icon-title.png" class="event-details__icon" />
-                <input type="text" name="name" class="event-details__input" value="{{ selected_event.name }}" placeholder="Event Name" maxlength="30" required/>
-              </div>
-
-              <div class="event-details__row">
-                <img src="/static/images/icon-time.png" class="event-details__icon" />
-                <!-- Start -->
-                <input type="datetime-local" name="start_time" class="event-details__input" value="{{ selected_event.start_time}}" required/>-
-                <!-- End -->
-                <input type="time" name="end_time" class="event-details__input" value="{{ selected_event.end_time }}" required/>
-              </div>
-
-              <div class="event-details__row">
-                <img src="/static/images/icon-location.png" class="event-details__icon" />
-                <input type="text" name="location" class="event-details__input" placeholder="Location" value="{{ selected_event.location }}" required/>
-              </div>
-
-              <input type="submit" value="Update Event" class="event-details__submit" />
-            </form>
-          {% else %}
-            <form action="/management/event/create" method="post" class="event-details">
-              <input type="hidden" name="profileid" value="{{ profileid }}" />
-
-              <div class="event-details__row">
-                <img src="/static/images/icon-title.png" class="event-details__icon" />
-                <input type="text" name="name" class="event-details__input" placeholder="Event Name" maxlength="30" required />
-              </div>
-
-              <div class="event-details__row">
-                <img src="/static/images/icon-time.png" class="event-details__icon" />
-                <!-- Start -->
-                <input type="datetime-local" name="start_time" class="event-details__input" required/>-
-                <!-- End -->
-                <input type="time" name="end_time" class="event-details__input" required/>
-              </div>
-
-              <div class="event-details__row">
-                <img src="/static/images/icon-location.png" class="event-details__icon" />
-                <input type="text" name="location" class="event-details__input" placeholder="Location" required />
-              </div>
-
-              <input type="submit" value="Create Event" class="event-details__submit" />
-            </form>
+            <a href="{{ url_for('web.web_management', profileid=profileid) }}" class="btn btn--ghost">Cancel</a>
           {% endif %}
         </div>
-      </div>
+      </form>
     </section>
-  </body>
-</html>
+  </div>
+{% endblock %}

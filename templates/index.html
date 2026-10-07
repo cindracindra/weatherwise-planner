@@ -1,156 +1,182 @@
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style/homepage.css') }}">
-    <title>WeatherWise Planner</title>
-  </head>
+{% extends "base.html" %}
+{% from "_macros.html" import icon %}
+{% set active = "calendar" %}
 
-  <body>
-    <!-- HEADER -->
-    <header class="header">
-      <div class="header__left">
-        <h1 class="header__title">
-          Welcome to WeatherWise Planner: plan your events around the weather.
-        </h1>
-      </div>
+{% set now_hour = today_detail.hour if today_detail.hour is defined else none %}
+{% set now_reading = hourly_forecast[now_hour] if now_hour is not none and hourly_forecast|length > now_hour else none %}
 
-      <div class="header__right">
-        <form action="/management/profile" method="get" class="header__form">
-          <button type="submit" class="header__button">Manage Profiles</button>
-        </form>
-        <form action="/" method="get" class="header__form">
-          <select name="profileid" class="header__select">
-            <option value="">Select profile</option>
-            {% for profile in profile_list %}
-              <option value="{{ profile.id }}" {% if profile.id|string == profileid|string %}selected{% endif %}>{{ profile.name }}</option>
-            {% endfor %}
-          </select>
-          <button type="submit" class="header__button">Go</button>
-        </form>
-      </div>
-    </header>
-
-    <!-- ERROR MESSAGE SECTION -->
-    <div class="flash-message-container">
-      {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-          {% for category, message in messages %}
-            
-            <input type="checkbox" id="flash-toggle-{{ loop.index }}" class="flash-toggle" checked>
-            
-            <div class="notification is-{{ category }}" role="alert">
-              <strong>{{ category | capitalize }}:</strong> {{ message }}
-              
-              <label for="flash-toggle-{{ loop.index }}" class="delete-btn">&times;</label>
-            </div>
-          {% endfor %}
-        {% endif %}
-      {% endwith %}
+{% block content %}
+  <div class="page-header">
+    <div>
+      <h1 class="page-header__title">{{ today_detail.month_name }} {{ today_detail.year }}</h1>
+      <p class="page-header__subtitle">London · {{ today_detail.day_name }} {{ today_detail.day }} {{ today_detail.month_name }}</p>
     </div>
 
-    <!-- MAIN SECTION -->
-    <section class="calendar-section">
+    <div class="form-actions">
+      <form action="{{ url_for('web.reload_calendar') }}" method="get">
+        <input type="hidden" name="profileid" value="{{ profileid }}">
+        <button type="submit" class="btn btn--icon" title="Refresh calendar">
+          {{ icon("refresh") }}<span class="sr-only">Refresh calendar</span>
+        </button>
+      </form>
+      <form action="{{ url_for('web.management_handle_form') }}" method="get">
+        <input type="hidden" name="profileid" value="{{ profileid }}">
+        <button type="submit" class="btn btn--primary">{{ icon("plus", "icon--sm") }} Add event</button>
+      </form>
+    </div>
+  </div>
 
-      <!-- LEFT: CALENDAR -->
-      <section class="calendar-section__left">
-        <div class="calendar-section__header">
-          <div class="calendar-section__title">{{ today_detail.month_name }} {{ today_detail.year }}</div>
+  <div class="dashboard">
+    <!-- Calendar -->
+    <section class="card" aria-labelledby="calendar-title">
+      <h2 id="calendar-title" class="sr-only">Calendar for {{ today_detail.month_name }} {{ today_detail.year }}</h2>
 
-          <div class="calendar-section__button-group">
-            <form action="/management" method="get" class="calendar-section__button-form">
-              <input type="hidden" name="profileid" value="{{ profileid }}">
-              <input type="submit" value="Manage Events">
-            </form>
-            <form action="/reload" method="get" class="calendar-section__button-form">
-              <input type="hidden" name="profileid" value="{{ profileid }}">
-              <input type="submit" value="Reload Calendar">
-            </form>
-          </div>
-        </div>
+      <div class="calendar__head" aria-hidden="true">
+        {% for name in ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"] %}
+          <div class="calendar__weekday">{{ name }}</div>
+        {% endfor %}
+      </div>
 
-        <table class="calendar">
-          <thead>
-            <tr>
-              <th>SUN</th><th>MON</th><th>TUE</th><th>WED</th>
-              <th>THU</th><th>FRI</th><th>SAT</th>
-            </tr>
-          </thead>
-
-          <tbody>
-            {% for week in calendar_matrix.weeks %}
-            <tr>
-              {% for day in week.days %}
-                <td>
-                  {% if day.day != 0 %}
-                  <div class="calendar-cell {% if day.day == today_detail.day %}calendar-cell--today{% endif %}">
-
-                    <!-- Top row: date and weather -->
-                    <div class="calendar-cell__top-row">
-                      <div class="calendar-cell__day-number">{{ day.day }}</div>
-                      {% if day.weather %}
-                        <img src="{{ url_for('static', filename='images/icons/' ~ day.weather.icon) }}" alt="{{ day.weather.label }}" class="calendar-cell__weather-icon">
-                      {% endif %}
-                    </div>
-
-                    <!-- Events and Holidays -->
-                    <div class="calendar-cell__events">
-
-                      <!-- Holidays  -->
-                      {% if day.holidays %}
-                        {% for holiday in day.holidays %}
-                          <div class="calendar-cell__event calendar-cell__event--holiday">{{ holiday }}</div>
-                        {% endfor %}
-                      {% endif %}
-                      
-                      <!-- Events  -->
-                      {% for daily in monthly_event_list %}
-                        {% if day.day == daily.day %}
-                          {% set daily_events = daily.daily_events %}
-                          {% set event_count = daily_events | length %}
-
-                          {% for event in daily_events[:2] %}
-                            <div class="calendar-cell__event">{{ event.name }}</div>
-                          {% endfor %}
-
-                          {% if event_count > 2 %}
-                            <div class="calendar-cell__event-count-badge">{{ event_count - 2 }}+ more</div>
-                          {% endif %}
-                          
-                        {% endif %}
-                      {% endfor %}
-                    </div>
-                  </div>
-                  {% endif %}
-                </td>
+      <div class="calendar__grid">
+        {% for week in calendar_matrix.weeks %}
+          {% for day in week.days %}
+            {% if day.day == 0 %}
+              <div class="day day--empty" aria-hidden="true"></div>
+            {% else %}
+              {% set ns = namespace(events=[]) %}
+              {% for daily in monthly_event_list if daily.day == day.day %}
+                {% set ns.events = daily.daily_events %}
               {% endfor %}
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </section>
+              {% set shown = [3 - (day.holidays|length if day.holidays else 0), 1]|max %}
 
-      <!-- RIGHT: SCHEDULE -->
-      <section class="calendar-section__right">
-        <div class="calendar-section__today-header">
-          {{ today_detail.day_name }}, {{ today_detail.day }} {{ today_detail.month_name }}
-        </div>
+              <div class="day {% if day.day == today_detail.day %}day--today{% elif day.day < today_detail.day %}day--past{% endif %}">
+                <div class="day__top">
+                  <span class="day__number tabular">
+                    {{ day.day }}
+                    {% if day.day == today_detail.day %}<span class="sr-only">(today)</span>{% endif %}
+                  </span>
+                  {% if day.weather and day.weather.icon %}
+                    <img src="{{ url_for('static', filename='images/icons/' ~ day.weather.icon) }}"
+                         alt="{{ day.weather.label }}" title="{{ day.weather.label }}"
+                         class="day__weather" width="36" height="36" loading="lazy">
+                  {% endif %}
+                </div>
 
-        <div class="calendar-section__day-container">
-          {% for entry in hourly_forecast %}
-            <div class="calendar-section__hour-row">
-              <span class="calendar-section__temperature">{{ entry.temperature }}°</span>
-              <span class="calendar-section__hour-number">|  {{ "%02d:00"|format(loop.index0) }}</span>
-            </div>
+                <div class="day__items">
+                  {% for holiday in day.holidays or [] %}
+                    <div class="chip chip--holiday" title="{{ holiday }}">{{ holiday }}</div>
+                  {% endfor %}
+                  {% for event in ns.events[:shown] %}
+                    <div class="chip chip--event" title="{{ event.name }}">{{ event.name }}</div>
+                  {% endfor %}
+                  {% if ns.events|length > shown %}
+                    <div class="chip--more">+{{ ns.events|length - shown }} more</div>
+                  {% endif %}
+                </div>
+              </div>
+            {% endif %}
           {% endfor %}
+        {% endfor %}
+      </div>
 
-          {% for event in daily_event_list %}
-            <div class="calendar-section__event-block" style="--start: {{ event.start_int }}; --duration: {{ event.duration }};">
-              {{ event.name }}
-            </div>
-          {% endfor %}
-        </div>
-      </section>
-
+      <div class="legend" aria-hidden="true">
+        <span class="legend__item"><span class="legend__swatch" style="background: var(--primary)"></span>Today &amp; events</span>
+        <span class="legend__item"><span class="legend__swatch" style="background: var(--holiday)"></span>Public holiday</span>
+      </div>
     </section>
-  </body>
-</html>
+
+    <aside class="sidebar">
+      <!-- Weather now -->
+      <section class="card" aria-labelledby="now-title">
+        <div class="card__header">
+          <h2 id="now-title" class="card__eyebrow">Weather now</h2>
+        </div>
+
+        {% if now_reading and now_reading.temperature is not none %}
+          <div class="now">
+            <div>
+              <div class="now__temp tabular">{{ now_reading.temperature }}°</div>
+              <div class="now__label">{{ now_reading.weather_code.label or "" }}</div>
+            </div>
+            {% if now_reading.weather_code.icon %}
+              <img src="{{ url_for('static', filename='images/icons/' ~ now_reading.weather_code.icon) }}"
+                   alt="" class="now__icon" width="96" height="96">
+            {% endif %}
+          </div>
+        {% else %}
+          <p class="muted">Forecast unavailable right now.</p>
+        {% endif %}
+
+        {% if hourly_forecast %}
+          <ol class="hourly" aria-label="Hourly forecast for today" data-hourly>
+            {% for entry in hourly_forecast %}
+              {% set h = loop.index0 %}
+              <li class="hour {% if h == now_hour %}hour--now{% elif now_hour is not none and h < now_hour %}hour--past{% endif %}"
+                  {% if h == now_hour %}aria-current="time"{% endif %}>
+                <span class="hour__time tabular">{{ "Now" if h == now_hour else "%02d:00"|format(h) }}</span>
+                {% if entry.weather_code and entry.weather_code.icon %}
+                  <img src="{{ url_for('static', filename='images/icons/' ~ entry.weather_code.icon) }}"
+                       alt="{{ entry.weather_code.label }}" class="hour__icon" width="32" height="32" loading="lazy">
+                {% endif %}
+                <span class="hour__temp tabular">{{ entry.temperature }}°</span>
+              </li>
+            {% endfor %}
+          </ol>
+        {% endif %}
+      </section>
+
+      <!-- Today's schedule -->
+      <section class="card" aria-labelledby="today-title">
+        <div class="card__header">
+          <h2 id="today-title" class="card__eyebrow">Today's schedule</h2>
+          {% if profileid %}
+            <a href="{{ url_for('web.management_handle_form', profileid=profileid) }}" class="btn btn--ghost">
+              Manage {{ icon("arrow-right", "icon--sm") }}
+            </a>
+          {% endif %}
+        </div>
+
+        {% if not profileid %}
+          <div class="empty">
+            {{ icon("users") }}
+            <p class="empty__title">No profile selected</p>
+            <p>Choose a profile at the top to see its events.</p>
+            <a href="{{ url_for('web.web_profile') }}" class="btn">Manage profiles</a>
+          </div>
+        {% elif not daily_event_list %}
+          <div class="empty">
+            {{ icon("calendar") }}
+            <p class="empty__title">Nothing planned today</p>
+            <p>Enjoy the free time, or add something.</p>
+          </div>
+        {% else %}
+          <ul class="agenda">
+            {% for event in daily_event_list|sort(attribute="start_int") %}
+              <li class="agenda__item">
+                <span class="agenda__bar" aria-hidden="true"></span>
+                <div>
+                  <div class="agenda__name">{{ event.name }}</div>
+                  <div class="agenda__meta">
+                    <span class="tabular">{{ icon("clock", "icon--sm") }} {{ event.start_time[11:16] }}–{{ event.end_time[11:16] }}</span>
+                    {% if event.location %}<span>{{ icon("map-pin", "icon--sm") }} {{ event.location }}</span>{% endif %}
+                  </div>
+                </div>
+              </li>
+            {% endfor %}
+          </ul>
+        {% endif %}
+      </section>
+    </aside>
+  </div>
+{% endblock %}
+
+{% block scripts %}
+  <script>
+    // Start the hourly strip at the current hour
+    (function () {
+      var strip = document.querySelector("[data-hourly]");
+      var now = strip && strip.querySelector(".hour--now");
+      if (now) strip.scrollLeft = now.offsetLeft - strip.offsetLeft - 24;
+    })();
+  </script>
+{% endblock %}

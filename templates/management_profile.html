@@ -1,65 +1,71 @@
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style/profile_management.css') }}" />
-    <title>WeatherWise Planner</title>
-  </head>
+{% extends "base.html" %}
+{% from "_macros.html" import icon %}
+{% set active = "profiles" %}
 
-  <body>
-    <header class="header">
-      <div class="header__left">
-        <h1 class="header__title">Manage your profiles here! </h1>
-      </div>
+{% block title %}Profiles · {% endblock %}
 
-      <div class="header__right">
-        <form action="/" method="get" class="header__home-form">
-          <input type="submit" value="HOME" class="header__home-btn" />
-        </form>
-      </div>
-    </header>
-
-    <!-- ERROR MESSAGE SECTION -->
-    <div class="flash-message-container">
-      {% with messages=get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-          {% for category, message in messages %}
-            <input type="checkbox" id="flash-toggle-{{ loop.index }}" class="flash-toggle" checked />
-
-            <div class="notification is-{{ category }}" role="alert">
-              <strong>{{ category|capitalize }}:</strong> {{ message }}
-
-              <label for="flash-toggle-{{ loop.index }}" class="delete-btn">&times;</label>
-            </div>
-          {% endfor %}
-        {% endif %}
-      {% endwith %}
+{% block content %}
+  <div class="page-header">
+    <div>
+      <h1 class="page-header__title">Profiles</h1>
+      <p class="page-header__subtitle">Each profile has its own set of events.</p>
     </div>
+  </div>
 
-
-    <section class="profile-mgmt">
-      <!-- CREATE NEW PROFILE -->
-      <div class="profile-mgmt__create">
-        Create New Profile
-        <form action="/management/profile/create" method="post" class="profile-item__create-form">
-          <input type="text" name="name" class="profile-create__input" placeholder="profile name" maxlength="15" required/>
-          <button type="submit" class="profile-create__button">Create</button>
-        </form>
+  <div class="split">
+    <!-- Create -->
+    <section class="card" aria-labelledby="create-title">
+      <div class="card__header">
+        <h2 id="create-title" class="card__title">Create a profile</h2>
       </div>
 
-      <!-- DELETE PROFILE -->
-      <div class="profile-mgmt__delete">
-        Delete Profile
-        <form action="/management/profile/delete" method="post" class="profile-item__delete-form">
-          <select name="profileid" class="profile-item__select" required>
-            <option value="">Select profile </option>
-            {% for profile in profile_list %}
-              <option value="{{ profile.id }}" {% if profile.id|string == profileid|string %}selected{% endif %}>{{ profile.name }}</option>
-            {% endfor %}
-          </select>
-          <button type="submit" class="profile-delete__button">Delete</button>
-        </form>
-      </div>
-
+      <form action="{{ url_for('web.web_create_profile') }}" method="post" class="form-grid">
+        <div class="field">
+          <label for="profile-name" class="field__label">Name</label>
+          <div class="inline-form">
+            <input id="profile-name" type="text" name="name" class="input" maxlength="15" required placeholder="e.g. Work">
+            <button type="submit" class="btn btn--primary">{{ icon("user-plus", "icon--sm") }} Create</button>
+          </div>
+          <p class="field__hint">Up to 15 characters.</p>
+        </div>
+      </form>
     </section>
-  </body>
-</html>
+
+    <!-- List -->
+    <section class="card" aria-labelledby="profiles-title">
+      <div class="card__header">
+        <h2 id="profiles-title" class="card__title">Your profiles</h2>
+        <span class="muted tabular">{{ profile_list|length }}</span>
+      </div>
+
+      {% if not profile_list %}
+        <div class="empty">
+          {{ icon("users") }}
+          <p class="empty__title">No profiles yet</p>
+          <p>Create one to start adding events.</p>
+        </div>
+      {% else %}
+        <ul class="profile-list">
+          {% for profile in profile_list %}
+            <li class="profile-row">
+              <span class="avatar" aria-hidden="true">{{ profile.name[:1] }}</span>
+              <span class="profile-row__name">{{ profile.name }}</span>
+              <div class="profile-row__actions">
+                <a href="{{ url_for('web.homepage', profileid=profile.id) }}" class="btn btn--ghost">
+                  Open {{ icon("arrow-right", "icon--sm") }}
+                </a>
+                <form action="{{ url_for('web.web_delete_profile') }}" method="post"
+                      data-confirm="Delete the profile “{{ profile.name }}”?">
+                  <input type="hidden" name="profileid" value="{{ profile.id }}">
+                  <button type="submit" class="btn btn--ghost btn--icon btn--danger" title="Delete {{ profile.name }}">
+                    {{ icon("trash", "icon--sm") }}<span class="sr-only">Delete {{ profile.name }}</span>
+                  </button>
+                </form>
+              </div>
+            </li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+    </section>
+  </div>
+{% endblock %}
