@@ -39,6 +39,7 @@
           <div class="account">
             <span class="account__name">{{ current_user.name }}</span>
             <form action="{{ url_for('auth.logout') }}" method="post">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
               <button type="submit" class="btn btn--quiet">Sign out</button>
             </form>
           </div>

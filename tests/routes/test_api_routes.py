@@ -15,6 +15,7 @@ def client():
     app = create_app()
     app.config["TESTING"] = True
     app.config["LOGIN_DISABLED"] = True  # sign-in is covered in test_auth.py
+    app.config["WTF_CSRF_ENABLED"] = False  # covered in test_csrf.py
     with app.test_client() as client, app.app_context():
         with patch("routes.api_routes.current_user_id", return_value=USER):
             yield client

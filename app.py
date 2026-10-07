@@ -8,16 +8,20 @@ import logging
 import os
 import secrets
 from datetime import timedelta
+from urllib.parse import urlsplit
 
 from dotenv import load_dotenv
-from flask import Flask
+from flask import Flask, flash, redirect, request, url_for
+from flask_wtf.csrf import CSRFError, CSRFProtect
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 # Import blueprints
 from routes.auth_routes import auth_bp
 from routes.web_routes import web_bp
 from routes.api_routes import api_bp
-from utils.auth import init_google, login_manager, require_login
+from utils.auth import (
+    init_google, is_safe_next, login_manager, require_login,
+)
 
 load_dotenv()
 
@@ -39,6 +43,18 @@ def _secret_key() -> str:
     return secrets.token_hex(32)
 
 
+def _form_expired(error):
+    """A form arrived without a valid CSRF token: most often a page left
+    open across a sign-out, occasionally another site's forged form.
+    Nothing is changed; the visitor is sent back to try again."""
+    flash("That form had expired. Please try again.", "error")
+    back = urlsplit(request.referrer or "")
+    target = back.path + (f"?{back.query}" if back.query else "")
+    if back.netloc == request.host and is_safe_next(target):
+        return redirect(target)
+    return redirect(url_for("web.homepage"))
+
+
 def create_app(config_name="default"):
     """
     Application factory function.
@@ -58,6 +74,9 @@ def create_app(config_name="default"):
         SESSION_COOKIE_SAMESITE="Lax",     # not sent with other sites' forms
         SESSION_COOKIE_SECURE=bool(os.getenv("RENDER")),  # HTTPS only live
         PERMANENT_SESSION_LIFETIME=timedelta(days=30),
+        # CSRF tokens last as long as the session, so a form left open
+        # for a while still works
+        WTF_CSRF_TIME_LIMIT=None,
     )
 
     # Render receives HTTPS and passes requests on as HTTP; trust its
@@ -78,6 +97,13 @@ def create_app(config_name="default"):
     # Every page and API call needs a signed-in user (sign-in pages and
     # static files excepted; see require_login)
     app.before_request(require_login)
+
+    # CSRF: every form post must carry the hidden token from our own page.
+    # The JSON API is exempt: a browser won't send JSON, PATCH or DELETE
+    # to it from another site without a CORS approval this app never gives.
+    csrf = CSRFProtect(app)
+    csrf.exempt(api_bp)
+    app.register_error_handler(CSRFError, _form_expired)
 
     return app
 

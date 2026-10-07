@@ -25,6 +25,7 @@
 
         {% if dev_login %}
           <form action="{{ url_for('auth.login_dev') }}" method="post">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <input type="hidden" name="next" value="{{ next }}">
             <button type="submit" class="btn">{{ icon("code") }}Continue as local developer</button>
           </form>

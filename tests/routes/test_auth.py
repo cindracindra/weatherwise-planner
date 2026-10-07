@@ -16,6 +16,7 @@ DEV = AppUser(id=42, google_sub="local-dev", name="Local developer")
 def app():
     app = create_app()
     app.config["TESTING"] = True
+    app.config["WTF_CSRF_ENABLED"] = False  # covered in test_csrf.py
     return app
 
 
