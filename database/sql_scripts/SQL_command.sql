@@ -4,6 +4,17 @@
 DROP TABLE IF EXISTS eventxprofile;
 DROP TABLE IF EXISTS event;
 DROP TABLE IF EXISTS profile;
+DROP TABLE IF EXISTS app_user;
+
+-- Table: app_user
+CREATE TABLE app_user (
+    id SERIAL PRIMARY KEY,
+    google_sub VARCHAR UNIQUE,
+    email VARCHAR,
+    name VARCHAR NOT NULL,
+    is_demo BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now()
+);
 
 -- Table: event
 CREATE TABLE event (
@@ -17,8 +28,11 @@ CREATE TABLE event (
 -- Table: profile
 CREATE TABLE profile (
     id SERIAL PRIMARY KEY,
-    name VARCHAR NOT NULL
+    name VARCHAR NOT NULL,
+    user_id INTEGER REFERENCES app_user(id) ON DELETE CASCADE
 );
+
+CREATE INDEX profile_user_id_idx ON profile (user_id);
 
 -- Table: eventxprofile
 CREATE TABLE eventxprofile (
