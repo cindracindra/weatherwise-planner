@@ -1,5 +1,20 @@
-{% macro icon(name, cls="") -%}
-<svg class="icon {{ cls }}" aria-hidden="true" focusable="false"><use href="#i-{{ name }}"></use></svg>
+{#- Phosphor icon (light weight). Decorative unless a label is given. -#}
+{% macro icon(name, label=none, cls="") -%}
+  <i class="ph-light ph-{{ name }} icon {{ cls }}" {% if label %}role="img" aria-label="{{ label }}"{% else %}aria-hidden="true"{% endif %}></i>
+{%- endmacro %}
+
+{#- Phosphor glyph for a WMO weather code; moon variants between 19:00 and 07:00 -#}
+{% macro weather_glyph(code, hour=none) -%}
+  {%- set night = hour is not none and (hour < 7 or hour >= 19) -%}
+  {%- if code is none -%}cloud
+  {%- elif code == 0 -%}{{ "moon" if night else "sun" }}
+  {%- elif code in [1, 2] -%}{{ "cloud-moon" if night else "cloud-sun" }}
+  {%- elif code == 3 -%}cloud
+  {%- elif code in [45, 48] -%}cloud-fog
+  {%- elif code in [71, 73, 75, 77, 85, 86] -%}cloud-snow
+  {%- elif code >= 95 -%}cloud-lightning
+  {%- else -%}cloud-rain
+  {%- endif -%}
 {%- endmacro %}
 
 {#- "HH:MM" from either an ISO string or Flask's HTTP-date ("Wed, 07 Oct 2026 09:30:00 GMT") -#}

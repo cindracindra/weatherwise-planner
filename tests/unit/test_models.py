@@ -98,8 +98,16 @@ class TestWeatherReading:
                 "code": 61,
                 "icon": "rain.svg",
                 "label": "Rain"
-            }
+            },
+            "rain_chance": None,
         }
+
+    def test_weather_reading_to_dict_with_rain_chance(self):
+        """Rain chance is carried through to the dictionary."""
+        wc = WeatherCode(code=61, icon="rain.svg", label="Rain")
+        wr = WeatherReading(temperature=15, weather_code=wc, rain_chance=70)
+
+        assert wr.to_dict()["rain_chance"] == 70
 
     def test_weather_reading_with_none_temperature(self):
         """Test WeatherReading handles None temperature correctly."""

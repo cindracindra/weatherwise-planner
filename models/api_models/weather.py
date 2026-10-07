@@ -43,13 +43,16 @@ class WeatherReading:
     Attributes:
         temperature: Temperature in Celsius (rounded), None if unavailable
         weather_code: WeatherCode object containing condition details
+        rain_chance: Chance of rain in percent (0-100), None if unavailable
 
     """
     temperature: Optional[int]
     weather_code: WeatherCode
+    rain_chance: Optional[int] = None
 
     def to_dict(self) -> dict:
         return {
             "temperature": self.temperature,
-            "weather_code": self.weather_code.to_dict()
+            "weather_code": self.weather_code.to_dict(),
+            "rain_chance": self.rain_chance,
         }

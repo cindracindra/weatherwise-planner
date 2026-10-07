@@ -174,7 +174,7 @@ def fetch_hourly_forecast_today() -> Dict[str, Any]:
     longitude = Config.LONDON_LON
 
     # Specify which hourly weather variables to fetch
-    hourly = ["temperature_2m", "weather_code"]
+    hourly = ["temperature_2m", "weather_code", "precipitation_probability"]
 
     # Build request parameters for today only
     params = {

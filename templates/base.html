@@ -4,69 +4,42 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="theme-color" content="#0d1726">
+    <meta name="theme-color" content="#121314">
+    <meta name="description" content="Plan your week around London's weather: hourly forecast, rain chance and your events in one calendar.">
     <title>{% block title %}{% endblock %}WeatherWise Planner</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..700&display=swap">
+    <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.2/src/light/style.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='style/app.css') }}">
-    {% if config.DEBUG %}
-      <script>
-        // Local-only font preview: try the recommended typefaces live
-        window.FONT_PREVIEW = {
-          bricolage: "Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,400..800",
-          schibsted: "Schibsted+Grotesk:wght@400..800",
-          shoulders: "Big+Shoulders+Display:wght@500..800&family=Hanken+Grotesk:wght@400..700",
-          familjen: "Familjen+Grotesk:wght@400..700"
-        };
-        window.applyFont = function (key) {
-          var root = document.documentElement;
-          if (key && window.FONT_PREVIEW[key]) {
-            if (!document.getElementById("font-" + key)) {
-              var link = document.createElement("link");
-              link.id = "font-" + key;
-              link.rel = "stylesheet";
-              link.href = "https://fonts.googleapis.com/css2?family=" + window.FONT_PREVIEW[key] + "&display=swap";
-              document.head.appendChild(link);
-            }
-            root.dataset.font = key;
-          } else {
-            delete root.dataset.font;
-          }
-        };
-        try { window.applyFont(localStorage.getItem("ww-font")); } catch (e) {}
-      </script>
-    {% endif %}
   </head>
 
   <body>
-    <!-- Icon sprite (Lucide, ISC licence) -->
-    <svg xmlns="http://www.w3.org/2000/svg" style="display: none">
-      <symbol id="i-cloud-sun" viewBox="0 0 24 24"><path d="M12 2v2M4.93 4.93l1.41 1.41M20 12h2M19.07 4.93l-1.41 1.41M15.95 12.65a4 4 0 0 0-5.93-4.13"/><path d="M13 22H7a5 5 0 1 1 4.9-6H13a3 3 0 0 1 0 6Z"/></symbol>
-      <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></symbol>
-      <symbol id="i-plus" viewBox="0 0 24 24"><path d="M5 12h14M12 5v14"/></symbol>
-      <symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></symbol>
-      <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
-    </svg>
+    <a href="#main" class="skip-link">Skip to content</a>
 
     <header class="masthead">
       <div class="wrap masthead__inner">
         <a href="{{ url_for('web.homepage', profileid=profileid or None) }}" class="brand">
-          {{ icon("cloud-sun") }} WeatherWise
+          {{ icon("cloud-sun") }}WeatherWise
         </a>
 
         <nav class="nav" aria-label="Main">
-          <a href="{{ url_for('web.homepage', profileid=profileid or None) }}" class="nav__link"
-             {% if active == "calendar" %}aria-current="page"{% endif %}>Calendar</a>
-          <a href="{{ url_for('web.management_handle_form', profileid=profileid or None) }}" class="nav__link"
-             {% if active == "events" %}aria-current="page"{% endif %}>Events</a>
-          <a href="{{ url_for('web.web_profile', profileid=profileid or None) }}" class="nav__link"
-             {% if active == "profiles" %}aria-current="page"{% endif %}>Profiles</a>
+          {% for key, label, endpoint in [
+               ("calendar", "Calendar", "web.homepage"),
+               ("events", "Events", "web.management_handle_form"),
+               ("profiles", "Profiles", "web.web_profile")] %}
+            <a href="{{ url_for(endpoint, profileid=profileid or None) }}" class="nav__link"
+               {% if active == key %}aria-current="page"{% endif %}>
+              {{ label }}
+              {% if active == key %}<span class="nav__indicator" aria-hidden="true"></span>{% endif %}
+            </a>
+          {% endfor %}
         </nav>
 
         {% if profile_list is defined %}
           <form action="{{ url_for('web.homepage') }}" method="get" class="profile-switcher">
             <label for="profile-switcher" class="sr-only">Showing events for</label>
+            {{ icon("users-three") }}
             <select id="profile-switcher" name="profileid" class="select select--inline" data-autosubmit>
               <option value="">Choose a profile</option>
               {% for profile in profile_list %}
@@ -86,39 +59,16 @@
           <div class="flash flash--{{ 'success' if category == 'success' else 'error' }}">
             <span class="flash__text">{{ message }}</span>
             <label for="flash-{{ loop.index }}" class="flash__close" title="Dismiss">
-              {{ icon("x", "icon--sm") }}<span class="sr-only">Dismiss</span>
+              {{ icon("x") }}<span class="sr-only">Dismiss</span>
             </label>
           </div>
         {%- endfor -%}
       {%- endwith -%}
     </div>
 
-    <main class="wrap">
+    <main id="main" class="wrap page">
       {% block content %}{% endblock %}
     </main>
-
-    {% if config.DEBUG %}
-      <div class="font-preview">
-        <label for="font-preview">Font preview</label>
-        <select id="font-preview" class="select">
-          <option value="">Archivo</option>
-          <option value="bricolage">Bricolage Grotesque</option>
-          <option value="schibsted">Schibsted Grotesk</option>
-          <option value="shoulders">Big Shoulders + Hanken</option>
-          <option value="familjen">Familjen Grotesk</option>
-        </select>
-      </div>
-      <script>
-        (function () {
-          var select = document.getElementById("font-preview");
-          select.value = document.documentElement.dataset.font || "";
-          select.addEventListener("change", function () {
-            window.applyFont(select.value);
-            try { localStorage.setItem("ww-font", select.value); } catch (e) {}
-          });
-        })();
-      </script>
-    {% endif %}
 
     <script>
       document.querySelectorAll("[data-autosubmit]").forEach(function (el) {

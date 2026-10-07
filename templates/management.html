@@ -2,14 +2,12 @@
 {% from "_macros.html" import icon %}
 {% set active = "events" %}
 
-{% block title %}Events · {% endblock %}
+{% block title %}Events | {% endblock %}
 
 {% block content %}
   <div class="page-head">
-    <div>
-      <h1 class="page-head__title display">Events</h1>
-      <p class="page-head__lede">Choose an event to change it, or add a new one.</p>
-    </div>
+    <h1 class="page-head__title display">Events</h1>
+    <p class="page-head__lede">Choose an event to change it, or add a new one.</p>
   </div>
 
   <div class="columns">
@@ -28,26 +26,26 @@
           <h2 class="agenda-day__title display">{{ d.strftime('%A') }} {{ d.day }} {{ d.strftime('%B') }}</h2>
 
           {% for event in day.daily_events %}
-            <div class="agenda-row {% if event.id|string == selected_eventid|string %}agenda-row--selected{% endif %}">
+            {% set selected = event.id|string == selected_eventid|string %}
+            <div class="agenda-row {% if selected %}agenda-row--selected{% endif %}">
               <form action="{{ url_for('web.web_load_event') }}" method="post">
                 <input type="hidden" name="profileid" value="{{ profileid }}">
                 <input type="hidden" name="eventid" value="{{ event.id }}">
-                <button type="submit" class="agenda-row__open"
-                        {% if event.id|string == selected_eventid|string %}aria-current="true"{% endif %}>
-                  <span class="agenda-row__time num">{{ event.start_time.strftime('%H:%M') }}–{{ event.end_time.strftime('%H:%M') }}</span>
+                <button type="submit" class="agenda-row__open" {% if selected %}aria-current="true"{% endif %}>
+                  <span class="agenda-row__time num">{{ event.start_time.strftime('%H:%M') }}-{{ event.end_time.strftime('%H:%M') }}</span>
                   <span>
                     <span class="agenda-row__name">{{ event.name }}</span>
-                    {% if event.location %}<span class="agenda-row__place">{{ event.location }}</span>{% endif %}
+                    {% if event.location %}<span class="agenda-row__place">{{ icon("map-pin") }}{{ event.location }}</span>{% endif %}
                   </span>
                 </button>
               </form>
 
               <form action="{{ url_for('web.web_delete_event') }}" method="post"
-                    data-confirm="Delete “{{ event.name }}”? This can't be undone.">
+                    data-confirm="Delete &quot;{{ event.name }}&quot;? This can't be undone.">
                 <input type="hidden" name="profileid" value="{{ profileid }}">
                 <input type="hidden" name="eventid" value="{{ event.id }}">
-                <button type="submit" class="btn btn--bare btn--square btn--danger" title="Delete {{ event.name }}">
-                  {{ icon("trash", "icon--sm") }}<span class="sr-only">Delete {{ event.name }}</span>
+                <button type="submit" class="btn btn--quiet btn--square btn--danger" title="Delete {{ event.name }}">
+                  {{ icon("trash") }}<span class="sr-only">Delete {{ event.name }}</span>
                 </button>
               </form>
             </div>
@@ -57,8 +55,8 @@
     </section>
 
     <!-- Form -->
-    <section class="columns__side columns__side--first" aria-labelledby="form-title">
-      <h2 id="form-title" class="section-title display">{{ "Change event" if selected_event else "New event" }}</h2>
+    <section class="columns__side" aria-labelledby="form-title">
+      <h2 id="form-title" class="columns__title display">{{ "Change event" if selected_event else "New event" }}</h2>
 
       <form action="{{ url_for('web.web_update_event') if selected_event else url_for('web.web_create_event') }}"
             method="post" class="form">
@@ -93,9 +91,9 @@
         </div>
 
         <div class="actions">
-          <button type="submit" class="btn btn--solid">{{ "Save changes" if selected_event else "Add event" }}</button>
+          <button type="submit" class="btn btn--accent">{{ "Save changes" if selected_event else "Add event" }}</button>
           {% if selected_event %}
-            <a href="{{ url_for('web.web_management', profileid=profileid) }}" class="btn btn--bare">Cancel</a>
+            <a href="{{ url_for('web.web_management', profileid=profileid) }}" class="btn btn--quiet">Cancel</a>
           {% endif %}
         </div>
       </form>

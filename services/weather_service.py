@@ -79,19 +79,24 @@ def get_hourly_forecast_today() -> List[WeatherReading]:
     hourly = data.get("hourly", {})
     temps = hourly.get("temperature_2m", [])
     codes = hourly.get("weather_code", [])
+    rain = hourly.get("precipitation_probability") or [None] * len(codes)
 
     # Process each hour's data
     hourly_forecast = []
     rounded_temps = round_temperatures(temps)
 
-    for temp, code in zip(rounded_temps, codes):
+    for temp, code, rain_chance in zip(rounded_temps, codes, rain):
         # Convert weather code to human-readable info
         icon, label = weather_code_to_info(code)
         weather_code = WeatherCode(code=code, icon=icon, label=label)
 
         # Create weather reading for this hour
         hourly_forecast.append(
-            WeatherReading(temperature=temp, weather_code=weather_code)
+            WeatherReading(
+                temperature=temp,
+                weather_code=weather_code,
+                rain_chance=rain_chance,
+            )
         )
     return hourly_forecast
 

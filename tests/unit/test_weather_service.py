@@ -83,6 +83,32 @@ class TestGetHourlyForecastToday:
         assert all(isinstance(r, WeatherReading) for r in result)
         assert result[0].temperature == 14
         assert result[0].weather_code.code == 0
+        assert result[0].rain_chance is None
+
+    def test_get_hourly_forecast_today_includes_rain_chance(
+            self,
+            mocker,
+            sample_weather_code_data
+    ):
+        """Rain chance from the API is attached to each hour."""
+        mocker.patch(
+            'services.weather_service.weather_api.fetch_hourly_forecast_today',
+            return_value={
+                "hourly": {
+                    "temperature_2m": [14.2, 15.0],
+                    "weather_code": [3, 61],
+                    "precipitation_probability": [10, 80]
+                }
+            }
+        )
+        mocker.patch(
+            'utils.converters._load_code_icons',
+            return_value=sample_weather_code_data
+        )
+
+        result = get_hourly_forecast_today()
+
+        assert [r.rain_chance for r in result] == [10, 80]
 
 
 class TestGetDailyForecast:
