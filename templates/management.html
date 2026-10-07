@@ -91,7 +91,7 @@
         </div>
 
         <div class="actions">
-          <button type="submit" class="btn btn--accent">{{ "Save changes" if selected_event else "Add event" }}</button>
+          <button type="submit" class="btn btn--primary">{{ "Save changes" if selected_event else "Add event" }}</button>
           {% if selected_event %}
             <a href="{{ url_for('web.web_management', profileid=profileid) }}" class="btn btn--quiet">Cancel</a>
           {% endif %}

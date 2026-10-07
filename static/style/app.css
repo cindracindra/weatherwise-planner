@@ -2,7 +2,7 @@
    WeatherWise Planner
 
    Palette: graphite neutrals (one cool-grey family) + one blue accent.
-   The accent marks today and the main action, nothing else.
+   The accent is for the logo and selection lines only.
    Shape: 10px on controls and tiles, full round only on the "now" marker.
    Motion: one entrance on the home page, then only motion that answers
    the person (press, scroll, page change). All of it stops under
@@ -20,13 +20,10 @@
   --muted: #9c9fa6;
   --faint: #6c6f77;
   --text: #ececee;
-  /* Accent: Electric. Filled buttons use a step deeper so white text
-     passes AA (4.6:1); #2f80ff itself is 3.7:1 with white. */
+  /* Accent: Electric. Used only for the logo and for lines that mark a
+     selection (the current page, today in the calendar, the chosen event).
+     Everything else is greys and white. */
   --accent: #2f80ff;
-  --accent-fill: #266fe8;
-  --accent-fill-hover: #1f62d4;
-  --on-accent: #ffffff;
-  --accent-wash: rgba(47, 128, 255, 0.16);
   --danger: #ec7a68;
   --danger-wash: rgba(236, 122, 104, 0.12);
 
@@ -121,7 +118,7 @@ select {
 }
 
 :focus-visible {
-  outline: 2px solid var(--accent);
+  outline: 2px solid var(--text);
   outline-offset: 3px;
   border-radius: 4px;
 }
@@ -163,8 +160,8 @@ select {
   z-index: calc(var(--z-masthead) + 1);
   padding: 8px 14px;
   border-radius: var(--radius);
-  background: var(--accent-fill);
-  color: var(--on-accent);
+  background: var(--text);
+  color: var(--bg);
   font-weight: 600;
   transform: translateY(-160%);
 }
@@ -285,15 +282,15 @@ select {
   transform: scale(0.97);
 }
 
-.btn--accent {
-  border-color: var(--accent-fill);
-  background: var(--accent-fill);
-  color: var(--on-accent);
+.btn--primary {
+  border-color: var(--text);
+  background: var(--text);
+  color: var(--bg);
 }
 
-.btn--accent:hover {
-  border-color: var(--accent-fill-hover);
-  background: var(--accent-fill-hover);
+.btn--primary:hover {
+  border-color: #ffffff;
+  background: #ffffff;
 }
 
 .btn--quiet {
@@ -359,8 +356,8 @@ select {
 .input:focus-visible,
 .select:focus-visible {
   outline: none;
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px var(--accent-wash);
+  border-color: var(--muted);
+  box-shadow: 0 0 0 3px rgba(236, 236, 238, 0.08);
 }
 
 .input::-webkit-calendar-picker-indicator {
@@ -411,7 +408,7 @@ select {
 }
 
 .flash--success {
-  background: var(--accent-wash);
+  background: var(--raise);
 }
 
 .flash--error {
@@ -493,7 +490,7 @@ select {
 
 .today__glyph {
   position: relative;
-  color: var(--accent);
+  color: var(--text);
 }
 
 /* Rain and snow, drawn by static/js/weather-motion.js */
@@ -510,7 +507,7 @@ select {
   display: block;
   will-change: transform;
   font-size: clamp(5rem, 12vw, 8.5rem);
-  color: var(--accent);
+  color: var(--text);
 }
 
 .today__temp {
@@ -606,7 +603,7 @@ select {
   width: calc(var(--span) * var(--hour-w) - 6px);
   height: 50px;
   padding: 6px 12px;
-  border-left: 3px solid var(--accent);
+  border-left: 3px solid var(--muted);
   border-radius: 0 var(--radius) var(--radius) 0;
   background: var(--raise);
   overflow: hidden;
@@ -640,7 +637,7 @@ select {
   position: relative;
   /* The figure's palette, from the page's */
   --hairline-plate: var(--bg);
-  --hairline-hi: var(--accent);
+  --hairline-hi: var(--text);
   --hairline-edge: #868991;
   --hairline-mid: #4b4e55;
   --hairline-lo: #2a2c31;
@@ -673,7 +670,7 @@ select {
   align-items: center;
   gap: 6px;
   margin-top: 16px;
-  color: var(--accent);
+  color: var(--text);
   font-weight: 600;
   text-decoration: none;
 }
@@ -854,7 +851,8 @@ select {
 
 .agenda-row--selected,
 .agenda-row--selected:hover {
-  background: var(--accent-wash);
+  background: var(--raise);
+  box-shadow: inset 3px 0 0 var(--accent);
 }
 
 .agenda-row__open {
@@ -877,7 +875,7 @@ select {
 }
 
 .agenda-row--selected .agenda-row__time {
-  color: var(--accent);
+  color: var(--text);
 }
 
 .agenda-row__name {
@@ -918,7 +916,7 @@ select {
   height: 44px;
   border-radius: 12px;
   background: var(--raise-hover);
-  color: var(--accent);
+  color: var(--text);
   font-size: var(--step-1);
 }
 
