@@ -46,17 +46,7 @@
   {% if hourly_forecast %}
     {% set hour_w = 76 %}
     <section class="hours" aria-labelledby="hours-title">
-      <div class="section-head">
-        <h2 id="hours-title" class="section-title display">Hour by hour</h2>
-        <div class="actions">
-          <button type="button" class="btn btn--square" data-scroll="-1" title="Earlier hours">
-            {{ icon("caret-left") }}<span class="sr-only">Earlier hours</span>
-          </button>
-          <button type="button" class="btn btn--square" data-scroll="1" title="Later hours">
-            {{ icon("caret-right") }}<span class="sr-only">Later hours</span>
-          </button>
-        </div>
-      </div>
+      <h2 id="hours-title" class="sr-only">Today, hour by hour</h2>
 
       <div class="strip" data-strip tabindex="0" role="region" aria-label="Hourly forecast and today's events"
            style="--hour-w: {{ hour_w }}px; --hours: {{ hourly_forecast|length }}">
@@ -70,14 +60,6 @@
                 {{ icon(weather_glyph(entry.weather_code.code if entry.weather_code else none, h), entry.weather_code.label if entry.weather_code else none) }}
               </span>
               <span class="hour__temp display num">{{ entry.temperature if entry.temperature is not none else "-" }}°</span>
-              {% if entry.rain_chance is not none %}
-                <span class="hour__rain {% if entry.rain_chance >= 50 %}hour__rain--likely{% endif %}"
-                      style="--p: {{ entry.rain_chance / 100 }}" title="{{ entry.rain_chance }}% chance of rain">
-                  <span class="hour__bar" aria-hidden="true"></span>
-                  <span class="num">{{ entry.rain_chance }}%</span>
-                  <span class="sr-only">chance of rain</span>
-                </span>
-              {% endif %}
             </li>
           {% endfor %}
         </ol>
@@ -200,12 +182,6 @@
           strip.scrollTo({ left: now.offsetLeft - hourW, behavior: still ? "auto" : "smooth" });
         }, still ? 0 : 450);
       }
-
-      document.querySelectorAll("[data-scroll]").forEach(function (btn) {
-        btn.addEventListener("click", function () {
-          strip.scrollBy({ left: Number(btn.dataset.scroll) * hourW * 4, behavior: still ? "auto" : "smooth" });
-        });
-      });
     })();
   </script>
 {% endblock %}

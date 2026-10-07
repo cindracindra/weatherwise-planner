@@ -1,8 +1,8 @@
 /* ==========================================================================
    WeatherWise Planner
 
-   Palette: graphite neutrals (one cool-grey family) + one accent, saffron.
-   Saffron marks "now" and the main action, nothing else.
+   Palette: graphite neutrals (one cool-grey family) + one blue accent.
+   The accent marks today and the main action, nothing else.
    Shape: 10px on controls and tiles, full round only on the "now" marker.
    Motion: one entrance on the home page, then only motion that answers
    the person (press, scroll, page change). All of it stops under
@@ -20,9 +20,11 @@
   --muted: #9c9fa6;
   --faint: #6c6f77;
   --text: #ececee;
-  --accent: #f2b441;
-  --on-accent: #191307;
-  --accent-wash: rgba(242, 180, 65, 0.12);
+  /* Accent: Cobalt. Alternatives below, previewable locally. */
+  --accent: #5b9bf0;
+  --accent-hover: #7fb1f4;
+  --on-accent: #08152b;
+  --accent-wash: rgba(91, 155, 240, 0.14);
   --danger: #ec7a68;
   --danger-wash: rgba(236, 122, 104, 0.12);
 
@@ -43,6 +45,27 @@
 
   /* Layers */
   --z-masthead: 10;
+}
+
+[data-accent="glacier"] {
+  --accent: #8cc2ee;
+  --accent-hover: #a9d2f3;
+  --on-accent: #0b1a28;
+  --accent-wash: rgba(140, 194, 238, 0.14);
+}
+
+[data-accent="steel"] {
+  --accent: #94aecb;
+  --accent-hover: #aec2da;
+  --on-accent: #111a25;
+  --accent-wash: rgba(148, 174, 203, 0.14);
+}
+
+[data-accent="lagoon"] {
+  --accent: #4fb3d9;
+  --accent-hover: #75c4e2;
+  --on-accent: #06202b;
+  --accent-wash: rgba(79, 179, 217, 0.14);
 }
 
 /* Page-to-page transitions (cross-document View Transitions) */
@@ -288,8 +311,8 @@ select {
 }
 
 .btn--accent:hover {
-  border-color: #f6c768;
-  background: #f6c768;
+  border-color: var(--accent-hover);
+  background: var(--accent-hover);
 }
 
 .btn--quiet {
@@ -541,18 +564,13 @@ select {
 
 .hour {
   display: grid;
-  grid-template-rows: auto 44px auto 72px;
+  grid-template-rows: auto 44px auto;
   justify-items: center;
   align-items: center;
   margin: 0 3px;
   padding: 12px 0 10px;
   border-radius: var(--radius);
   scroll-snap-align: start;
-}
-
-.hour--now {
-  background: var(--raise);
-  box-shadow: inset 0 0 0 1px var(--accent);
 }
 
 .hour--past {
@@ -564,9 +582,10 @@ select {
   font-size: var(--step--1);
 }
 
-.hour--now .hour__time {
-  color: var(--accent);
-  font-weight: 600;
+.hour--now .hour__time,
+.hour--now .hour__temp {
+  color: var(--text);
+  font-weight: 700;
 }
 
 .hour__glyph .icon {
@@ -575,36 +594,6 @@ select {
 
 .hour__temp {
   font-size: var(--step-2);
-}
-
-/* Rain chance: a bar whose height is the chance, read as a small chart across the day */
-.hour__rain {
-  display: grid;
-  grid-template-rows: 1fr auto;
-  justify-items: center;
-  gap: 4px;
-  align-self: stretch;
-  width: 100%;
-  color: var(--faint);
-  font-size: var(--step--1);
-}
-
-.hour__bar {
-  align-self: end;
-  width: 6px;
-  height: 44px;
-  border-radius: 3px;
-  background: var(--line-strong);
-  transform: scaleY(max(var(--p), 0.04));
-  transform-origin: bottom;
-}
-
-.hour__rain--likely {
-  color: var(--text);
-}
-
-.hour__rain--likely .hour__bar {
-  background: var(--muted);
 }
 
 .strip__events {
@@ -907,6 +896,37 @@ select {
   color: var(--text);
 }
 
+/* ---------- Accent preview (local only) ---------- */
+
+.accent-preview {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: calc(var(--z-masthead) + 1);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px 8px 14px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  background: var(--raise);
+  font-size: var(--step--1);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+}
+
+.accent-preview button {
+  width: 28px;
+  height: 28px;
+  border: 2px solid transparent;
+  border-radius: 50%;
+  background: var(--swatch);
+  cursor: pointer;
+}
+
+.accent-preview button[aria-pressed="true"] {
+  border-color: var(--text);
+}
+
 /* ---------- Motion: one entrance on the home page ---------- */
 
 @media (prefers-reduced-motion: no-preference) {
@@ -928,12 +948,6 @@ select {
   .hour {
     animation: slide-in 520ms var(--ease) both;
     animation-delay: calc(240ms + var(--i) * 18ms);
-  }
-
-  /* Rain bars grow to their chance, so the day's rain reads as it arrives */
-  .hour__bar {
-    animation: rain-grow 700ms var(--ease) both;
-    animation-delay: calc(380ms + var(--i) * 22ms);
   }
 
   .event-bar {
@@ -960,12 +974,6 @@ select {
   from {
     opacity: 0;
     transform: translateX(16px);
-  }
-}
-
-@keyframes rain-grow {
-  from {
-    transform: scaleY(0);
   }
 }
 

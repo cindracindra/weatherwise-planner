@@ -12,6 +12,11 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..700&display=swap">
     <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.2/src/light/style.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='style/app.css') }}">
+    {% if config.DEBUG %}
+      <script>
+        try { var a = localStorage.getItem("ww-accent"); if (a) document.documentElement.dataset.accent = a; } catch (e) {}
+      </script>
+    {% endif %}
   </head>
 
   <body>
@@ -69,6 +74,33 @@
     <main id="main" class="wrap page">
       {% block content %}{% endblock %}
     </main>
+
+    {% if config.DEBUG %}
+      <div class="accent-preview" role="group" aria-label="Accent preview">
+        <span>Accent</span>
+        {% for key, name, hex in [("", "Cobalt", "#5b9bf0"), ("glacier", "Glacier", "#8cc2ee"),
+                                  ("steel", "Steel", "#94aecb"), ("lagoon", "Lagoon", "#4fb3d9")] %}
+          <button type="button" data-accent-pick="{{ key }}" style="--swatch: {{ hex }}" title="{{ name }}" aria-label="{{ name }}"></button>
+        {% endfor %}
+      </div>
+      <script>
+        (function () {
+          var root = document.documentElement;
+          var buttons = document.querySelectorAll("[data-accent-pick]");
+          function mark() {
+            buttons.forEach(function (b) { b.setAttribute("aria-pressed", String(b.dataset.accentPick === (root.dataset.accent || ""))); });
+          }
+          buttons.forEach(function (b) {
+            b.addEventListener("click", function () {
+              if (b.dataset.accentPick) root.dataset.accent = b.dataset.accentPick; else delete root.dataset.accent;
+              try { localStorage.setItem("ww-accent", b.dataset.accentPick); } catch (e) {}
+              mark();
+            });
+          });
+          mark();
+        })();
+      </script>
+    {% endif %}
 
     <script>
       document.querySelectorAll("[data-autosubmit]").forEach(function (el) {
