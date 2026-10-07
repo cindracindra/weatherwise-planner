@@ -13,6 +13,7 @@ import os
 from typing import Optional
 from urllib.parse import urlsplit
 
+from authlib.integrations.flask_client import OAuth
 from flask import current_app, jsonify, redirect, request, url_for
 from flask_login import LoginManager, current_user
 from sqlalchemy import select
@@ -28,6 +29,12 @@ DEV_SUB = "local-dev"
 
 # Blueprints that need a signed-in user
 PROTECTED = {"web", "api"}
+
+# Google publishes its sign-in endpoints and signing keys here; Authlib
+# reads it so nothing about Google's servers is hard-coded.
+GOOGLE_METADATA = (
+    "https://accounts.google.com/.well-known/openid-configuration"
+)
 
 
 @login_manager.user_loader
@@ -95,5 +102,59 @@ def get_or_create_dev_user() -> AppUser:
             session.add(user)
             session.commit()
             session.refresh(user)
+        session.expunge(user)
+        return user
+
+
+# ---------- Google sign-in ----------
+
+def google_configured() -> bool:
+    """Whether the Google OAuth client id and secret are set (.env or
+    Render's environment settings)."""
+    return bool(
+        os.getenv("GOOGLE_CLIENT_ID") and os.getenv("GOOGLE_CLIENT_SECRET")
+    )
+
+
+def init_google(app) -> None:
+    """Give the app an OAuth registry with Google in it, if configured.
+
+    Scopes: openid (who you are), email and profile (your address and
+    name). Nothing else is requested from the Google account."""
+    oauth = OAuth(app)
+    if google_configured():
+        oauth.register(
+            "google",
+            client_id=os.getenv("GOOGLE_CLIENT_ID"),
+            client_secret=os.getenv("GOOGLE_CLIENT_SECRET"),
+            server_metadata_url=GOOGLE_METADATA,
+            client_kwargs={"scope": "openid email profile"},
+        )
+
+
+def google_client():
+    """The Google OAuth client for this app, or None if not configured."""
+    oauth = current_app.extensions.get("authlib.integrations.flask_client")
+    return oauth.create_client("google") if oauth else None
+
+
+def upsert_google_user(info: dict) -> AppUser:
+    """The account for a verified Google identity: found by Google's
+    permanent id ("sub"), or created on first sign-in. Email and name are
+    refreshed each time, as people can change them on Google."""
+    sub = info["sub"]
+    email = info.get("email")
+    name = info.get("name") or (email.split("@")[0] if email else "You")
+    with Session(engine) as session:
+        user = session.execute(
+            select(AppUser).where(AppUser.google_sub == sub)
+        ).scalar_one_or_none()
+        if user is None:
+            user = AppUser(google_sub=sub, email=email, name=name)
+            session.add(user)
+        else:
+            user.email, user.name = email, name
+        session.commit()
+        session.refresh(user)
         session.expunge(user)
         return user

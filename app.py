@@ -11,12 +11,13 @@ from datetime import timedelta
 
 from dotenv import load_dotenv
 from flask import Flask
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 # Import blueprints
 from routes.auth_routes import auth_bp
 from routes.web_routes import web_bp
 from routes.api_routes import api_bp
-from utils.auth import login_manager, require_login
+from utils.auth import init_google, login_manager, require_login
 
 load_dotenv()
 
@@ -59,8 +60,15 @@ def create_app(config_name="default"):
         PERMANENT_SESSION_LIFETIME=timedelta(days=30),
     )
 
-    # Who is signed in
+    # Render receives HTTPS and passes requests on as HTTP; trust its
+    # X-Forwarded-Proto/Host headers so the app builds https:// links
+    # (Google's redirect address must match exactly)
+    if os.getenv("RENDER"):
+        app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
+
+    # Who is signed in, and Google as a way to sign in
     login_manager.init_app(app)
+    init_google(app)
 
     # Register blueprints
     app.register_blueprint(auth_bp)

@@ -14,10 +14,14 @@
       <p class="choose__lede">Your calendar with London's hourly forecast beside it. Sign in to see your events.</p>
 
       <div class="signin__actions">
-        <button type="button" class="btn btn--primary" disabled
-                title="Google sign-in arrives in the next step">
-          Sign in with Google
-        </button>
+        {% if google %}
+          <a href="{{ url_for('auth.login_google', next=next or None) }}" class="btn btn--primary">
+            {{ icon("google-logo") }}Sign in with Google
+          </a>
+        {% else %}
+          <button type="button" class="btn btn--primary" disabled>Sign in with Google</button>
+          <p class="signin__note">Google sign-in isn't set up here: GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET are missing.</p>
+        {% endif %}
 
         {% if dev_login %}
           <form action="{{ url_for('auth.login_dev') }}" method="post">

@@ -1,13 +1,13 @@
 """Tests for sign-in: protected pages, the API's 401, the local developer
 sign-in, sign-out, and the ?next= redirect check."""
 
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
 from app import create_app
 from models.db_models.user import AppUser
-from utils.auth import is_safe_next, login_manager
+from utils.auth import is_safe_next, login_manager, upsert_google_user
 
 DEV = AppUser(id=42, google_sub="local-dev", name="Local developer")
 
@@ -131,3 +131,124 @@ def test_session_cookie_settings(app):
     assert app.config["SESSION_COOKIE_SAMESITE"] == "Lax"
     assert app.config["PERMANENT_SESSION_LIFETIME"].days == 30
     assert app.secret_key and app.secret_key != "event-calendar"
+
+
+# ---------- Google sign-in (Google itself is replaced by a stand-in) ----------
+
+GOOGLE_USER = AppUser(id=5, google_sub="g-123", email="cindra@example.com",
+                      name="Cindra")
+VERIFIED = {"sub": "g-123", "email": "cindra@example.com",
+            "email_verified": True, "name": "Cindra"}
+
+
+@pytest.fixture
+def google(app):
+    """A stand-in for Google's OAuth client."""
+    from flask import redirect as flask_redirect
+    fake = MagicMock()
+    fake.authorize_redirect.side_effect = lambda uri: flask_redirect(
+        "https://accounts.google.com/o/oauth2/auth?redirect_uri=" + uri)
+    load = lambda user_id: GOOGLE_USER if user_id == "5" else None  # noqa: E731
+    with patch("routes.auth_routes.google_client", return_value=fake), \
+         patch.object(login_manager, "_user_callback", load):
+        yield fake
+
+
+def test_google_button_links_to_google_sign_in(monkeypatch):
+    monkeypatch.setenv("GOOGLE_CLIENT_ID", "id.apps.googleusercontent.com")
+    monkeypatch.setenv("GOOGLE_CLIENT_SECRET", "secret")
+    with create_app().test_client() as client:
+        body = client.get("/login?next=/management/event").data
+    assert b'href="/login/google?next=/management/event"' in body
+
+
+def test_google_sign_in_is_off_without_credentials(monkeypatch):
+    monkeypatch.delenv("GOOGLE_CLIENT_ID", raising=False)
+    monkeypatch.delenv("GOOGLE_CLIENT_SECRET", raising=False)
+    with create_app().test_client() as client:
+        assert b"isn't set up here" in client.get("/login").data
+        assert client.get("/login/google").status_code == 404
+        assert client.get("/auth/google/callback").status_code == 404
+
+
+def test_login_google_sends_you_to_google(client, google):
+    response = client.get("/login/google?next=/management/event")
+    assert response.location.startswith("https://accounts.google.com/")
+    google.authorize_redirect.assert_called_once_with(
+        "http://localhost/auth/google/callback")
+    with client.session_transaction() as session:
+        assert session["next"] == "/management/event"
+
+
+def test_login_google_drops_an_unsafe_next(client, google):
+    client.get("/login/google?next=https://evil.example/")
+    with client.session_transaction() as session:
+        assert session["next"] is None
+
+
+def test_google_callback_signs_you_in(client, google):
+    google.authorize_access_token.return_value = {"userinfo": VERIFIED}
+    with client.session_transaction() as session:
+        session["next"] = "/management/event"
+    with patch("routes.auth_routes.upsert_google_user",
+               return_value=GOOGLE_USER) as upsert:
+        response = client.get("/auth/google/callback?code=abc&state=xyz")
+    upsert.assert_called_once_with(VERIFIED)
+    assert response.location.endswith("/management/event")
+    with client.session_transaction() as session:
+        assert session["_user_id"] == "5"
+        assert session.permanent is True
+        assert "next" not in session
+
+
+def test_google_callback_when_cancelled(client, google):
+    response = client.get("/auth/google/callback?error=access_denied")
+    assert response.location.endswith("/login")
+    google.authorize_access_token.assert_not_called()
+    assert b"Sign-in was cancelled." in client.get("/login").data
+
+
+def test_google_callback_rejects_a_bad_reply(client, google):
+    from authlib.integrations.base_client import OAuthError
+    google.authorize_access_token.side_effect = OAuthError("mismatching_state")
+    with patch("routes.auth_routes.upsert_google_user") as upsert:
+        response = client.get("/auth/google/callback?code=abc&state=forged")
+    assert response.location.endswith("/login")
+    upsert.assert_not_called()
+    with client.session_transaction() as session:
+        assert "_user_id" not in session
+
+
+def test_google_callback_needs_a_verified_email(client, google):
+    google.authorize_access_token.return_value = {
+        "userinfo": {**VERIFIED, "email_verified": False}}
+    with patch("routes.auth_routes.upsert_google_user") as upsert:
+        response = client.get("/auth/google/callback?code=abc&state=xyz")
+    assert response.location.endswith("/login")
+    upsert.assert_not_called()
+
+
+# ---------- Finding or creating the account ----------
+
+@pytest.fixture
+def db():
+    with patch("utils.auth.Session") as session_class:
+        yield session_class.return_value.__enter__.return_value
+
+
+def test_first_google_sign_in_creates_the_account(db):
+    db.execute.return_value.scalar_one_or_none.return_value = None
+    user = upsert_google_user(VERIFIED)
+    added = db.add.call_args[0][0]
+    assert (added.google_sub, added.email, added.name) == (
+        "g-123", "cindra@example.com", "Cindra")
+    assert user is added
+
+
+def test_later_sign_ins_refresh_name_and_email(db):
+    existing = AppUser(id=5, google_sub="g-123", email="old@example.com",
+                       name="Old name")
+    db.execute.return_value.scalar_one_or_none.return_value = existing
+    upsert_google_user(VERIFIED)
+    db.add.assert_not_called()
+    assert (existing.email, existing.name) == ("cindra@example.com", "Cindra")

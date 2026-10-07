@@ -1,48 +1,109 @@
 """Sign-in and sign-out pages."""
 
+from authlib.integrations.base_client import OAuthError
 from flask import (
     Blueprint, abort, flash, redirect, render_template, request, session,
     url_for,
 )
 from flask_login import current_user, login_user, logout_user
 
-from utils.auth import dev_login_enabled, get_or_create_dev_user, is_safe_next
+from utils.auth import (
+    dev_login_enabled, get_or_create_dev_user, google_client,
+    google_configured, is_safe_next, upsert_google_user,
+)
 
 auth_bp = Blueprint("auth", __name__)
 
 
-def _signed_in_redirect():
-    """After signing in: back to where the person was going, or home."""
-    target = request.values.get("next")
-    if is_safe_next(target):
-        return redirect(target)
+def _start_session(user, next_url=None):
+    """Sign `user` in on a fresh session and send them on their way."""
+    # A fresh session on sign-in, so nothing from before carries over
+    session.clear()
+    login_user(user)
+    # Keep the session for PERMANENT_SESSION_LIFETIME (30 days), renewed
+    # on every visit, instead of ending when the browser closes
+    session.permanent = True
+    if is_safe_next(next_url):
+        return redirect(next_url)
     return redirect(url_for("web.homepage"))
+
+
+def _back_to_sign_in(message):
+    flash(message, "error")
+    return redirect(url_for("auth.login"))
 
 
 @auth_bp.route("/login")
 def login():
     """The sign-in page."""
     if current_user.is_authenticated:
-        return _signed_in_redirect()
+        target = request.args.get("next")
+        if is_safe_next(target):
+            return redirect(target)
+        return redirect(url_for("web.homepage"))
     return render_template(
         "login.html",
         next=request.args.get("next", ""),
+        google=google_configured(),
         dev_login=dev_login_enabled(),
     )
 
 
+@auth_bp.route("/login/google")
+def login_google():
+    """Step 1 of Google sign-in: send the visitor to Google.
+
+    Authlib stores a random `state` and `nonce` in the session first; the
+    callback checks both, so a reply that didn't start here is refused."""
+    client = google_client()
+    if client is None:
+        abort(404)
+    next_url = request.args.get("next")
+    session["next"] = next_url if is_safe_next(next_url) else None
+    return client.authorize_redirect(
+        url_for("auth.google_callback", _external=True)
+    )
+
+
+@auth_bp.route("/auth/google/callback")
+def google_callback():
+    """Step 2: Google sends the visitor back here with a one-time code."""
+    client = google_client()
+    if client is None:
+        abort(404)
+    if request.args.get("error"):
+        # For example access_denied, when the visitor pressed Cancel
+        return _back_to_sign_in("Sign-in was cancelled.")
+
+    try:
+        # Checks state, swaps the code for tokens (server to server, with
+        # the client secret), and verifies the ID token's signature/nonce
+        token = client.authorize_access_token()
+    except OAuthError:
+        return _back_to_sign_in(
+            "Google sign-in couldn't be completed. Please try again."
+        )
+
+    info = token.get("userinfo") or {}
+    if not info.get("sub"):
+        return _back_to_sign_in(
+            "Google didn't confirm who you are. Please try again."
+        )
+    if not info.get("email_verified"):
+        return _back_to_sign_in(
+            "Your Google email address isn't verified yet."
+        )
+
+    next_url = session.pop("next", None)
+    return _start_session(upsert_google_user(info), next_url)
+
+
 @auth_bp.route("/login/dev", methods=["POST"])
 def login_dev():
-    """Local-only test sign-in, until Google sign-in exists (step 4)."""
+    """Local-only test sign-in, never available on Render."""
     if not dev_login_enabled():
         abort(404)
-    # A fresh session on sign-in, so nothing from before carries over
-    session.clear()
-    login_user(get_or_create_dev_user())
-    # Keep the session for PERMANENT_SESSION_LIFETIME (30 days), renewed
-    # on every visit, instead of ending when the browser closes
-    session.permanent = True
-    return _signed_in_redirect()
+    return _start_session(get_or_create_dev_user(), request.form.get("next"))
 
 
 @auth_bp.route("/logout", methods=["POST"])
