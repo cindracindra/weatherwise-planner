@@ -6,3 +6,6 @@ venv
 
 **/.DS_Store# hairline look-check sheets (regenerate with look.mjs)
 design/hairline/*.png
+
+# Local Claude preview settings (machine-specific paths)
+.claude/launch.json
