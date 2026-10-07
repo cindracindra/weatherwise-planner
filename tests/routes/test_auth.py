@@ -252,3 +252,25 @@ def test_later_sign_ins_refresh_name_and_email(db):
     upsert_google_user(VERIFIED)
     db.add.assert_not_called()
     assert (existing.email, existing.name) == ("cindra@example.com", "Cindra")
+
+
+# ---------- Every data route is protected ----------
+
+def test_every_page_and_api_route_needs_sign_in(app):
+    """Walks every route in the app, so a page added later without
+    sign-in fails here. Only the sign-in pages and static files are open."""
+    open_routes = {"auth", "static"}
+    checked = 0
+    with app.test_client() as client:
+        for rule in app.url_map.iter_rules():
+            area = rule.endpoint.split(".")[0]
+            if area in open_routes:
+                continue
+            url = rule.rule.replace("<int:eventid>", "1")
+            for method in rule.methods - {"HEAD", "OPTIONS"}:
+                response = client.open(url, method=method)
+                assert response.status_code in (302, 401), (method, url)
+                if response.status_code == 302:
+                    assert "/login" in response.location, (method, url)
+                checked += 1
+    assert checked >= 12

@@ -161,3 +161,31 @@ def test_delete_someone_elses_event_is_not_found(app, session):
     status, _ = payload(delete_event(1, OWNER))
     assert status == 404
     session.delete.assert_not_called()
+
+
+# ---------- Things a client can't do ----------
+
+def test_update_cannot_change_the_owner(app, session):
+    event = make_event()
+    session.get.return_value = event
+    update_event(1, {"name": "Picnic", "user_id": OTHER}, OWNER)
+    assert event.user_id == OWNER
+
+
+def test_create_ignores_a_user_id_in_the_request(app, session):
+    create_event(
+        {"name": "Picnic", "start_time": "2026-10-18T12:00:00",
+         "end_time": "2026-10-18T15:00:00", "location": "Hyde Park",
+         "user_id": OTHER},
+        OWNER,
+    )
+    assert session.add.call_args[0][0].user_id == OWNER
+
+
+def test_unexpected_errors_do_not_reach_the_browser(app, session):
+    session.execute.side_effect = RuntimeError(
+        "connection to server at 10.0.0.5 failed: password authentication")
+    status, body = payload(get_events(OWNER))
+    assert status == 500
+    assert "10.0.0.5" not in body["data"]["error"]
+    assert "password" not in body["data"]["error"]

@@ -1,3 +1,5 @@
+import logging
+
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 from datetime import datetime
@@ -13,6 +15,8 @@ from utils.request import (
     parse_datetime,
     validate_datetime_range,
 )
+
+logger = logging.getLogger(__name__)
 
 # Every function takes the id of the account the request is for. An event
 # that belongs to someone else is treated exactly like one that does not
@@ -45,6 +49,17 @@ def _not_found(eventid: int) -> Tuple[Response, int]:
 def _bad_id() -> Tuple[Response, int]:
     return build_response(
         StatusCode.BAD_REQUEST, {"error": "'eventid' must be an integer."}
+    )
+
+
+def _server_error() -> Tuple[Response, int]:
+    """Something unexpected failed (for example the database is down). The
+    details go to the server log only; the visitor gets a plain message,
+    so internal names and connection details never reach the browser."""
+    logger.exception("Event request failed")
+    return build_response(
+        StatusCode.INTERNAL_SERVER_ERROR,
+        {"error": "Something went wrong on our side. Please try again."},
     )
 
 
@@ -82,10 +97,8 @@ def get_events(
             events = session.execute(stmt).scalars().all()
             data = [_serialize_event(event) for event in events]
         return build_response(StatusCode.OK, {"events": data})
-    except Exception as e:
-        return build_response(
-            StatusCode.INTERNAL_SERVER_ERROR, {"error": f"{str(e)}"}
-        )
+    except Exception:
+        return _server_error()
 
 
 def get_event_by_id(eventid: Any, user_id: int) -> Tuple[Response, int]:
@@ -100,10 +113,8 @@ def get_event_by_id(eventid: Any, user_id: int) -> Tuple[Response, int]:
             if not event:
                 return _not_found(validated_id)
             return build_response(StatusCode.OK, _serialize_event(event))
-    except Exception as e:
-        return build_response(
-            StatusCode.INTERNAL_SERVER_ERROR, {"error": f"{str(e)}"}
-        )
+    except Exception:
+        return _server_error()
 
 
 def create_event(data: Any, user_id: int) -> Tuple[Response, int]:
@@ -161,10 +172,8 @@ def create_event(data: Any, user_id: int) -> Tuple[Response, int]:
             session.commit()
             session.refresh(event)
             return build_response(StatusCode.CREATED, _serialize_event(event))
-    except Exception as e:
-        return build_response(
-            StatusCode.INTERNAL_SERVER_ERROR, {"error": f"{str(e)}"}
-        )
+    except Exception:
+        return _server_error()
 
 
 def update_event(
@@ -221,10 +230,8 @@ def update_event(
             session.commit()
             session.refresh(event)
             return build_response(StatusCode.OK, _serialize_event(event))
-    except Exception as e:
-        return build_response(
-            StatusCode.INTERNAL_SERVER_ERROR, {"error": f"{str(e)}"}
-        )
+    except Exception:
+        return _server_error()
 
 
 def delete_event(eventid: Any, user_id: int) -> Tuple[Response, int]:
@@ -243,7 +250,5 @@ def delete_event(eventid: Any, user_id: int) -> Tuple[Response, int]:
         return build_response(
             StatusCode.OK, {"message": f"Event {validated_id} deleted."}
         )
-    except Exception as e:
-        return build_response(
-            StatusCode.INTERNAL_SERVER_ERROR, {"error": f"{str(e)}"}
-        )
+    except Exception:
+        return _server_error()
