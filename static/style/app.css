@@ -20,11 +20,11 @@
   --muted: #9c9fa6;
   --faint: #6c6f77;
   --text: #ececee;
-  /* Accent: Cobalt. Alternatives below, previewable locally. */
-  --accent: #5b9bf0;
-  --accent-hover: #7fb1f4;
-  --on-accent: #08152b;
-  --accent-wash: rgba(91, 155, 240, 0.14);
+  /* Accent: Ultramarine. Alternatives below, previewable locally. */
+  --accent: #3d5afe;
+  --accent-hover: #5a73ff;
+  --on-accent: #ffffff;
+  --accent-wash: rgba(61, 90, 254, 0.16);
   --danger: #ec7a68;
   --danger-wash: rgba(236, 122, 104, 0.12);
 
@@ -47,25 +47,25 @@
   --z-masthead: 10;
 }
 
-[data-accent="glacier"] {
-  --accent: #8cc2ee;
-  --accent-hover: #a9d2f3;
-  --on-accent: #0b1a28;
-  --accent-wash: rgba(140, 194, 238, 0.14);
+[data-accent="electric"] {
+  --accent: #2f80ff;
+  --accent-hover: #5596ff;
+  --on-accent: #03122b;
+  --accent-wash: rgba(47, 128, 255, 0.16);
 }
 
-[data-accent="steel"] {
-  --accent: #94aecb;
-  --accent-hover: #aec2da;
-  --on-accent: #111a25;
-  --accent-wash: rgba(148, 174, 203, 0.14);
+[data-accent="signal"] {
+  --accent: #1f6feb;
+  --accent-hover: #3b82f0;
+  --on-accent: #ffffff;
+  --accent-wash: rgba(31, 111, 235, 0.16);
 }
 
-[data-accent="lagoon"] {
-  --accent: #4fb3d9;
-  --accent-hover: #75c4e2;
-  --on-accent: #06202b;
-  --accent-wash: rgba(79, 179, 217, 0.14);
+[data-accent="azure"] {
+  --accent: #00a3ff;
+  --accent-hover: #33b5ff;
+  --on-accent: #001b2e;
+  --accent-wash: rgba(0, 163, 255, 0.16);
 }
 
 /* Page-to-page transitions (cross-document View Transitions) */

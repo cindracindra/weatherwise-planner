@@ -78,8 +78,8 @@
     {% if config.DEBUG %}
       <div class="accent-preview" role="group" aria-label="Accent preview">
         <span>Accent</span>
-        {% for key, name, hex in [("", "Cobalt", "#5b9bf0"), ("glacier", "Glacier", "#8cc2ee"),
-                                  ("steel", "Steel", "#94aecb"), ("lagoon", "Lagoon", "#4fb3d9")] %}
+        {% for key, name, hex in [("", "Ultramarine", "#3d5afe"), ("electric", "Electric", "#2f80ff"),
+                                  ("signal", "Signal", "#1f6feb"), ("azure", "Azure", "#00a3ff")] %}
           <button type="button" data-accent-pick="{{ key }}" style="--swatch: {{ hex }}" title="{{ name }}" aria-label="{{ name }}"></button>
         {% endfor %}
       </div>
