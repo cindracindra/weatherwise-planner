@@ -70,7 +70,9 @@ def homepage():
         calendar_matrix=calendar_matrix,
         today_detail=today,
         monthly_event_list=monthly_events_grouped(monthly_event_data),
-        daily_event_list=build_daily_event_list(monthly_event_data),
+        daily_event_list=build_daily_event_list(
+            monthly_event_data, today["day"]
+        ),
         hourly_forecast=hourly_forecast,
     )
 

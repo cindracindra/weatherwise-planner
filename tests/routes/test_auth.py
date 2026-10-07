@@ -275,3 +275,58 @@ def test_every_page_and_api_route_needs_sign_in(app):
                     assert "/login" in response.location, (method, url)
                 checked += 1
     assert checked >= 12
+
+
+# ---------- Review fixes ----------
+
+def test_form_posted_after_sign_out_returns_to_its_page(client):
+    response = client.post("/management/event/create", data={"name": "x"},
+                           headers={"Referer": "http://localhost/management/event?selected_eventid=4"})
+    assert response.location.endswith(
+        "/login?next=/management/event?selected_eventid%3D4")
+
+
+def test_form_post_from_another_site_gets_no_next(client):
+    response = client.post("/management/event/create",
+                           headers={"Referer": "https://evil.example/x"})
+    assert response.location.endswith("/login")
+
+
+def test_google_unreachable_on_the_way_out(client, google):
+    google.authorize_redirect.side_effect = ConnectionError("dns")
+    response = client.get("/login/google")
+    assert response.location.endswith("/login")
+    assert b"reachable right now" in client.get("/login").data
+
+
+def test_google_unreachable_on_the_way_back(client, google):
+    google.authorize_access_token.side_effect = TimeoutError("token")
+    response = client.get("/auth/google/callback?code=abc&state=xyz")
+    assert response.location.endswith("/login")
+    with client.session_transaction() as session:
+        assert "_user_id" not in session
+
+
+def test_double_first_sign_in_uses_the_account_just_made(db):
+    from sqlalchemy.exc import IntegrityError
+    winner = AppUser(id=5, google_sub="g-123", email="x", name="x")
+    db.execute.return_value.scalar_one_or_none.return_value = None
+    db.execute.return_value.scalar_one.return_value = winner
+    db.commit.side_effect = [IntegrityError("insert", {}, Exception()), None]
+    user = upsert_google_user(VERIFIED)
+    assert user is winner
+    db.rollback.assert_called_once()
+    assert (winner.email, winner.name) == ("cindra@example.com", "Cindra")
+
+
+def test_app_refuses_to_start_without_a_secret_key(monkeypatch):
+    monkeypatch.delenv("SECRET_KEY", raising=False)
+    monkeypatch.delenv("FLASK_DEBUG", raising=False)
+    with pytest.raises(RuntimeError, match="SECRET_KEY"):
+        create_app()
+
+
+def test_debug_mode_makes_up_a_key(monkeypatch):
+    monkeypatch.delenv("SECRET_KEY", raising=False)
+    monkeypatch.setenv("FLASK_DEBUG", "1")
+    assert create_app().secret_key

@@ -2,157 +2,122 @@
 
 > **Origin:** This project began as the [SSE TP1 Event Calendar](https://github.com/cindracindra/event-calendar-imperial-group-project), a group project for the Imperial College London MSc Software Systems Engineering, built by De Jun Tan, Cindra, Richard Lee and Timothy Ho. The group's final state is preserved at tag [`v1-group-project`](https://github.com/cindracindra/weatherwise-planner/tree/v1-group-project). All work after that tag is developed independently by Cindra.
 
-## Name
-
-WeatherWise Planner (formerly Event Calendar Web Application)
-
 [![CI](https://github.com/cindracindra/weatherwise-planner/actions/workflows/ci.yml/badge.svg)](https://github.com/cindracindra/weatherwise-planner/actions/workflows/ci.yml)
 
-**Live demo:** https://weatherwise-planner.onrender.com (free hosting, so the first load after a quiet spell can take up to a minute)
+**Live demo:** https://weatherwise-planner.onrender.com (free hosting, so the first load after a quiet spell can take up to a minute). Use **Try the demo** to look around without an account.
 
-## Description
+## What it does
 
-Event Calendar is a WebApp built to provide scheduling and planning capabilities for individuals. Users would be able to plan activities and events in advance using real-time weather and environmental data for improved productivity and time management.
+A personal calendar with London's weather beside it, so you can plan around the forecast.
 
-See the full list of planned and completed features in [Roadmap](#roadmap).
+- **Today at a glance:** current temperature and conditions, the day's range and when rain is most likely, with rain that sways as your cursor passes like a gust of wind.
+- **Hour by hour:** a scrollable strip of today's hourly forecast, with your events laid along the same timeline.
+- **The month:** daily weather and UK public holidays on every day, with your events.
+- **Events:** add, change and delete events from one page.
+- **Accounts:** sign in with Google; each person has their own private calendar.
 
-If you notice any bugs or issues with this project, report them using the [Issue Tracker](#support).
+## How it's built
 
-We welcome any and all contributions to this project. Please follow the steps listed in our [Ways of Working](#contributing) section.
-
-## Architecture
-
-### High-Level Diagram
-
-<img src="./diagrams/architecture.svg" alt="HLD" width="500">
-
-### Database Schema
-
-<img src="./diagrams/db-schema.png" alt="DB Schema" width="500">
-
-### Application Call Flow
+- **Flask** (Python), server-rendered with Jinja templates, plus a small JSON API
+- **PostgreSQL** (Neon) through SQLAlchemy
+- **Open-Meteo** for weather and **Nager.Date** for public holidays
+- **Sign-in:** Google OpenID Connect via Authlib, sessions via Flask-Login, CSRF protection via Flask-WTF
+- Hosted on **Render**; CI on **GitHub Actions** (flake8 and pytest on every push and pull request)
 
 ```
-┌────────────────────────────────────────┐
-│  Client (Browser / HTTP Client)        │
-└────────────────────────────────────────┘
-                  ↓
-┌────────────────────────────────────────┐
-│  Flask Application                     │
-└────────────────────────────────────────┘
-                  ↓
-┌─────────────┬──────────────────────────┐
-│ web_routes  │  api_routes              │
-│ (HTML)      │  (JSON)                  │
-└─────────────┴──────────────────────────┘
-                  ↓
-┌────────────────────────────────────────┐
-│  Logic Layer                           │
-└────────────────────────────────────────┘
-                  ↓
-┌────────────────────────────────────────┐
-│  PostgreSQL Database / External APIs   │
-└────────────────────────────────────────┘
+Browser ──▶ Flask app ──┬─▶ web_routes (pages)  ─┐
+                        ├─▶ api_routes (JSON)   ─┼─▶ database/ ──▶ PostgreSQL
+                        └─▶ auth_routes (sign-in)┘   services/ ──▶ Open-Meteo, Nager.Date
 ```
 
-## Visuals
+### Data model
 
-### Landing Page
+```mermaid
+erDiagram
+    app_user ||--o{ event : owns
+    app_user {
+        int id
+        string google_sub "Google's permanent account id"
+        string email
+        string name
+        bool is_demo
+        timestamp created_at
+    }
+    event {
+        int id
+        string name
+        timestamp start_time
+        timestamp end_time
+        string location
+        int user_id
+    }
+```
 
-<img src="./diagrams/landing_page.png" alt="Landing Page" width="500">
+One calendar per person: every event belongs to exactly one account, and every query is limited to the signed-in account. Someone else's event is reported as "not found".
 
-The landing page presents the monthly calendar with weather icons and event badges displayed on each day. Next to the calendar, the daily timetable shows all events for that day along with hourly temperature data. A profile selection dropdown and a persistent navigation bar are also visible, supporting smooth transitions across the application.
+## Accounts and security
 
-### Event Management Page
+- **Sign in with Google** (scopes `openid email profile` only). Accounts are matched on Google's permanent id, never on email.
+- **Sessions** are signed cookies (`SECRET_KEY`) holding only the user id: HttpOnly, SameSite=Lax, HTTPS-only in production, 30 days.
+- **Every page and API call needs a signed-in user.** Pages redirect to sign-in; the API answers `401`.
+- **CSRF tokens** on every form. The JSON API is exempt: browsers won't send JSON, PATCH or DELETE to it from another site.
+- **Try the demo** creates a fresh throwaway account with sample events. It's deleted on sign-out or within a day, and at most 200 exist at once.
+- **Errors** are logged on the server; visitors only see a plain message.
 
-<img src="./diagrams/event_management_page.png" alt="Event Management Page" width="500">
+## Running it locally
 
-The event management page displays a list of all events on the left, allowing users to select an event for editing. On the right, the form for creating or updating events is shown, enabling full modification of event details. Flash messages will appear at the top of the page, providing feedback on the success or failure of user actions.
+1. Create a virtual environment and install dependencies:
+   ```bash
+   python -m venv .venv && source .venv/bin/activate
+   pip install -r requirements-dev.txt
+   ```
+2. Create a `.env` file (never committed):
+   ```
+   SECRET_KEY=<output of: python -c "import secrets; print(secrets.token_hex(32))">
+   GOOGLE_CLIENT_ID=<from Google Cloud Console>
+   GOOGLE_CLIENT_SECRET=<from Google Cloud Console>
+   PGHOST=...  PGUSER=...  PGPASSWORD=...  PGDATABASE=...  PGPORT=5432
+   ```
+   Google's OAuth client needs the redirect URI `http://localhost:5050/auth/google/callback` (and the production one, `https://<your-host>/auth/google/callback`).
+3. Create the tables on an empty database with `database/sql_scripts/SQL_command.sql`.
+4. Run with `flask run --debug --port 5050`. In debug mode the sign-in page also offers **Continue as local developer**, which never appears in production.
 
-### Profile Management Page
+### Database changes
 
-<img src="./diagrams/profile_management_page.png" alt="Profile Management Page" width="500">
+Changes to a database that's already in use go in numbered migration scripts in `database/sql_scripts/`, run in order. Each is safe to run more than once.
 
-The profile management page lists all existing profiles and provides a form for creating new ones. Users can add or delete profiles directly from this interface. Flash messages will confirm the results of profile operations, ensuring clear and immediate feedback.
+| Script | What it does |
+|---|---|
+| `001_accounts.sql` | Adds accounts (`app_user`), gives every event an owner, removes the old profile tables. Events from before accounts existed are discarded. |
 
-## User Guide
+`SQL_command.sql` rebuilds everything from scratch and **deletes all data**; use it only for a new, empty database.
 
-This application consists of three main pages, accessible through the persistent navigation bar at the top of the interface:
+## API
 
-### 1. Landing Page (/)
+All endpoints are under `/api`, need a signed-in session, and only ever see the signed-in account's events.
 
-- Landing page displays a monthly calendar with event badges and weather icons for each day.
-- Profile dropdown at the top allows users to filter events by profile, automatically updating both the calendar and the daily timetable.
-- Manage Profiles navigation button routes the user to the Profile Management Page, where they can create and delete profiles.
-- Manage Events navigation button routes the user to the Event Management Page, where they can create, edit, and delete events; this button is only accessible once a profile has been selected.
+| Endpoint | Method | Description |
+|---|---|---|
+| `/api/events` | GET | Your events |
+| `/api/events/<id>` | GET | One of your events |
+| `/api/events` | POST | Create an event (JSON: `name`, `start_time`, `end_time`, `location`) |
+| `/api/events/<id>` | PATCH | Change an event |
+| `/api/events/<id>` | DELETE | Delete an event |
 
-### 2. Event Management Page (/management/event)
-
-- The left panel lists all events booked under the selected profile.
-- Users can edit an event by clicking it in the left panel, which populates the form on the right panel; changes can then be updated and submitted.
-- The Create Event button opens an empty form with all necessary fields to create a new event.
-- Each event in the list has a Delete button to remove it from the system.
-- Flash messages appear at the top of the page after creating, updating, or deleting an event to provide feedback on the action.
-
-### 3. Profile Management Page (/management/profile)
-
-- Users can create new profiles using the Create Profile form.
-- A selected profile can be deleted from the dropdown list using the Delete Profile button.
-- Flash messages appear at the top of the page to confirm the success or failure of all profile operations.
-
-#### Navigation Summary:
-
-Home → Returns to the landing page
-Manage Events → Open the event management interface
-Manage Profiles → Open the profile management interface
-
-The application is fully server-rendered; each action reloads the page to reflect updated data. Profile selection is preserved automatically across pages.
-
-## API Endpoints
-
-All API routes are prefixed with `/api`.
-
-| Endpoint                   | Method | Description           |
-| -------------------------- | ------ | --------------------- |
-| `/api/events`              | GET    | Get all events        |
-| `/api/events/<id>`         | GET    | Get event by ID       |
-| `/api/events`              | POST   | Create event          |
-| `/api/events/<id>`         | PATCH  | Update event          |
-| `/api/events/<id>`         | DELETE | Delete event          |
-| `/api/profiles`            | GET    | Get all profiles      |
-| `/api/profiles/<id>`       | GET    | Get profile by ID     |
-| `/api/profiles`            | POST   | Create profile        |
-| `/api/profiles/<id>`       | DELETE | Delete profile        |
-| `/api/event-profiles`      | GET    | Get all associations  |
-| `/api/event-profiles/<id>` | GET    | Get association by ID |
-| `/api/event-profiles`      | POST   | Create association    |
-| `/api/event-profiles/<id>` | DELETE | Delete association    |
-
-## Support
-
-Please raise any issues or bugs via the [issue tracker](https://github.com/cindracindra/weatherwise-planner/issues).
-
-## Roadmap
-
-- [x] Monthly Calendar Overview
-- [x] Display Real-time Weather on Calendar
-- [x] Display Holidays on Calendar
-- [x] Display Events on Calendar
-- [x] Event Management (Query, Create, Update, & Delete)
-- [x] Profile Management (Query, Create & Delete)
-- [x] EventXProfile Management (Query, Create & Delete)
-- [x] API Support for Event, Profile, EventXProfile
+Responses share one shape: `{"statusCode": 200, "statusMessage": "SUCCESS", "data": {...}}`.
 
 ## Development
 
 ```bash
-python -m venv .venv && source .venv/bin/activate
-pip install -r requirements-dev.txt
 flake8 .
 pytest tests/
 ```
 
-Every push to `main` and every pull request runs lint and tests via [GitHub Actions](https://github.com/cindracindra/weatherwise-planner/actions).
+The tests need no database or network: database and API calls are replaced with stand-ins. More detail in [`routes/README.md`](routes/README.md), [`database/README.md`](database/README.md) and [`tests/README.md`](tests/README.md).
+
+## Support
+
+Please raise any issues or bugs via the [issue tracker](https://github.com/cindracindra/weatherwise-planner/issues).
 
 ## Contributing
 
@@ -172,16 +137,3 @@ Released under the [MIT License](LICENSE). The original group-project code (up t
 ## Project status
 
 Active
-
-## Navigation
-
-## 🎯 Quick Navigation
-
-| Topic                           | Route                |
-| ------------------------------- | -------------------- |
-| Project Overview                | `/README.MD`         |
-| Database Operations.            | `database/README.md` |
-| API & Web Routes                | `routes/README.md`   |
-| External APIs (Weather/Holiday) | `api/README.MD`      |
-| Internal Services               | `services/README.MD` |
-| Testing.                        | `tests/README.MD`    |

@@ -17,6 +17,7 @@ from authlib.integrations.flask_client import OAuth
 from flask import current_app, jsonify, redirect, request, url_for
 from flask_login import LoginManager, current_user
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from database.engine import engine
@@ -79,7 +80,21 @@ def require_login():
         body = {"statusCode": 401, "statusMessage": "UNAUTHORIZED",
                 "data": {"error": "Sign in to use the API."}}
         return jsonify(body), 401
-    return redirect(url_for("auth.login", next=request.full_path.rstrip("?")))
+    return redirect(url_for("auth.login", next=_return_to()))
+
+
+def _return_to() -> Optional[str]:
+    """Where to go after signing in. For a page, that page. For a form
+    submission (say the session ended while the form was open), the page
+    the form was on: the submit address itself only accepts POST, so
+    opening it after sign-in would fail."""
+    if request.method == "GET":
+        return request.full_path.rstrip("?")
+    referrer = urlsplit(request.referrer or "")
+    if referrer.netloc != request.host:
+        return None
+    target = referrer.path + (f"?{referrer.query}" if referrer.query else "")
+    return target if is_safe_next(target) else None
 
 
 def dev_login_enabled() -> bool:
@@ -145,16 +160,23 @@ def upsert_google_user(info: dict) -> AppUser:
     sub = info["sub"]
     email = info.get("email")
     name = info.get("name") or (email.split("@")[0] if email else "You")
+    find = select(AppUser).where(AppUser.google_sub == sub)
     with Session(engine) as session:
-        user = session.execute(
-            select(AppUser).where(AppUser.google_sub == sub)
-        ).scalar_one_or_none()
+        user = session.execute(find).scalar_one_or_none()
         if user is None:
             user = AppUser(google_sub=sub, email=email, name=name)
             session.add(user)
         else:
             user.email, user.name = email, name
-        session.commit()
+        try:
+            session.commit()
+        except IntegrityError:
+            # Two first sign-ins at once (a double click): the other one
+            # created the account a moment ago, so use that one
+            session.rollback()
+            user = session.execute(find).scalar_one()
+            user.email, user.name = email, name
+            session.commit()
         session.refresh(user)
         session.expunge(user)
         return user

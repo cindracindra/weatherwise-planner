@@ -3,8 +3,9 @@
 Each demo account gets sample events placed around today's date, so the
 calendar and today's timeline have something to show. Demo accounts are
 deleted when their visitor signs out, or after DEMO_LIFETIME for visitors
-who just leave, and there are never more than DEMO_CAP at once. Events go
-with their account (ON DELETE CASCADE).
+who just leave. At most DEMO_CAP exist at once: beyond that, new demos are
+refused rather than evicting someone mid-visit. Events go with their
+account (ON DELETE CASCADE).
 """
 
 from datetime import datetime, timedelta
@@ -54,30 +55,33 @@ def sample_events(user_id: int) -> list[Event]:
     return events
 
 
-def cleanup_demo_users(session: Session) -> None:
-    """Delete demo accounts older than DEMO_LIFETIME, then the oldest
-    beyond DEMO_CAP (leaving room for one more)."""
-    cutoff = datetime.now() - DEMO_LIFETIME
+class DemoFull(Exception):
+    """DEMO_CAP demo accounts are already in use."""
+
+
+def cleanup_demo_users(session: Session) -> int:
+    """Delete demo accounts older than DEMO_LIFETIME, and return how many
+    are still live. The age is measured with the database's own clock,
+    the same one that set created_at."""
     session.execute(
-        delete(AppUser).where(AppUser.is_demo, AppUser.created_at < cutoff)
+        delete(AppUser).where(
+            AppUser.is_demo,
+            AppUser.created_at < func.now() - DEMO_LIFETIME,
+        )
     )
-    live = session.execute(
+    return session.execute(
         select(func.count()).select_from(AppUser).where(AppUser.is_demo)
     ).scalar_one()
-    extra = live - (DEMO_CAP - 1)
-    if extra > 0:
-        oldest = (
-            select(AppUser.id).where(AppUser.is_demo)
-            .order_by(AppUser.created_at).limit(extra)
-        )
-        session.execute(delete(AppUser).where(AppUser.id.in_(oldest)))
 
 
 def create_demo_user() -> AppUser:
     """A brand-new demo account with sample events, after tidying up old
-    ones. Nothing is shared between demo visitors."""
+    ones. Nothing is shared between demo visitors. Raises DemoFull when
+    DEMO_CAP demos are live."""
     with Session(engine) as session:
-        cleanup_demo_users(session)
+        if cleanup_demo_users(session) >= DEMO_CAP:
+            session.commit()  # keep the tidy-up
+            raise DemoFull()
         user = AppUser(name=DEMO_NAME, is_demo=True)
         session.add(user)
         session.flush()  # gives the account its id for the events

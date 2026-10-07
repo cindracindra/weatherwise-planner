@@ -47,7 +47,7 @@ def _parse_datetime(dt):
 # ===================== homepage =====================
 
 
-def build_daily_event_list(event_by_month):
+def build_daily_event_list(event_by_month, today_day=None):
     """
     Convert event_by_month → daily_event_list for the current day.
     Adds start_int, end_int, and duration to each event.
@@ -64,8 +64,10 @@ def build_daily_event_list(event_by_month):
     }
     ]
     """
-    now = datetime.now(timezone.utc)
-    current_day = now.day
+    # The day of the month to pick, in London time like the rest of the
+    # calendar (UTC would be a day behind for an hour after midnight in
+    # summer). Callers pass get_today_detail()["day"].
+    current_day = today_day or datetime.now(timezone.utc).day
 
     events = event_by_month.get("events", [])
     daily_events = []
@@ -135,7 +137,7 @@ def monthly_events_grouped(event_by_month):
 # ===================== event management page =====================
 
 
-def group_all_events_by_full_date(event_by_profile):
+def group_all_events_by_full_date(event_data):
     """
     Groups all events by their full date (e.g., "Thursday, 27 December 2025").
     Returns:
@@ -147,7 +149,7 @@ def group_all_events_by_full_date(event_by_profile):
         ...
     ]
     """
-    events = event_by_profile.get("events", [])
+    events = event_data.get("events", [])
     daily_groups = defaultdict(list)
 
     for e in events:

@@ -20,6 +20,9 @@ jobs:
 
   test:
     runs-on: ubuntu-latest
+    env:
+      # A throwaway key so the app can start under test; not a real secret
+      SECRET_KEY: ci-test-key-not-secret
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5

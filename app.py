@@ -27,20 +27,26 @@ load_dotenv()
 
 
 def _secret_key() -> str:
-    """The key that signs session cookies. It comes from the environment
-    (.env locally, Render's settings in production) and is never in git.
+    """The key that signs session cookies and CSRF tokens. It comes from
+    the environment (.env locally, Render's settings in production, the
+    CI workflow for tests) and is never in git.
 
-    Production refuses to start without one. Elsewhere a random key is made
-    for this run, which works but signs everyone out on every restart."""
+    Without one the app refuses to start, except in local debug mode
+    (flask run --debug), where a key is made up for that run. A made-up
+    key per process would sign people out whenever requests land on a
+    different worker, so it is never used anywhere else."""
     key = os.getenv("SECRET_KEY")
     if key:
         return key
-    if os.getenv("RENDER"):
-        raise RuntimeError("SECRET_KEY must be set in production.")
-    logging.getLogger(__name__).warning(
-        "SECRET_KEY not set; using a temporary key. Add one to .env."
+    if os.getenv("FLASK_DEBUG", "").lower() in ("1", "true"):
+        logging.getLogger(__name__).warning(
+            "SECRET_KEY not set; using a temporary key. Add one to .env."
+        )
+        return secrets.token_hex(32)
+    raise RuntimeError(
+        "SECRET_KEY is not set. Add it to .env (locally) or to the host's "
+        "environment settings."
     )
-    return secrets.token_hex(32)
 
 
 def _form_expired(error):

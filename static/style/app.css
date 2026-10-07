@@ -639,7 +639,7 @@ select {
   text-overflow: ellipsis;
 }
 
-/* ---------- Choose a profile (with the Vane figure) ---------- */
+/* ---------- Figure + text panel (sign-in page, with the Vane) ---------- */
 
 .choose {
   display: grid;

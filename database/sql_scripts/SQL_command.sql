@@ -32,7 +32,7 @@ CREATE INDEX event_user_id_idx ON event (user_id);
 
 
 -- Sample data: one account with a few events
-INSERT INTO app_user (name, is_demo) VALUES ('Sample user', TRUE);
+INSERT INTO app_user (name, is_demo) VALUES ('Sample user', FALSE);
 
 INSERT INTO event (name, start_time, end_time, location, user_id) VALUES
 ('Tech Conference', '2026-10-12 09:00:00', '2026-10-12 17:00:00', 'London', 1),

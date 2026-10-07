@@ -1,5 +1,7 @@
 """Sign-in and sign-out pages."""
 
+import logging
+
 from authlib.integrations.base_client import OAuthError
 from flask import (
     Blueprint, abort, flash, redirect, render_template, request, session,
@@ -11,9 +13,14 @@ from utils.auth import (
     dev_login_enabled, get_or_create_dev_user, google_client,
     google_configured, is_safe_next, upsert_google_user,
 )
-from utils.demo import create_demo_user, delete_demo_user
+from utils.demo import DemoFull, create_demo_user, delete_demo_user
 
 auth_bp = Blueprint("auth", __name__)
+logger = logging.getLogger(__name__)
+
+GOOGLE_UNREACHABLE = (
+    "Google sign-in isn't reachable right now. Please try again shortly."
+)
 
 
 def _start_session(user, next_url=None, lasting=True):
@@ -61,9 +68,15 @@ def login_google():
         abort(404)
     next_url = request.args.get("next")
     session["next"] = next_url if is_safe_next(next_url) else None
-    return client.authorize_redirect(
-        url_for("auth.google_callback", _external=True)
-    )
+    try:
+        # Fetches Google's published endpoints first, so this can fail
+        # if Google can't be reached
+        return client.authorize_redirect(
+            url_for("auth.google_callback", _external=True)
+        )
+    except Exception:
+        logger.exception("Could not start Google sign-in")
+        return _back_to_sign_in(GOOGLE_UNREACHABLE)
 
 
 @auth_bp.route("/auth/google/callback")
@@ -81,9 +94,14 @@ def google_callback():
         # the client secret), and verifies the ID token's signature/nonce
         token = client.authorize_access_token()
     except OAuthError:
+        # A reply we can't trust: wrong state, bad token, reused code
         return _back_to_sign_in(
             "Google sign-in couldn't be completed. Please try again."
         )
+    except Exception:
+        # Google couldn't be reached for the token exchange
+        logger.exception("Google token exchange failed")
+        return _back_to_sign_in(GOOGLE_UNREACHABLE)
 
     info = token.get("userinfo") or {}
     if not info.get("sub"):
@@ -110,7 +128,13 @@ def login_dev():
 @auth_bp.route("/login/demo", methods=["POST"])
 def login_demo():
     """Try the demo: a fresh throwaway account with sample events."""
-    return _start_session(create_demo_user(), lasting=False)
+    try:
+        demo = create_demo_user()
+    except DemoFull:
+        return _back_to_sign_in(
+            "The demo is busy right now. Please try again later."
+        )
+    return _start_session(demo, lasting=False)
 
 
 @auth_bp.route("/logout", methods=["POST"])

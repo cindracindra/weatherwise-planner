@@ -10,7 +10,7 @@ from models.db_models.user import AppUser
 from utils.auth import login_manager
 from utils.response import StatusCode, build_response
 from utils.demo import (
-    DEMO_CAP, SAMPLE_EVENTS, cleanup_demo_users, create_demo_user,
+    DEMO_CAP, DEMO_LIFETIME, SAMPLE_EVENTS, DemoFull, cleanup_demo_users, create_demo_user,
     delete_demo_user, sample_events,
 )
 
@@ -20,7 +20,17 @@ TODAY = {"year": 2026, "month": 10, "day": 7, "hour": 9}
 
 
 def sql(statement):
-    return str(statement.compile(compile_kwargs={"literal_binds": True}))
+    """The statement's SQL, with values filled in where SQLAlchemy can
+    print them (it can't print an interval like '1 day'; that one stays a
+    placeholder here and is sent to Postgres as a parameter)."""
+    try:
+        return str(statement.compile(compile_kwargs={"literal_binds": True}))
+    except Exception:
+        return str(statement.compile())
+
+
+def statement_params(statement):
+    return list(statement.compile().params.values())
 
 
 @pytest.fixture
@@ -122,23 +132,33 @@ def test_create_demo_user_makes_a_marked_account_with_events(db):
     db.commit.assert_called_once()
 
 
-def test_cleanup_removes_demos_older_than_a_day():
+def test_cleanup_removes_demos_older_than_a_day_by_the_db_clock():
     session = MagicMock()
     session.execute.return_value.scalar_one.return_value = 5
-    cleanup_demo_users(session)
+    assert cleanup_demo_users(session) == 5
     first = sql(session.execute.call_args_list[0][0][0])
     assert first.startswith("DELETE FROM app_user")
-    assert "app_user.is_demo" in first and "app_user.created_at <" in first
-    assert session.execute.call_count == 2  # under the cap: no extra delete
+    assert "app_user.is_demo" in first
+    assert "app_user.created_at < now() -" in first
+    assert statement_params(session.execute.call_args_list[0][0][0]) == [
+        DEMO_LIFETIME]
 
 
-def test_cleanup_enforces_the_cap():
-    session = MagicMock()
-    session.execute.return_value.scalar_one.return_value = DEMO_CAP + 50
-    cleanup_demo_users(session)
-    capped = sql(session.execute.call_args_list[2][0][0])
-    assert "ORDER BY app_user.created_at" in capped
-    assert "LIMIT 51" in capped
+def test_no_new_demo_at_the_cap_and_nobody_is_evicted(db):
+    db.execute.return_value.scalar_one.return_value = DEMO_CAP
+    with pytest.raises(DemoFull):
+        create_demo_user()
+    db.add.assert_not_called()
+    deletes = [sql(c[0][0]) for c in db.execute.call_args_list
+               if sql(c[0][0]).startswith("DELETE")]
+    assert len(deletes) == 1 and "created_at <" in deletes[0]
+
+
+def test_busy_demo_shows_a_message(client):
+    with patch("routes.auth_routes.create_demo_user", side_effect=DemoFull):
+        response = client.post("/login/demo")
+    assert response.location.endswith("/login")
+    assert b"The demo is busy right now" in client.get("/login").data
 
 
 def test_delete_demo_user_never_touches_real_accounts():
