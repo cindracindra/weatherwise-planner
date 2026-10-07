@@ -34,7 +34,7 @@ def homepage():
     """Homepage with calendar view."""
     isReqSucc = request.args.get("isReqSucc", "True")
     if isReqSucc == "False":
-        flash("Select a profile to manage events.", "error")
+        flash("Choose a profile first, then add your events.", "error")
 
     profileid = request.args.get("profileid", "")
     profile_response, status_code = get_profiles()
@@ -147,9 +147,13 @@ def web_management():
 
         # Handle flash messages
         if code in [200, 201]:
-            flash("Event successfully updated/created/deleted", "success")
+            flash("Your events are up to date.", "success")
         elif code != 100:
-            flash("Unable to update/create/delete event", "error")
+            flash(
+                "That change didn't save. Check the end time is after the "
+                "start time and try again.",
+                "error",
+            )
 
         return render_template(
             "management.html",
@@ -254,9 +258,9 @@ def web_profile():
         profile_list = profile_json["data"].get("profiles", [])
 
     if code in [200, 201]:
-        flash("Profile successfully created/deleted", "success")
+        flash("Your profiles are up to date.", "success")
     elif code != 100:
-        flash("Unable to create/delete profile", "error")
+        flash("That change didn't save. Try again.", "error")
 
     return render_template(
         "management_profile.html",

@@ -5,55 +5,48 @@
 {% block title %}Events · {% endblock %}
 
 {% block content %}
-  <div class="page-header">
+  <div class="page-head">
     <div>
-      <h1 class="page-header__title">Events</h1>
-      <p class="page-header__subtitle">Pick an event to edit it, or add a new one.</p>
+      <h1 class="page-head__title display">Events</h1>
+      <p class="page-head__lede">Choose an event to change it, or add a new one.</p>
     </div>
-    {% if selected_event %}
-      <a href="{{ url_for('web.web_management', profileid=profileid) }}" class="btn btn--primary">
-        {{ icon("plus", "icon--sm") }} New event
-      </a>
-    {% endif %}
   </div>
 
-  <div class="split">
-    <!-- Event list -->
-    <section class="card" aria-labelledby="list-title">
-      <div class="card__header">
-        <h2 id="list-title" class="card__title">All events</h2>
-      </div>
-
+  <div class="columns">
+    <!-- Agenda -->
+    <section aria-label="All events">
       {% if not all_event %}
-        <div class="empty">
-          {{ icon("calendar") }}
-          <p class="empty__title">No events yet</p>
-          <p>Use the form to add your first one.</p>
-        </div>
+        <p class="empty-note">
+          <strong>No events yet</strong>
+          Add your first one with the form.
+        </p>
       {% endif %}
 
       {% for day in all_event %}
-        <div class="date-group">
-          <h3 class="date-group__label">{{ day.full_date }}</h3>
+        <div class="agenda-day">
+          {% set d = day.daily_events[0].start_time %}
+          <h2 class="agenda-day__title display">{{ d.strftime('%A') }} {{ d.day }} {{ d.strftime('%B') }}</h2>
 
           {% for event in day.daily_events %}
-            <div class="event-row {% if event.id|string == selected_eventid|string %}event-row--selected{% endif %}">
-              <form action="{{ url_for('web.web_load_event') }}" method="post" class="event-row__main">
+            <div class="agenda-row {% if event.id|string == selected_eventid|string %}agenda-row--selected{% endif %}">
+              <form action="{{ url_for('web.web_load_event') }}" method="post">
                 <input type="hidden" name="profileid" value="{{ profileid }}">
                 <input type="hidden" name="eventid" value="{{ event.id }}">
-                <button type="submit" class="event-row__open">
-                  <span class="event-row__name">{{ event.name }}</span>
-                  <span class="event-row__meta tabular">
-                    {{ event.start_time.strftime('%H:%M') }}–{{ event.end_time.strftime('%H:%M') }}{% if event.location %} · {{ event.location }}{% endif %}
+                <button type="submit" class="agenda-row__open"
+                        {% if event.id|string == selected_eventid|string %}aria-current="true"{% endif %}>
+                  <span class="agenda-row__time num">{{ event.start_time.strftime('%H:%M') }}–{{ event.end_time.strftime('%H:%M') }}</span>
+                  <span>
+                    <span class="agenda-row__name">{{ event.name }}</span>
+                    {% if event.location %}<span class="agenda-row__place">{{ event.location }}</span>{% endif %}
                   </span>
                 </button>
               </form>
 
-              <form action="{{ url_for('web.web_delete_event') }}" method="post" class="event-row__actions"
+              <form action="{{ url_for('web.web_delete_event') }}" method="post"
                     data-confirm="Delete “{{ event.name }}”? This can't be undone.">
                 <input type="hidden" name="profileid" value="{{ profileid }}">
                 <input type="hidden" name="eventid" value="{{ event.id }}">
-                <button type="submit" class="btn btn--ghost btn--icon btn--danger" title="Delete {{ event.name }}">
+                <button type="submit" class="btn btn--bare btn--square btn--danger" title="Delete {{ event.name }}">
                   {{ icon("trash", "icon--sm") }}<span class="sr-only">Delete {{ event.name }}</span>
                 </button>
               </form>
@@ -63,26 +56,24 @@
       {% endfor %}
     </section>
 
-    <!-- Create / edit form -->
-    <section class="card" aria-labelledby="form-title">
-      <div class="card__header">
-        <h2 id="form-title" class="card__title">{{ "Edit event" if selected_event else "New event" }}</h2>
-      </div>
+    <!-- Form -->
+    <section class="columns__side columns__side--first" aria-labelledby="form-title">
+      <h2 id="form-title" class="section-title display">{{ "Change event" if selected_event else "New event" }}</h2>
 
       <form action="{{ url_for('web.web_update_event') if selected_event else url_for('web.web_create_event') }}"
-            method="post" class="form-grid">
+            method="post" class="form">
         <input type="hidden" name="profileid" value="{{ profileid }}">
         {% if selected_event %}
           <input type="hidden" name="eventid" value="{{ selected_eventid }}">
         {% endif %}
 
         <div class="field">
-          <label for="name" class="field__label">Event name</label>
+          <label for="name" class="field__label">Name</label>
           <input id="name" type="text" name="name" class="input" maxlength="30" required
-                 value="{{ selected_event.name if selected_event else '' }}" placeholder="e.g. Picnic in Hyde Park">
+                 value="{{ selected_event.name if selected_event else '' }}" placeholder="Picnic in Hyde Park">
         </div>
 
-        <div class="form-row">
+        <div class="form__pair">
           <div class="field">
             <label for="start_time" class="field__label">Starts</label>
             <input id="start_time" type="datetime-local" name="start_time" class="input" required
@@ -94,20 +85,17 @@
                    value="{{ selected_event.end_time if selected_event else '' }}">
           </div>
         </div>
-        <p class="field__hint">Events end on the same day they start.</p>
 
         <div class="field">
-          <label for="location" class="field__label">Location</label>
+          <label for="location" class="field__label">Where</label>
           <input id="location" type="text" name="location" class="input" required
-                 value="{{ selected_event.location if selected_event else '' }}" placeholder="e.g. London">
+                 value="{{ selected_event.location if selected_event else '' }}" placeholder="Hyde Park, London">
         </div>
 
-        <div class="form-actions">
-          <button type="submit" class="btn btn--primary">
-            {{ "Save changes" if selected_event else "Create event" }}
-          </button>
+        <div class="actions">
+          <button type="submit" class="btn btn--solid">{{ "Save changes" if selected_event else "Add event" }}</button>
           {% if selected_event %}
-            <a href="{{ url_for('web.web_management', profileid=profileid) }}" class="btn btn--ghost">Cancel</a>
+            <a href="{{ url_for('web.web_management', profileid=profileid) }}" class="btn btn--bare">Cancel</a>
           {% endif %}
         </div>
       </form>
