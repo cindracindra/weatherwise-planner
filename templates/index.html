@@ -94,11 +94,31 @@
         {% endif %}
       </div>
 
-      {% if not profileid %}
-        <p class="note">Choose a profile at the top to see your events along the day.</p>
-      {% elif not daily_event_list %}
+      {% if profileid and not daily_event_list %}
         <p class="note">Nothing planned today.</p>
       {% endif %}
+    </section>
+  {% endif %}
+
+  {% if not profileid %}
+    <!-- No profile chosen yet -->
+    <section class="choose" aria-labelledby="choose-title">
+      <div class="choose__figure">
+        <div data-hairline-host="vane"></div>
+        <p class="choose__read num" data-hairline-read="vane" aria-hidden="true"></p>
+      </div>
+      <div class="choose__body">
+        <h2 id="choose-title" class="section-title display">Choose a profile</h2>
+        <p class="choose__lede">Your events appear along the day and in the month once you pick whose plans to show.</p>
+        {% if profile_list %}
+          <ul class="choose__list">
+            {% for profile in profile_list %}
+              <li><a href="{{ url_for('web.homepage', profileid=profile.id) }}" class="btn">{{ profile.name }}</a></li>
+            {% endfor %}
+          </ul>
+        {% endif %}
+        <a href="{{ url_for('web.web_profile') }}" class="choose__new">{{ icon("plus") }}New profile</a>
+      </div>
     </section>
   {% endif %}
 
@@ -168,6 +188,11 @@
 {% endblock %}
 
 {% block scripts %}
+  {% if not profileid %}
+    <script src="{{ url_for('static', filename='hairline/kernel.js') }}"></script>
+    <script src="{{ url_for('static', filename='hairline/host.js') }}"></script>
+    <script type="module" src="{{ url_for('static', filename='hairline/vane.js') }}"></script>
+  {% endif %}
   <script>
     (function () {
       var strip = document.querySelector("[data-strip]");

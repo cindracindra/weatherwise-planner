@@ -20,11 +20,13 @@
   --muted: #9c9fa6;
   --faint: #6c6f77;
   --text: #ececee;
-  /* Accent: Ultramarine. Alternatives below, previewable locally. */
-  --accent: #3d5afe;
-  --accent-hover: #5a73ff;
+  /* Accent: Electric. Filled buttons use a step deeper so white text
+     passes AA (4.6:1); #2f80ff itself is 3.7:1 with white. */
+  --accent: #2f80ff;
+  --accent-fill: #266fe8;
+  --accent-fill-hover: #1f62d4;
   --on-accent: #ffffff;
-  --accent-wash: rgba(61, 90, 254, 0.16);
+  --accent-wash: rgba(47, 128, 255, 0.16);
   --danger: #ec7a68;
   --danger-wash: rgba(236, 122, 104, 0.12);
 
@@ -45,27 +47,6 @@
 
   /* Layers */
   --z-masthead: 10;
-}
-
-[data-accent="electric"] {
-  --accent: #2f80ff;
-  --accent-hover: #5596ff;
-  --on-accent: #03122b;
-  --accent-wash: rgba(47, 128, 255, 0.16);
-}
-
-[data-accent="signal"] {
-  --accent: #1f6feb;
-  --accent-hover: #3b82f0;
-  --on-accent: #ffffff;
-  --accent-wash: rgba(31, 111, 235, 0.16);
-}
-
-[data-accent="azure"] {
-  --accent: #00a3ff;
-  --accent-hover: #33b5ff;
-  --on-accent: #001b2e;
-  --accent-wash: rgba(0, 163, 255, 0.16);
 }
 
 /* Page-to-page transitions (cross-document View Transitions) */
@@ -182,7 +163,7 @@ select {
   z-index: calc(var(--z-masthead) + 1);
   padding: 8px 14px;
   border-radius: var(--radius);
-  background: var(--accent);
+  background: var(--accent-fill);
   color: var(--on-accent);
   font-weight: 600;
   transform: translateY(-160%);
@@ -305,14 +286,14 @@ select {
 }
 
 .btn--accent {
-  border-color: var(--accent);
-  background: var(--accent);
+  border-color: var(--accent-fill);
+  background: var(--accent-fill);
   color: var(--on-accent);
 }
 
 .btn--accent:hover {
-  border-color: var(--accent-hover);
-  background: var(--accent-hover);
+  border-color: var(--accent-fill-hover);
+  background: var(--accent-fill-hover);
 }
 
 .btn--quiet {
@@ -494,7 +475,7 @@ select {
 /* ---------- Today ---------- */
 
 .today {
-  padding: 56px 0 48px;
+  padding: 56px 0 20px;
 }
 
 .today__date {
@@ -627,6 +608,62 @@ select {
   font-size: var(--step-0);
   font-weight: 600;
   text-overflow: ellipsis;
+}
+
+/* ---------- Choose a profile (with the Vane figure) ---------- */
+
+.choose {
+  display: grid;
+  grid-template-columns: minmax(0, 340px) minmax(0, 1fr);
+  align-items: center;
+  gap: clamp(24px, 5vw, 64px);
+  padding: 8px 0 72px;
+}
+
+.choose__figure {
+  position: relative;
+  /* The figure's palette, from the page's */
+  --hairline-plate: var(--bg);
+  --hairline-hi: var(--accent);
+  --hairline-edge: #868991;
+  --hairline-mid: #4b4e55;
+  --hairline-lo: #2a2c31;
+  --hairline-stroke: 1;
+}
+
+.choose__read {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  color: var(--muted);
+  font-size: var(--step--1);
+}
+
+.choose__lede {
+  max-width: 46ch;
+  margin-top: 12px;
+  color: var(--muted);
+}
+
+.choose__list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 24px;
+}
+
+.choose__new {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 16px;
+  color: var(--accent);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.choose__new:hover {
+  text-decoration: underline;
 }
 
 /* ---------- Month ---------- */
@@ -896,37 +933,6 @@ select {
   color: var(--text);
 }
 
-/* ---------- Accent preview (local only) ---------- */
-
-.accent-preview {
-  position: fixed;
-  right: 16px;
-  bottom: 16px;
-  z-index: calc(var(--z-masthead) + 1);
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 10px 8px 14px;
-  border: 1px solid var(--line-strong);
-  border-radius: var(--radius);
-  background: var(--raise);
-  font-size: var(--step--1);
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
-}
-
-.accent-preview button {
-  width: 28px;
-  height: 28px;
-  border: 2px solid transparent;
-  border-radius: 50%;
-  background: var(--swatch);
-  cursor: pointer;
-}
-
-.accent-preview button[aria-pressed="true"] {
-  border-color: var(--text);
-}
-
 /* ---------- Motion: one entrance on the home page ---------- */
 
 @media (prefers-reduced-motion: no-preference) {
@@ -1026,7 +1032,7 @@ select {
   }
 
   .today {
-    padding: 32px 0 40px;
+    padding: 32px 0 16px;
   }
 
   .weekdays,
@@ -1085,6 +1091,14 @@ select {
 
   .form__pair {
     grid-template-columns: 1fr;
+  }
+
+  .choose {
+    grid-template-columns: 1fr;
+  }
+
+  .choose__figure {
+    max-width: 300px;
   }
 
   .agenda-row__open {
