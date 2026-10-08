@@ -123,12 +123,11 @@ Please raise any issues or bugs via the [issue tracker](https://github.com/cindr
 
 Issues and pull requests are welcome. Please open an [issue](https://github.com/cindracindra/weatherwise-planner/issues) first to discuss larger changes, and make sure `flake8 .` and `pytest` pass before opening a pull request.
 
-## Authors
+## Author
 
-- De Jun Tan (dt525)
-- Cindra (cc4625)
-- Richard Lee (rl1625)
-- Timothy Ho (tyh25)
+**Cindra** ([@cindracindra](https://github.com/cindracindra)), author and maintainer since the project became independent: the redesign, weather motion, accounts and Google sign-in, demo mode, and everything after tag [`v1-group-project`](https://github.com/cindracindra/weatherwise-planner/tree/v1-group-project).
+
+**Original contributors** (the group project, up to `v1-group-project`): De Jun Tan, Cindra, Richard Lee and Timothy Ho.
 
 ## License
 
