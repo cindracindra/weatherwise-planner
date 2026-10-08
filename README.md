@@ -16,6 +16,33 @@ A personal calendar with London's weather beside it, so you can plan around the 
 - **Events:** add, change and delete events from one page.
 - **Accounts:** sign in with Google; each person has their own private calendar.
 
+## Screenshots
+
+**Today and the hour-by-hour strip.** The current weather, the day's range, and the hourly forecast with today's events laid along the same timeline.
+
+![Home page: today's weather, the hourly forecast and today's events](docs/screenshots/home.png)
+
+**The month.** Each day's forecast and events; today is marked in blue.
+
+![The month: daily weather icons and events, with today highlighted](docs/screenshots/month.png)
+
+**Events.** Every event grouped by day; pick one to change it.
+
+![Events page: events grouped by day, one open for editing](docs/screenshots/events.png)
+
+<table>
+  <tr>
+    <td width="62%"><img src="docs/screenshots/sign-in.png" alt="Sign-in page with the weather vane, Sign in with Google and Try the demo"></td>
+    <td width="38%"><img src="docs/screenshots/phone.png" alt="The home page on a phone"></td>
+  </tr>
+  <tr>
+    <td><b>Sign in</b> with Google, or try a demo calendar without an account. The weather vane turns to follow your cursor.</td>
+    <td><b>On a phone</b>, the hourly strip scrolls sideways and the month collapses to dots.</td>
+  </tr>
+</table>
+
+Screenshots use the demo account's sample events.
+
 ## How it's built
 
 - **Flask** (Python), server-rendered with Jinja templates, plus a small JSON API
@@ -113,7 +140,7 @@ flake8 .
 pytest tests/
 ```
 
-The tests need no database or network: database and API calls are replaced with stand-ins. More detail in [`routes/README.md`](routes/README.md), [`database/README.md`](database/README.md) and [`tests/README.md`](tests/README.md).
+The tests need no database or network: database and API calls are replaced with stand-ins. More detail in [`routes/README.md`](routes/README.md) (pages, API, sign-in), [`database/README.md`](database/README.md) (schema, migrations), [`services/README.md`](services/README.md) (weather, holidays, the calendar) and [`tests/README.md`](tests/README.md).
 
 ## Support
 

@@ -4,8 +4,6 @@ venv
 .idea
 *.pyc
 
-**/.DS_Store# hairline look-check sheets (regenerate with look.mjs)
-design/hairline/*.png
-
+**/.DS_Store
 # Local Claude preview settings (machine-specific paths)
 .claude/launch.json
