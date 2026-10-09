@@ -36,7 +36,7 @@ def labels(sample_weather_code_data):
 @pytest.fixture
 def clock():
     """Controls time.monotonic() inside the service."""
-    now = {"t": 1000.0}
+    now = {"t": 30.0}  # a machine that started 30 seconds ago
     with patch("services.weather_service.time.monotonic",
                side_effect=lambda: now["t"]):
         yield now
@@ -139,3 +139,12 @@ def test_a_forecast_too_old_is_not_shown(clock):
         get_forecast()
         clock["t"] += weather_service.STALE_FOR + 1
         assert get_forecast() is None
+
+
+def test_fetches_straight_away_on_a_freshly_started_machine():
+    # The monotonic clock counts from boot; "never failed" must not look
+    # like "failed 30 seconds ago" (the bug CI caught on a fresh runner)
+    with patch("services.weather_service.time.monotonic", return_value=5.0), \
+         fetch(BUNDLE) as fetcher:
+        assert get_forecast() is BUNDLE
+    assert fetcher.call_count == 1

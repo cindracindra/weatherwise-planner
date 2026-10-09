@@ -24,30 +24,34 @@ FRESH_FOR = 30 * 60        # seconds a forecast is reused
 STALE_FOR = 12 * 60 * 60   # seconds an old forecast may stand in for a new one
 RETRY_AFTER = 60           # seconds to wait after a failed fetch
 
-_state: Dict[str, Any] = {"bundle": None, "fetched": 0.0, "failed": 0.0}
+# Times are time.monotonic() readings, or None for "never". (Not 0: the
+# monotonic clock counts from boot, so on a machine up for under a minute
+# 0 would look like a failure "just now" and the weather would be skipped.)
+_state: Dict[str, Any] = {"bundle": None, "fetched": None, "failed": None}
 
 
 def reset_forecast_cache() -> None:
     """Forget the stored forecast (for tests)."""
-    _state.update(bundle=None, fetched=0.0, failed=0.0)
+    _state.update(bundle=None, fetched=None, failed=None)
 
 
 def get_forecast() -> Optional[Dict[str, Any]]:
     """The forecast bundle, or None if there is none to show."""
     now = time.monotonic()
     bundle = _state["bundle"]
-    age = now - _state["fetched"]
+    fetched, failed = _state["fetched"], _state["failed"]
+    age = now - fetched if fetched is not None else float("inf")
+    usable_old = bundle if age < STALE_FOR else None
     if bundle is not None and age < FRESH_FOR:
         return bundle
-    if now - _state["failed"] < RETRY_AFTER:
-        return bundle if bundle is not None and age < STALE_FOR else None
+    if failed is not None and now - failed < RETRY_AFTER:
+        return usable_old
     try:
         bundle = weather_api.fetch_forecast()
     except weather_api.WeatherAPIError:
         _state["failed"] = now
-        old = _state["bundle"]
-        return old if old is not None and age < STALE_FOR else None
-    _state.update(bundle=bundle, fetched=now, failed=0.0)
+        return usable_old
+    _state.update(bundle=bundle, fetched=now, failed=None)
     return bundle
 
 
