@@ -19,8 +19,8 @@ class TestCalendarFlow:
         mocker.patch('api.holiday_api.fetch_public_holidays', return_value=[])
 
         # Mock weather API to return empty forecast
-        mocker.patch('api.weather_api.fetch_daily_forecast', return_value={
-            "daily": {"time": [], "weather_code": []}
+        mocker.patch('api.weather_api.fetch_forecast', return_value={
+            "source": "open-meteo", "current": {}, "hourly": [], "daily": {}
         })
 
         year, month = datetime.now().year, datetime.now().month

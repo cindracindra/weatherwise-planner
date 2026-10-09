@@ -5,7 +5,9 @@ import pytest
 def clear_cache_before_test():
     """Clear cache before each test to prevent interference between tests."""
     from utils.cache import clear_cache
+    from services.weather_service import reset_forecast_cache
     clear_cache()
+    reset_forecast_cache()
     yield
     clear_cache()
 

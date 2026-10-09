@@ -1,165 +1,141 @@
-"""Unit tests for services/weather_service.py - weather data transformation and business logic."""
+"""Weather service: one shared forecast, and what happens when fetching fails."""
 
+from datetime import datetime
+from unittest.mock import patch
+
+import pytest
+
+from api.weather_api import WeatherAPIError
+from services import weather_service
 from services.weather_service import (
-    get_current_weather,
+    get_current_weather, get_daily_forecast, get_forecast,
     get_hourly_forecast_today,
-    get_daily_forecast
 )
-from models.api_models.weather import WeatherCode, WeatherReading
+
+TODAY = datetime(2026, 10, 9)
+BUNDLE = {
+    "source": "open-meteo",
+    "current": {"temperature": 14.6, "code": 61},
+    "hourly": [
+        {"time": datetime(2026, 10, 9, h), "temperature": 10 + h / 2,
+         "code": 3 if h < 12 else 61, "rain_chance": h * 4}
+        for h in range(24)
+    ] + [{"time": datetime(2026, 10, 10, 0), "temperature": 9,
+          "code": 0, "rain_chance": 0}],
+    "daily": {"2026-10-09": 61, "2026-10-10": 0, "2026-10-11": 999},
+}
 
 
-class TestGetCurrentWeather:
-    """Test get_current_weather() - transforms raw API data to WeatherReading."""
-
-    def test_get_current_weather_success(
-            self,
-            mocker,
-            sample_current_weather_response,
-            sample_weather_code_data
-    ):
-        """Test fetching and transforming current weather with rounded temperature."""
-        mocker.patch(
-            'services.weather_service.weather_api.fetch_current_weather',
-            return_value=sample_current_weather_response
-        )
-
-        mocker.patch(
-            'utils.converters._load_code_icons',
-            return_value=sample_weather_code_data
-        )
-
-        result = get_current_weather()
-
-        assert isinstance(result, WeatherReading)
-        assert result.temperature == 16
-        assert isinstance(result.weather_code, WeatherCode)
-        assert result.weather_code.code == 61
-        assert result.weather_code.icon == "rain.svg"
-        assert result.weather_code.label == "Rain"
-
-    def test_get_current_weather_none_values(self, mocker):
-        """Test handling None values from API response."""
-        mocker.patch(
-            'services.weather_service.weather_api.fetch_current_weather',
-            return_value={
-                "current": {"temperature_2m": None, "weather_code": None}
-                }
-        )
-
-        result = get_current_weather()
-
-        assert isinstance(result, WeatherReading)
-        assert result.temperature is None
-        assert isinstance(result.weather_code, WeatherCode)
-        assert result.weather_code.code is None
-        assert result.weather_code.icon is None
-        assert result.weather_code.label is None
+@pytest.fixture(autouse=True)
+def labels(sample_weather_code_data):
+    with patch("utils.converters._load_code_icons",
+               return_value=sample_weather_code_data):
+        yield
 
 
-class TestGetHourlyForecastToday:
-    """Test get_hourly_forecast_today() - transforms hourly forecast to list of WeatherReadings."""
-
-    def test_get_hourly_forecast_today(
-            self,
-            mocker,
-            sample_hourly_forecast_response,
-            sample_weather_code_data
-    ):
-        """Test fetching and transforming hourly forecast data."""
-        mocker.patch(
-            'services.weather_service.weather_api.fetch_hourly_forecast_today',
-            return_value=sample_hourly_forecast_response
-        )
-
-        mocker.patch(
-            'utils.converters._load_code_icons',
-            return_value=sample_weather_code_data
-        )
-
-        result = get_hourly_forecast_today()
-
-        assert isinstance(result, list)
-        assert len(result) == 4
-        assert all(isinstance(r, WeatherReading) for r in result)
-        assert result[0].temperature == 14
-        assert result[0].weather_code.code == 0
-        assert result[0].rain_chance is None
-
-    def test_get_hourly_forecast_today_includes_rain_chance(
-            self,
-            mocker,
-            sample_weather_code_data
-    ):
-        """Rain chance from the API is attached to each hour."""
-        mocker.patch(
-            'services.weather_service.weather_api.fetch_hourly_forecast_today',
-            return_value={
-                "hourly": {
-                    "temperature_2m": [14.2, 15.0],
-                    "weather_code": [3, 61],
-                    "precipitation_probability": [10, 80]
-                }
-            }
-        )
-        mocker.patch(
-            'utils.converters._load_code_icons',
-            return_value=sample_weather_code_data
-        )
-
-        result = get_hourly_forecast_today()
-
-        assert [r.rain_chance for r in result] == [10, 80]
+@pytest.fixture
+def clock():
+    """Controls time.monotonic() inside the service."""
+    now = {"t": 1000.0}
+    with patch("services.weather_service.time.monotonic",
+               side_effect=lambda: now["t"]):
+        yield now
 
 
-class TestGetDailyForecast:
-    """Test get_daily_forecast() - transforms daily forecast to date-to-WeatherCode dict."""
+def fetch(*results):
+    """Patch fetch_forecast to return/raise each result in turn."""
+    def side_effect():
+        result = results[min(side_effect.calls, len(results) - 1)]
+        side_effect.calls += 1
+        if isinstance(result, Exception):
+            raise result
+        return result
+    side_effect.calls = 0
+    return patch("services.weather_service.weather_api.fetch_forecast",
+                 side_effect=side_effect)
 
-    def test_get_daily_forecast_success(
-        self,
-        mocker,
-        sample_daily_weather_response,
-        sample_weather_code_data
-    ):
-        """Test fetching and transforming daily forecast with date keys."""
-        mocker.patch(
-            'services.weather_service.weather_api.fetch_daily_forecast',
-            return_value=sample_daily_weather_response
-        )
 
-        mocker.patch(
-            'utils.converters._load_code_icons',
-            return_value=sample_weather_code_data
-        )
+# ---------- Turning the bundle into what pages use ----------
 
-        result = get_daily_forecast()
+def test_current_weather():
+    with fetch(BUNDLE):
+        reading = get_current_weather()
+    assert reading.temperature == 15
+    assert reading.weather_code.code == 61
+    assert reading.weather_code.label == "Rain"
 
-        assert isinstance(result, dict)
-        assert "2025-12-01" in result
-        assert isinstance(result["2025-12-01"], WeatherCode)
-        assert result["2025-12-01"].code == 0
-        assert result["2025-12-01"].icon == "clear-day.svg"
 
-    def test_get_daily_forecast_skips_days_without_code(
-        self,
-        mocker,
-        sample_weather_code_data
-    ):
-        """Days with no weather code are left out, not given a None icon."""
-        mocker.patch(
-            'services.weather_service.weather_api.fetch_daily_forecast',
-            return_value={
-                "daily": {
-                    "time": ["2026-10-20", "2026-10-21"],
-                    "weather_code": [3, None]
-                }
-            }
-        )
-        mocker.patch(
-            'utils.converters._load_code_icons',
-            return_value=sample_weather_code_data
-        )
+def test_hourly_is_todays_24_hours_in_order():
+    with fetch(BUNDLE):
+        hours = get_hourly_forecast_today(TODAY)
+    assert len(hours) == 24
+    assert hours[0].temperature == 10 and hours[13].rain_chance == 52
+    assert hours[12].weather_code.code == 61
 
-        result = get_daily_forecast()
 
-        assert list(result) == ["2026-10-20"]
-        assert result["2026-10-20"].icon == "cloudy.svg"
+def test_hourly_fills_hours_the_source_does_not_cover():
+    partial = {**BUNDLE, "hourly": BUNDLE["hourly"][9:]}  # starts at 09:00
+    with fetch(partial):
+        hours = get_hourly_forecast_today(TODAY)
+    assert len(hours) == 24
+    assert hours[3].temperature is None and hours[3].weather_code.code is None
+    assert hours[9].temperature is not None
+
+
+def test_daily_skips_codes_without_a_label():
+    with fetch(BUNDLE):
+        daily = get_daily_forecast()
+    assert set(daily) == {"2026-10-09", "2026-10-10"}
+    assert daily["2026-10-09"].icon == "rain.svg"
+
+
+def test_no_forecast_means_empty_views():
+    with fetch(WeatherAPIError("429")):
+        assert get_hourly_forecast_today(TODAY) == []
+        assert get_daily_forecast() == {}
+        assert get_current_weather().temperature is None
+
+
+# ---------- One fetch, shared and kept ----------
+
+def test_one_fetch_serves_all_three_views(clock):
+    with fetch(BUNDLE) as fetcher:
+        get_current_weather()
+        get_hourly_forecast_today(TODAY)
+        get_daily_forecast()
+    assert fetcher.call_count == 1
+
+
+def test_fresh_forecast_is_reused_then_refreshed(clock):
+    with fetch(BUNDLE) as fetcher:
+        get_forecast()
+        clock["t"] += weather_service.FRESH_FOR - 1
+        get_forecast()
+        assert fetcher.call_count == 1
+        clock["t"] += 2
+        get_forecast()
+        assert fetcher.call_count == 2
+
+
+def test_failed_refresh_keeps_the_last_good_forecast(clock):
+    with fetch(BUNDLE, WeatherAPIError("429")):
+        get_forecast()
+        clock["t"] += weather_service.FRESH_FOR + 1
+        assert get_forecast() is BUNDLE
+
+
+def test_after_a_failure_it_waits_before_asking_again(clock):
+    with fetch(WeatherAPIError("429"), BUNDLE) as fetcher:
+        assert get_forecast() is None
+        clock["t"] += weather_service.RETRY_AFTER - 1
+        assert get_forecast() is None
+        assert fetcher.call_count == 1          # no hammering
+        clock["t"] += 2
+        assert get_forecast() is BUNDLE         # and it recovers
+
+
+def test_a_forecast_too_old_is_not_shown(clock):
+    with fetch(BUNDLE, WeatherAPIError("429")):
+        get_forecast()
+        clock["t"] += weather_service.STALE_FOR + 1
+        assert get_forecast() is None

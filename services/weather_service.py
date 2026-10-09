@@ -1,138 +1,116 @@
 """
 Weather service - Business logic for weather data.
 
-This module provides functions for retrieving and processing
-weather information.It transforms raw API data into structured
-WeatherReading and WeatherCode objects with human-readable
-labels and icons.
+Turns the forecast bundle from api.weather_api into the WeatherReading and
+WeatherCode objects the pages use. All three views (now, today by hour,
+the next 16 days) come from one shared forecast, fetched at most every
+FRESH_FOR.
+
+When a fetch fails, the last good forecast keeps being shown for up to
+STALE_FOR, and the next attempt waits RETRY_AFTER, so a temporary refusal
+(such as HTTP 429) neither blanks the page nor makes the app ask again
+on every page view.
 """
 
-from utils.converters import (
-    round_temperature,
-    round_temperatures,
-    weather_code_to_info,
-)
-from utils.cache import timed_cache
+import time
+from datetime import datetime
+from typing import Any, Dict, List, Optional
+
 from api import weather_api
 from models.api_models.weather import WeatherCode, WeatherReading
-from typing import List, Dict
+from utils.converters import round_temperature, weather_code_to_info
+
+FRESH_FOR = 30 * 60        # seconds a forecast is reused
+STALE_FOR = 12 * 60 * 60   # seconds an old forecast may stand in for a new one
+RETRY_AFTER = 60           # seconds to wait after a failed fetch
+
+_state: Dict[str, Any] = {"bundle": None, "fetched": 0.0, "failed": 0.0}
 
 
-@timed_cache(seconds=1800)  # Cache for 30 minutes
+def reset_forecast_cache() -> None:
+    """Forget the stored forecast (for tests)."""
+    _state.update(bundle=None, fetched=0.0, failed=0.0)
+
+
+def get_forecast() -> Optional[Dict[str, Any]]:
+    """The forecast bundle, or None if there is none to show."""
+    now = time.monotonic()
+    bundle = _state["bundle"]
+    age = now - _state["fetched"]
+    if bundle is not None and age < FRESH_FOR:
+        return bundle
+    if now - _state["failed"] < RETRY_AFTER:
+        return bundle if bundle is not None and age < STALE_FOR else None
+    try:
+        bundle = weather_api.fetch_forecast()
+    except weather_api.WeatherAPIError:
+        _state["failed"] = now
+        old = _state["bundle"]
+        return old if old is not None and age < STALE_FOR else None
+    _state.update(bundle=bundle, fetched=now, failed=0.0)
+    return bundle
+
+
+def _code(code: Optional[int]) -> WeatherCode:
+    icon, label = weather_code_to_info(code) if code is not None else (
+        None, None)
+    return WeatherCode(code=code, icon=icon, label=label)
+
+
 def get_current_weather() -> WeatherReading:
-    """
-    Get current weather conditions with icon and label.
-
-    Returns:
-        WeatherReading object containing:
-        - temperature: Rounded temperature in Celsius
-        - weather_code: WeatherCode with code, icon, and label
-
-    Note:
-        This function is typically called by Flask routes to provide
-        current weather data for the UI.
-    """
-    # Fetch raw weather data from API
-    data = weather_api.fetch_current_weather()
-
-    # Extract current weather values
-    current = data.get("current", {})
-    temp = current.get("temperature_2m", None)
-    code = current.get("weather_code", None)
-
-    # Round temperature to nearest integer
-    rounded_temp = round_temperature(temp)
-
-    # Convert weather code to human-readable info
-    if code is not None:
-        icon, label = weather_code_to_info(code)
-    else:
-        icon, label = None, None
-
-    # Build weather code object
-    weather_code = WeatherCode(code=code, icon=icon, label=label)
-
-    # Return structured weather reading
-    return WeatherReading(temperature=rounded_temp, weather_code=weather_code)
+    """The weather now: rounded temperature and conditions."""
+    bundle = get_forecast()
+    current = bundle["current"] if bundle else {}
+    return WeatherReading(
+        temperature=round_temperature(current.get("temperature")),
+        weather_code=_code(current.get("code")),
+    )
 
 
-@timed_cache(seconds=3600)  # Cache for 1 hour
-def get_hourly_forecast_today() -> List[WeatherReading]:
-    """
-    Get hourly weather forecast for today (24 hours).
+def get_hourly_forecast_today(
+    today: Optional[datetime] = None,
+) -> List[WeatherReading]:
+    """Today's 24 hours (London), one WeatherReading per hour, in order.
 
-    Fetches hourly forecast data from Open-Meteo API, processes each hour's
-    data, and returns a list of WeatherReading objects with icons and labels.
-
-    Returns:
-        List of 24 WeatherReading objects, one for each hour of the day.
-        Each reading contains rounded temperature and weather code info.
-
-    Note:
-        This function is typically called by Flask routes to display
-        hourly forecast charts or tables in the UI.
-    """
-    # Fetch raw hourly forecast data from API
-    data = weather_api.fetch_hourly_forecast_today()
-
-    # Extract hourly temperature and weather code arrays
-    hourly = data.get("hourly", {})
-    temps = hourly.get("temperature_2m", [])
-    codes = hourly.get("weather_code", [])
-    rain = hourly.get("precipitation_probability") or [None] * len(codes)
-
-    # Process each hour's data
-    hourly_forecast = []
-    rounded_temps = round_temperatures(temps)
-
-    for temp, code, rain_chance in zip(rounded_temps, codes, rain):
-        # Convert weather code to human-readable info
-        icon, label = weather_code_to_info(code)
-        weather_code = WeatherCode(code=code, icon=icon, label=label)
-
-        # Create weather reading for this hour
-        hourly_forecast.append(
-            WeatherReading(
-                temperature=temp,
-                weather_code=weather_code,
-                rain_chance=rain_chance,
-            )
-        )
-    return hourly_forecast
+    Hours the source doesn't cover (MET Norway starts at the current hour)
+    have no temperature or code. Empty if there is no forecast at all."""
+    bundle = get_forecast()
+    if not bundle:
+        return []
+    today = (today or datetime.now(weather_api.LONDON)).date()
+    by_hour = {
+        h["time"].hour: h for h in bundle["hourly"]
+        if h["time"].date() == today
+    }
+    if not by_hour:
+        return []
+    readings = []
+    for hour in range(24):
+        h = by_hour.get(hour, {})
+        readings.append(WeatherReading(
+            temperature=round_temperature(h.get("temperature")),
+            weather_code=_code(h.get("code")),
+            rain_chance=h.get("rain_chance"),
+        ))
+    return readings
 
 
-# Called internally by calendar_service.py
-@timed_cache(seconds=3600)  # Cache for 1 hour
 def get_daily_forecast() -> Dict[str, WeatherCode]:
-    """
-    Get daily weather forecast for the next 16 days.
+    """{"YYYY-MM-DD": WeatherCode} for the days the forecast covers. Days
+    whose code has no label are left out, so the calendar never shows a
+    broken icon."""
+    bundle = get_forecast()
+    if not bundle:
+        return {}
+    daily = {}
+    for day, code in bundle["daily"].items():
+        weather = _code(code)
+        if weather.icon is not None:
+            daily[day] = weather
+    return daily
 
-    Fetches daily forecast data from Open-Meteo API and processes
-    it into a dictionary mapping date strings to WeatherCode objects.
-    This function is used internally by calendar_service to add weather
-    icons to calendar days.
 
-    Returns:
-        Dictionary mapping ISO date strings (YYYY-MM-DD) to WeatherCode
-        objects. Each WeatherCode contains the weather condition code,
-        icon, and label for that day.
-    """
-    data = weather_api.fetch_daily_forecast()
-
-    daily = data.get("daily", {})
-    dates = daily.get("time", [])
-    codes = daily.get("weather_code", [])
-
-    weather_codes = {}
-
-    for date_str, code in zip(dates, codes):
-        icon, label = weather_code_to_info(code)
-        # The last forecast day can come back without a code; skip it
-        # rather than render a broken icon
-        if icon is None:
-            continue
-        weather_codes[date_str] = WeatherCode(
-            code=code, icon=icon, label=label
-        )
-
-    return weather_codes
+def forecast_source() -> Optional[str]:
+    """Which service the forecast on screen came from, if any."""
+    bundle = _state["bundle"]
+    return bundle["source"] if bundle else None

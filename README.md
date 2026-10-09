@@ -47,7 +47,7 @@ Screenshots use the demo account's sample events.
 
 - **Flask** (Python), server-rendered with Jinja templates, plus a small JSON API
 - **PostgreSQL** (Neon) through SQLAlchemy
-- **Open-Meteo** for weather and **Nager.Date** for public holidays
+- **Open-Meteo** for weather (with **MET Norway** as an automatic backup) and **Nager.Date** for public holidays
 - **Sign-in:** Google OpenID Connect via Authlib, sessions via Flask-Login, CSRF protection via Flask-WTF
 - Hosted on **Render**; CI on **GitHub Actions** (flake8 and pytest on every push and pull request)
 
