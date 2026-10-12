@@ -9,12 +9,14 @@ The data layer between the routes and PostgreSQL, using SQLAlchemy.
 | `sql_scripts/SQL_command.sql` | Builds the schema from scratch, with sample data (**deletes everything**) |
 | `sql_scripts/001_accounts.sql` | Migration: accounts and event ownership (see below) |
 
-Models live in `models/db_models/`: `AppUser` (`user.py`) and `Event` (`event.py`). Account helpers (Google, the local developer account, demos) are in `utils/auth.py` and `utils/demo.py`.
+Models live in `models/db_models/`: `AppUser` (`user.py`), `Event` (`event.py`), `Place` (`place.py`) and `UserSettings` (`settings.py`). Account helpers (Google, the local developer account, demos) are in `utils/auth.py` and `utils/demo.py`.
 
 ## Schema
 
 - **`app_user`**: one row per person. `google_sub` is Google's permanent account id (unique, empty for demo accounts), plus `email`, `name`, `is_demo` and `created_at`.
-- **`event`**: `name`, `start_time`, `end_time`, `location` and `user_id`. Every event belongs to exactly one account; deleting the account deletes its events (`ON DELETE CASCADE`).
+- **`event`**: `name`, `start_time`, `end_time`, `location`, `user_id`, and `place_id` if it was made from a place. Every event belongs to exactly one account; deleting the account deletes its events (`ON DELETE CASCADE`). Deleting a place keeps its events (`ON DELETE SET NULL`).
+- **`place`**: `name`, `category` (one of `CATEGORIES` in `place.py`), `address`, an optional pin (`latitude`, `longitude`), `notes`, the weather it suits (`suits_sunny`, `suits_cloudy`, `suits_rainy`; rainy means indoors), an optional `temp_min`/`temp_max`, `visit_minutes` and `user_id`.
+- **`user_settings`**: at most one row per account: `suggest_days` (weekday digits, Monday 0), `weekday_start`/`weekday_end`, `weekend_start`/`weekend_end` (hours), `skip_busy_days`, `show_today`. Without a row, the defaults: every day, weekdays 18-21, weekends 9-18.
 
 Times are stored without a time zone, in London time.
 
@@ -29,6 +31,9 @@ Every function takes the id of the account the request is for:
 | `create_event(data, user_id)` | The new event (`201`) |
 | `update_event(eventid, data, user_id)` | The changed event |
 | `delete_event(eventid, user_id)` | A confirmation |
+| `events_between(user_id, start, end)` | The account's events starting in that range, with datetimes (for the day panel and suggestions) |
+
+`create_event` also takes an optional `place_id`, which must be one of the account's own places.
 
 Rules every function follows:
 
@@ -48,4 +53,12 @@ psql "$DATABASE_URL" -f database/sql_scripts/001_accounts.sql
 
 `001_accounts.sql` adds `app_user` and `event.user_id`, and removes the old `profile` and `eventxprofile` tables. Events from before accounts existed have no owner and are discarded; this only happens the first time it runs.
 
+`002_places.sql` adds `place`, `user_settings` and `event.place_id`. It discards nothing.
+
 Keep `SQL_command.sql` in step with the migrations so a fresh database matches a migrated one.
+
+## `db_place.py` and `db_settings.py`
+
+`db_place.py` mirrors `db_event.py` for places (`get_places`, `get_place_by_id`, `create_place`, `update_place`, `delete_place`, plus `list_places` for pages), with the same ownership and error rules. `clean_place` checks a place before it is stored: a name of up to 60 characters, a known category, at least one kind of weather, a temperature range between -30° and 50° with the lowest not above the highest, a visit of 15 minutes to 12 hours, and a pin with both coordinates or neither. The page's form sends `weather_form`, so an unticked box there means "no"; JSON callers change only the fields they send.
+
+`db_settings.py` reads an account's preferences (`get_preferences`, defaults if none are saved), checks the settings form (`clean_preferences`) and saves them (`save_preferences`).

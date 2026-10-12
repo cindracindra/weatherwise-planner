@@ -6,11 +6,12 @@ Flask blueprints that turn HTTP requests into pages and JSON. Data access lives 
 |---|---|---|
 | `auth_routes.py` | `auth` | Sign-in page, Google sign-in, the demo, sign-out |
 | `web_routes.py` | `web` | The calendar and events pages, and their forms |
+| `places_routes.py` | `places` | The places page and map, settings, and turning a suggestion into an event |
 | `api_routes.py` | `api` | The JSON API under `/api` |
 
 ## Who can reach what
 
-`utils.auth.require_login` runs before every request. The `web` and `api` blueprints need a signed-in user; `auth` and static files are open.
+`utils.auth.require_login` runs before every request. The `web`, `places` and `api` blueprints need a signed-in user (`PROTECTED` in `utils/auth.py`); `auth` and static files are open. A new blueprint must be added to `PROTECTED`.
 
 - Signed out, a **page** redirects to `/login?next=<where you were going>`. For a form submission, `next` is the page the form was on.
 - Signed out, the **API** answers `401` with a JSON error.
@@ -35,9 +36,9 @@ Every sign-in starts a fresh session. Real accounts keep it for 30 days; a demo'
 
 | Route | Method | What it does |
 |---|---|---|
-| `/` | GET | Today's weather, the hourly strip with today's events, and the month |
+| `/` | GET | Today's suggestion, today's weather, the hourly chart with today's events, the good days ahead, and the month; `?day=YYYY-MM-DD` opens that day's panel |
 | `/reload` | GET | Back to `/` (the refresh button) |
-| `/management/event` | GET | All your events, and the form to add or change one (`?selected_eventid=` picks one) |
+| `/management/event` | GET | All your events, and the form to add or change one (`?selected_eventid=` picks one; `?day=` starts a new one on that day) |
 | `/management/event/load` | POST | Selects an event to change |
 | `/management/event/create` | POST | Adds an event |
 | `/management/event/update` | POST | Changes an event |
@@ -54,5 +55,22 @@ Form posts carry a CSRF token (Flask-WTF). A post without a valid one changes no
 | `/api/events` | POST | JSON `name`, `start_time`, `end_time`, `location` (ISO 8601 times) |
 | `/api/events/<id>` | PATCH | JSON with any of the fields above |
 | `/api/events/<id>` | DELETE | |
+| `/api/places` | GET, POST | POST: JSON `name`, `category` and any other place fields |
+| `/api/places/<id>` | GET, PATCH, DELETE | PATCH: only the fields sent change |
+| `/api/suggestions` | GET | |
 
 All responses use `{"statusCode", "statusMessage", "data"}` (`utils/response.py`). The API is exempt from CSRF tokens: browsers won't send JSON, PATCH or DELETE to it from another site without a CORS approval this app never gives.
+
+## Places and suggestions (`places_routes.py`)
+
+| Route | Method | What it does |
+|---|---|---|
+| `/places` | GET | Your places on a map and in a list, and the form to add or change one (`?selected_placeid=` picks one) |
+| `/places/load` | POST | Selects a place to change |
+| `/places/create`, `/places/update`, `/places/delete` | POST | Adds, changes or deletes a place (deleting keeps its events) |
+| `/places/search` | GET | Address search for the map (`?q=`), as JSON; see `api/geocode_api.py` |
+| `/settings` | GET, POST | Which days to suggest, the weekday and weekend hours, skipping busy days, the today strip |
+| `/suggestions/add` | POST | Turns a suggestion into an event at the place (`placeid`, `start`, `end`), then back to `next` |
+| `/suggestions/undo` | POST | Deletes the event just added |
+
+After `/suggestions/add` the session holds the new event's id for one page, which shows "Added ..." with **Undo** and **Change**. `next` is only followed to paths on this site.

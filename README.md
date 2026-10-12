@@ -12,9 +12,12 @@ A personal calendar with London's weather beside it, so you can plan around the 
 
 - **Today at a glance:** current temperature and conditions, the day's range and when rain is most likely, with rain that sways as your cursor passes like a gust of wind.
 - **Hour by hour:** today's forecast as a chart, one column per hour: temperature bars, the chance of rain, and your events laid along the same hours.
-- **The month:** daily weather and UK public holidays on every day, with your events.
+- **The month:** daily weather and UK public holidays on every day, with your events. Choose any day to open its forecast, events and suggestions.
 - **Events:** add, change and delete events from one page.
-- **Accounts:** sign in with Google; each person has their own private calendar.
+- **Places:** keep the places you like (parks, museums, cafés...) with the weather each one suits and, if you like, a temperature range. Pin them on a map by address search or by clicking, and open any of them in Google Maps.
+- **Suggestions:** your places are matched against the 16-day forecast, hour by hour, to find the best time for a visit: today's best fit at the top of the calendar, the good days ahead below the hours, a ✓ on good days in the month. One click turns a suggestion into an event, with Undo.
+- **Settings:** which days to get suggestions for (every day, weekends, or chosen days), the hours to search on weekdays and at weekends, and whether to skip days that already have plans.
+- **Accounts:** sign in with Google; each person has their own private calendar and places.
 
 ## Screenshots
 
@@ -22,9 +25,21 @@ A personal calendar with London's weather beside it, so you can plan around the 
 
 ![Home page: today's weather, the hourly temperature and rain chart, and today's events](docs/screenshots/home.png)
 
-**The month.** Each day's forecast and events; today is marked in terracotta.
+**The month.** Each day's forecast and events; today is marked in terracotta, and a ✓ marks days that suit one of your places.
 
-![The month: daily weather icons and events, with today highlighted](docs/screenshots/month.png)
+![The month: daily weather icons, events and good-day marks, with today highlighted](docs/screenshots/month.png)
+
+**Good days ahead.** The coming days that suit your places, with the best time and how sure the forecast is.
+
+![Good days ahead: each coming day with its weather, the best time and the places that suit it](docs/screenshots/good-days.png)
+
+**A day, opened from the month.** Its weather, your events, and the places that suit it, each with the best time and one-click Add.
+
+![A day's panel: weather, events and suggestions with Add buttons](docs/screenshots/day.png)
+
+**Places.** Your places on a map, each pin marked with how it suits today; a pin's card links to Google Maps and directions.
+
+![Places: a map of London with pins marked Great, Okay or Not ideal, and the list of places](docs/screenshots/places.jpg)
 
 **Events.** Every event grouped by day; pick one to change it.
 
@@ -41,20 +56,42 @@ A personal calendar with London's weather beside it, so you can plan around the 
   </tr>
 </table>
 
-Screenshots use the demo account's sample events.
+Screenshots use the demo account's sample events and places.
+
+## How suggestions work
+
+Each forecast day and hour is **sunny**, **dry but cloudy**, **rain likely** or **snow and storms**, from its weather code and chance of rain. A place fits it:
+
+| Weather | The place ticks it | Otherwise |
+|---|---|---|
+| Sunny, dry but cloudy | ✓ Great | – Okay (any place is fine when it's dry) |
+| Rain likely | ✓ Great: a rainy-day pick, since ticking rainy means indoors | ✕ Not ideal |
+| Snow or storms | – Okay if indoors | ✕ Not ideal |
+
+- A temperature outside the place's range, or strong wind at an outdoor place, lowers the fit a step, and the suggestion says why. Outdoor places don't fit after dark.
+- A place that suits any weather is Okay every day: it's put forward only when nothing fits better, so it never makes every day look good.
+- For each place the best time for a visit of its usual length is searched hour by hour inside your hours (by default weekdays 18:00-21:00 and weekends 09:00-18:00), avoiding the wettest hours.
+- Today only suggests what can still start; a place already planned that day isn't suggested again.
+- Each day says how far the forecast can be trusted: **Likely** (the next 3 days), **Possible** (up to a week), **Early look** (beyond).
+- Fits are always an icon and a word as well as a colour, so they don't depend on telling colours apart.
+
+The weather is London's, from one point in the centre, wherever a place is.
 
 ## How it's built
 
 - **Flask** (Python), server-rendered with Jinja templates, plus a small JSON API
 - **PostgreSQL** (Neon) through SQLAlchemy
 - **Open-Meteo** for weather (with **MET Norway** as an automatic backup) and **Nager.Date** for public holidays
+- **Leaflet** with **OpenStreetMap** tiles for the places map, and OpenStreetMap's **Nominatim** for address search (no API keys)
 - **Sign-in:** Google OpenID Connect via Authlib, sessions via Flask-Login, CSRF protection via Flask-WTF
 - Hosted on **Render**; CI on **GitHub Actions** (flake8 and pytest on every push and pull request)
 
 ```
-Browser ──▶ Flask app ──┬─▶ web_routes (pages)  ─┐
-                        ├─▶ api_routes (JSON)   ─┼─▶ database/ ──▶ PostgreSQL
-                        └─▶ auth_routes (sign-in)┘   services/ ──▶ Open-Meteo, Nager.Date
+Browser ──▶ Flask app ──┬─▶ web_routes (pages)     ─┐
+                        ├─▶ places_routes (places) ─┤
+                        ├─▶ api_routes (JSON)      ─┼─▶ database/ ──▶ PostgreSQL
+                        └─▶ auth_routes (sign-in)  ─┘   services/ ──▶ Open-Meteo, Nager.Date
+                                                         api/      ──▶ Nominatim
 ```
 
 ### Data model
@@ -62,6 +99,9 @@ Browser ──▶ Flask app ──┬─▶ web_routes (pages)  ─┐
 ```mermaid
 erDiagram
     app_user ||--o{ event : owns
+    app_user ||--o{ place : keeps
+    app_user ||--o| user_settings : has
+    place |o--o{ event : "made from"
     app_user {
         int id
         string google_sub "Google's permanent account id"
@@ -77,10 +117,37 @@ erDiagram
         timestamp end_time
         string location
         int user_id
+        int place_id "the place it was made from, if any"
+    }
+    place {
+        int id
+        int user_id
+        string name
+        string category
+        string address
+        float latitude
+        float longitude
+        string notes
+        bool suits_sunny
+        bool suits_cloudy
+        bool suits_rainy "indoors"
+        int temp_min
+        int temp_max
+        int visit_minutes
+    }
+    user_settings {
+        int user_id
+        string suggest_days "Monday 0 to Sunday 6"
+        int weekday_start
+        int weekday_end
+        int weekend_start
+        int weekend_end
+        bool skip_busy_days
+        bool show_today
     }
 ```
 
-One calendar per person: every event belongs to exactly one account, and every query is limited to the signed-in account. Someone else's event is reported as "not found".
+One calendar per person: every event and place belongs to exactly one account, and every query is limited to the signed-in account. Someone else's event or place is reported as "not found". Deleting a place keeps the events made from it. An account without settings uses the defaults.
 
 ## Accounts and security
 
@@ -88,7 +155,7 @@ One calendar per person: every event belongs to exactly one account, and every q
 - **Sessions** are signed cookies (`SECRET_KEY`) holding only the user id: HttpOnly, SameSite=Lax, HTTPS-only in production, 30 days.
 - **Every page and API call needs a signed-in user.** Pages redirect to sign-in; the API answers `401`.
 - **CSRF tokens** on every form. The JSON API is exempt: browsers won't send JSON, PATCH or DELETE to it from another site.
-- **Try the demo** creates a fresh throwaway account with sample events. It's deleted on sign-out or within a day, and at most 200 exist at once.
+- **Try the demo** creates a fresh throwaway account with sample events and places. It's deleted on sign-out or within a day, and at most 200 exist at once.
 - **Errors** are logged on the server; visitors only see a plain message.
 
 ## Running it locally
@@ -116,12 +183,13 @@ Changes to a database that's already in use go in numbered migration scripts in 
 | Script | What it does |
 |---|---|
 | `001_accounts.sql` | Adds accounts (`app_user`), gives every event an owner, removes the old profile tables. Events from before accounts existed are discarded. |
+| `002_places.sql` | Adds places (`place`), suggestion settings (`user_settings`) and `event.place_id`. Nothing is discarded. |
 
 `SQL_command.sql` rebuilds everything from scratch and **deletes all data**; use it only for a new, empty database.
 
 ## API
 
-All endpoints are under `/api`, need a signed-in session, and only ever see the signed-in account's events.
+All endpoints are under `/api`, need a signed-in session, and only ever see the signed-in account's events and places.
 
 | Endpoint | Method | Description |
 |---|---|---|
@@ -130,6 +198,12 @@ All endpoints are under `/api`, need a signed-in session, and only ever see the 
 | `/api/events` | POST | Create an event (JSON: `name`, `start_time`, `end_time`, `location`) |
 | `/api/events/<id>` | PATCH | Change an event |
 | `/api/events/<id>` | DELETE | Delete an event |
+| `/api/places` | GET | Your places |
+| `/api/places/<id>` | GET | One of your places |
+| `/api/places` | POST | Create a place (JSON: `name`, `category`, and optionally `address`, `latitude`, `longitude`, `notes`, `suits_sunny`, `suits_cloudy`, `suits_rainy`, `temp_min`, `temp_max`, `visit_minutes`) |
+| `/api/places/<id>` | PATCH | Change a place (only the fields sent) |
+| `/api/places/<id>` | DELETE | Delete a place; events made from it are kept |
+| `/api/suggestions` | GET | Every forecast day with how each of your places fits it, best first, and the best time |
 
 Responses share one shape: `{"statusCode": 200, "statusMessage": "SUCCESS", "data": {...}}`.
 
@@ -140,7 +214,7 @@ flake8 .
 pytest tests/
 ```
 
-The tests need no database or network: database and API calls are replaced with stand-ins. More detail in [`routes/README.md`](routes/README.md) (pages, API, sign-in), [`database/README.md`](database/README.md) (schema, migrations), [`services/README.md`](services/README.md) (weather, holidays, the calendar) and [`tests/README.md`](tests/README.md).
+The tests need no database or network: database and API calls are replaced with stand-ins. More detail in [`routes/README.md`](routes/README.md) (pages, API, sign-in), [`database/README.md`](database/README.md) (schema, migrations), [`services/README.md`](services/README.md) (weather, holidays, the calendar, suggestions) and [`tests/README.md`](tests/README.md).
 
 ## Support
 
