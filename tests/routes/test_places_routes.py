@@ -69,7 +69,7 @@ def test_places_page_lists_places_with_their_fit_and_next_great_day(client):
     assert response.status_code == 200
     assert "Hyde Park" in page and "New place" in page
     assert "Today" in page and "Great" in page          # icon and word
-    assert "Next great: Sat 17 Oct, 09:00" in page
+    assert "Next great: Sun 18 Oct, 09:00" in page      # today has its own line
 
 
 def test_places_page_with_no_places_invites_you_to_add_one(client):

@@ -65,8 +65,11 @@ class AccountPlans:
                 if p.has_great and self.prefs.includes(p.day)}
 
     def next_great(self, place_id: int):
-        """The first great suggestion for a place in the account's days."""
+        """The first great suggestion for a place in the account's days,
+        from tomorrow (today's fit is shown on its own)."""
         for plan in self.plans:
+            if plan.day <= self.now.date():
+                continue
             if not self.prefs.includes(plan.day):
                 continue
             found = plan.fit_for(place_id)
