@@ -6,6 +6,7 @@ from datetime import datetime
 from typing import Dict, Tuple, Any, Optional
 from flask import Response
 from models.db_models.event import Event
+from database.db_place import owned_place
 from database.engine import engine
 from utils.response import StatusCode, build_response
 from utils.request import (
@@ -37,6 +38,7 @@ def _serialize_event(event: Event, iso_format: bool = True) -> Dict[str, Any]:
             event.end_time.isoformat() if iso_format else event.end_time
         ),
         "location": event.location,
+        "place_id": event.place_id,
     }
 
 
@@ -159,14 +161,24 @@ def create_event(data: Any, user_id: int) -> Tuple[Response, int]:
                 {"error": "End time must be after start time."},
             )
 
-        # Create event
+        # Create event, at one of the account's places if one is given
         with Session(engine) as session:
+            place_id = None
+            if data.get("place_id") not in (None, ""):
+                place_id = validate_id(data["place_id"])
+                if place_id == StatusCode.BAD_REQUEST.value or not \
+                        owned_place(session, place_id, user_id):
+                    return build_response(
+                        StatusCode.BAD_REQUEST,
+                        {"error": "That place wasn't found."},
+                    )
             event = Event(
                 name=data["name"],
                 start_time=start_time,
                 end_time=end_time,
                 location=data["location"],
                 user_id=user_id,
+                place_id=place_id,
             )
             session.add(event)
             session.commit()

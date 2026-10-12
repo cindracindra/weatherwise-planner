@@ -1,9 +1,11 @@
 from datetime import datetime
+from typing import Optional
 
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column
 
 from models.db_models.base import Base
+from models.db_models.place import Place  # noqa: F401  (registers place)
 from models.db_models.user import AppUser  # noqa: F401  (registers app_user)
 
 
@@ -18,4 +20,9 @@ class Event(Base):
     # Every event belongs to one account; deleting the account deletes them
     user_id: Mapped[int] = mapped_column(
         ForeignKey("app_user.id", ondelete="CASCADE")
+    )
+    # The place the event is at, if it came from one; deleting the place
+    # keeps the event
+    place_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("place.id", ondelete="SET NULL")
     )

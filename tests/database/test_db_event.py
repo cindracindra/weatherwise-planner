@@ -42,6 +42,7 @@ def make_event(user_id=OWNER, **overrides):
     event.end_time = overrides.get("end_time", datetime(2026, 10, 18, 15, 0))
     event.location = overrides.get("location", "Hyde Park")
     event.user_id = user_id
+    event.place_id = overrides.get("place_id")
     return event
 
 
