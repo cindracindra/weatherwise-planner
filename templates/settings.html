@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% from "_macros.html" import icon %}
+{% set active = "settings" %}
+
+{% block title %}Settings | {% endblock %}
+
+{% macro hour_select(name, value, label) %}
+  <div class="field">
+    <label for="{{ name }}" class="field__label">{{ label }}</label>
+    <select id="{{ name }}" name="{{ name }}" class="input num">
+      {% for h in range(25) %}
+        <option value="{{ h }}" {% if h == value %}selected{% endif %}>{{ "%02d:00"|format(h) }}</option>
+      {% endfor %}
+    </select>
+  </div>
+{% endmacro %}
+
+{% block content %}
+  <div class="head">
+    <h1 class="head__title">Settings</h1>
+    <p class="head__lede">When you'd like suggestions for your places.</p>
+  </div>
+
+  <form action="{{ url_for('places.settings_page') }}" method="post" class="form settings">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+    <fieldset class="settings__group">
+      <legend class="settings__title">Days to suggest</legend>
+      {% for value, label in [("every", "Every day"), ("weekends", "Weekends only"), ("custom", "Choose days")] %}
+        <label class="choice">
+          <input type="radio" name="days" value="{{ value }}" {% if preset == value %}checked{% endif %} data-days="{{ value }}">
+          <span>{{ label }}</span>
+        </label>
+      {% endfor %}
+      <div class="settings__days" data-custom-days>
+        {% for d, name in [(0, "Mon"), (1, "Tue"), (2, "Wed"), (3, "Thu"), (4, "Fri"), (5, "Sat"), (6, "Sun")] %}
+          <label class="choice choice--day">
+            <input type="checkbox" name="day_{{ d }}" value="on" {% if d|string in prefs.days %}checked{% endif %}>
+            <span>{{ name }}</span>
+          </label>
+        {% endfor %}
+      </div>
+      <p class="field__help">Today's suggestion and the marks in the month use these days. Choosing any day in the calendar always shows what suits it.</p>
+    </fieldset>
+
+    <fieldset class="settings__group">
+      <legend class="settings__title">Time of day</legend>
+      <p class="field__help">Suggestions look for the best weather between these times.</p>
+      <div class="settings__windows">
+        <div class="form__pair">
+          {{ hour_select("weekday_start", prefs.weekday_start, "Weekdays from") }}
+          {{ hour_select("weekday_end", prefs.weekday_end, "until") }}
+        </div>
+        <div class="form__pair">
+          {{ hour_select("weekend_start", prefs.weekend_start, "Weekends from") }}
+          {{ hour_select("weekend_end", prefs.weekend_end, "until") }}
+        </div>
+      </div>
+    </fieldset>
+
+    <fieldset class="settings__group">
+      <legend class="settings__title">More</legend>
+      <label class="choice">
+        <input type="checkbox" name="skip_busy_days" value="on" {% if prefs.skip_busy_days %}checked{% endif %}>
+        <span>Skip days that already have events</span>
+      </label>
+      <label class="choice">
+        <input type="checkbox" name="show_today" value="on" {% if prefs.show_today %}checked{% endif %}>
+        <span>Show what today is good for beside today's weather</span>
+      </label>
+    </fieldset>
+
+    <div class="form__actions">
+      <button type="submit" class="btn btn--primary">Save settings</button>
+    </div>
+  </form>
+{% endblock %}
+
+{% block scripts %}
+  <script>
+    (function () {
+      // The day boxes only matter for "Choose days"
+      var boxes = document.querySelector("[data-custom-days]");
+      function sync() {
+        var custom = document.querySelector('[data-days="custom"]').checked;
+        boxes.hidden = !custom;
+      }
+      document.querySelectorAll("[data-days]").forEach(function (r) { r.addEventListener("change", sync); });
+      sync();
+    })();
+  </script>
+{% endblock %}

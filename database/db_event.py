@@ -6,6 +6,7 @@ from datetime import datetime
 from typing import Dict, Tuple, Any, Optional
 from flask import Response
 from models.db_models.event import Event
+from database.db_place import owned_place
 from database.engine import engine
 from utils.response import StatusCode, build_response
 from utils.request import (
@@ -37,6 +38,7 @@ def _serialize_event(event: Event, iso_format: bool = True) -> Dict[str, Any]:
             event.end_time.isoformat() if iso_format else event.end_time
         ),
         "location": event.location,
+        "place_id": event.place_id,
     }
 
 
@@ -159,14 +161,24 @@ def create_event(data: Any, user_id: int) -> Tuple[Response, int]:
                 {"error": "End time must be after start time."},
             )
 
-        # Create event
+        # Create event, at one of the account's places if one is given
         with Session(engine) as session:
+            place_id = None
+            if data.get("place_id") not in (None, ""):
+                place_id = validate_id(data["place_id"])
+                if place_id == StatusCode.BAD_REQUEST.value or not \
+                        owned_place(session, place_id, user_id):
+                    return build_response(
+                        StatusCode.BAD_REQUEST,
+                        {"error": "That place wasn't found."},
+                    )
             event = Event(
                 name=data["name"],
                 start_time=start_time,
                 end_time=end_time,
                 location=data["location"],
                 user_id=user_id,
+                place_id=place_id,
             )
             session.add(event)
             session.commit()
@@ -226,6 +238,19 @@ def update_event(
                 event.name = data["name"]
             if "location" in data and data["location"]:
                 event.location = data["location"]
+            if "place_id" in data:
+                # One of the account's places, or "" for none
+                if data["place_id"] in (None, ""):
+                    event.place_id = None
+                else:
+                    place_id = validate_id(data["place_id"])
+                    if place_id == StatusCode.BAD_REQUEST.value or not \
+                            owned_place(session, place_id, user_id):
+                        return build_response(
+                            StatusCode.BAD_REQUEST,
+                            {"error": "That place wasn't found."},
+                        )
+                    event.place_id = place_id
 
             session.commit()
             session.refresh(event)
@@ -252,3 +277,21 @@ def delete_event(eventid: Any, user_id: int) -> Tuple[Response, int]:
         )
     except Exception:
         return _server_error()
+
+
+def events_between(user_id: int, start: datetime, end: datetime
+                   ) -> list[Dict[str, Any]]:
+    """The account's events starting in [start, end), in order, with
+    datetimes (not text). Raises on a database failure; callers that
+    only add extras to a page handle it."""
+    stmt = (
+        select(Event)
+        .where(Event.user_id == user_id,
+               Event.start_time >= start, Event.start_time < end)
+        .order_by(Event.start_time)
+    )
+    with Session(engine) as session:
+        return [
+            _serialize_event(event, iso_format=False)
+            for event in session.execute(stmt).scalars().all()
+        ]

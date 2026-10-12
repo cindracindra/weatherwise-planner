@@ -14,6 +14,7 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;700;800&display=swap">
     <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.2/src/bold/style.css">
     <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.2/src/fill/style.css">
+    {% block head %}{% endblock %}
     <link rel="stylesheet" href="{{ url_for('static', filename='style/swiss.css') }}">
   </head>
 
@@ -28,7 +29,8 @@
           <nav class="bar__nav" aria-label="Main">
             {% for key, label, endpoint in [
                  ("calendar", "Calendar", "web.homepage"),
-                 ("events", "Events", "web.web_management")] %}
+                 ("events", "Events", "web.web_management"),
+                 ("places", "Places", "places.places_page")] %}
               <a href="{{ url_for(endpoint) }}" class="bar__link"
                  {% if active == key %}aria-current="page"{% endif %}>{{ label }}</a>
             {% endfor %}
@@ -36,6 +38,8 @@
 
           <div class="bar__account">
             <span class="bar__name">{{ current_user.name }}</span>
+            <a href="{{ url_for('places.settings_page') }}" class="bar__link"
+               {% if active == "settings" %}aria-current="page"{% endif %}>Settings</a>
             <form action="{{ url_for('auth.logout') }}" method="post">
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
               <button type="submit" class="bar__link bar__out">Sign out</button>

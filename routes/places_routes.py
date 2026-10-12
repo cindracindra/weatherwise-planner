@@ -1,0 +1,196 @@
+"""Places, their map, and suggestion settings."""
+
+from types import SimpleNamespace
+from urllib.parse import quote_plus
+
+from flask import (
+    Blueprint, flash, jsonify, redirect, render_template, request, url_for,
+)
+
+from api import geocode_api
+from database.db_place import (
+    create_place, delete_place, get_place_by_id, list_places, update_place,
+)
+from database.db_settings import (
+    clean_preferences, get_preferences, preset_of, save_preferences,
+)
+from models.api_models.suggestion import Preferences
+from models.db_models.place import CATEGORIES
+from services.planner import account_plans
+from utils.current_user import current_user_id
+from utils.helpers import safe_int
+
+places_bp = Blueprint("places", __name__)
+
+# Visit lengths the form offers, in minutes
+VISIT_CHOICES = [30, 60, 90, 120, 180, 240, 360]
+
+
+def _error(response) -> str:
+    return response[0].get_json().get("data", {}).get("error", "")
+
+
+# ---------- The places page ----------
+
+def google_maps_urls(place) -> dict:
+    """Links to the place in Google Maps: no API key needed. By the pin
+    if there is one, else by name and address."""
+    if place.latitude is not None and place.longitude is not None:
+        where = f"{place.latitude},{place.longitude}"
+    else:
+        where = ", ".join(x for x in (place.name, place.address) if x)
+    where = quote_plus(where)
+    return {
+        "maps_url": f"https://www.google.com/maps/search/?api=1&query={where}",
+        "directions_url": (
+            f"https://www.google.com/maps/dir/?api=1&destination={where}"),
+    }
+
+
+def today_note(place, today_plan, plans) -> str:
+    """Why a place has no fit for today, in words."""
+    if plans.planned(place.id, plans.now.date()):
+        return "Already planned today"
+    if today_plan is None:
+        return "No forecast for today"
+    _, end = plans.prefs.window(plans.now.date())
+    if plans.now.hour + 1 >= end:
+        return "Your suggestion hours are over for today"
+    return "No forecast left for today's hours"
+
+
+def map_place(place, today_plan, plans) -> dict:
+    """What the map's pin and card show for a place."""
+    fit = today_plan.fit_for(place.id) if today_plan else None
+    upcoming = plans.next_great(place.id)
+    return {
+        "id": place.id,
+        "name": place.name,
+        "category": place.category.capitalize(),
+        "address": place.address,
+        "latitude": place.latitude,
+        "longitude": place.longitude,
+        "fit": fit.fit if fit else None,
+        "fit_label": fit.fit_label if fit else None,
+        "fit_why": fit.summary if fit else None,
+        "today_note": None if fit else today_note(place, today_plan, plans),
+        "next": (f"{upcoming.start:%a} {upcoming.start.day} "
+                 f"{upcoming.start:%b}, {upcoming.start:%H:%M}"
+                 if upcoming else None),
+        "edit_url": url_for("places.places_page", selected_placeid=place.id),
+        **google_maps_urls(place),
+    }
+
+
+@places_bp.route("/places")
+def places_page():
+    user_id = current_user_id()
+    selected_id = safe_int(request.args.get("selected_placeid"), 0)
+    selected = None
+    if selected_id:
+        response, status = get_place_by_id(selected_id, user_id)
+        if status == 200:
+            selected = response.get_json()["data"]
+    plans = account_plans(user_id)
+    try:
+        places = list_places(user_id)
+    except Exception:
+        flash("Could not load your places. Please try again.", "error")
+        places = []
+    today_plan = plans.plan_for(plans.now.date())
+    return render_template(
+        "places.html",
+        places=places,
+        map_places=[map_place(p, today_plan, plans) for p in places],
+        today_notes={
+            p.id: today_note(p, today_plan, plans) for p in places
+            if not (today_plan and today_plan.fit_for(p.id))
+        },
+        selected_links=(
+            google_maps_urls(SimpleNamespace(**selected)) if selected
+            else None),
+        selected=selected,
+        selected_id=selected_id,
+        categories=CATEGORIES,
+        visit_choices=VISIT_CHOICES,
+        plans=plans,
+        today_plan=today_plan,
+    )
+
+
+@places_bp.route("/places/search")
+def search_address():
+    """Address search for the place form's map (see api.geocode_api)."""
+    try:
+        results = geocode_api.search(request.args.get("q", ""))
+    except geocode_api.GeocodeError:
+        return jsonify({"error": "Address search isn't reachable right "
+                                 "now. Try again, or click the map."}), 502
+    return jsonify({"results": results})
+
+
+@places_bp.route("/places/load", methods=["POST"])
+def load_place():
+    placeid = safe_int(request.form.get("placeid"), 0)
+    return redirect(url_for("places.places_page", selected_placeid=placeid))
+
+
+@places_bp.route("/places/create", methods=["POST"])
+def create_place_form():
+    result = create_place(request.form, current_user_id())
+    if result[1] == 201:
+        flash(f"Added {result[0].get_json()['data']['name']} to your places.",
+              "success")
+        return redirect(url_for("places.places_page"))
+    flash(_error(result) or "That place didn't save.", "error")
+    return redirect(url_for("places.places_page"))
+
+
+@places_bp.route("/places/update", methods=["POST"])
+def update_place_form():
+    placeid = safe_int(request.form.get("placeid"), 0)
+    result = update_place(placeid, request.form, current_user_id())
+    if result[1] == 200:
+        flash("Your place is up to date.", "success")
+        return redirect(url_for("places.places_page"))
+    flash(_error(result) or "That change didn't save.", "error")
+    return redirect(url_for("places.places_page", selected_placeid=placeid))
+
+
+@places_bp.route("/places/delete", methods=["POST"])
+def delete_place_form():
+    placeid = safe_int(request.form.get("placeid"), 0)
+    result = delete_place(placeid, current_user_id())
+    if result[1] == 200:
+        flash("Place deleted. Events you made from it are kept.", "success")
+    else:
+        flash(_error(result) or "That place couldn't be deleted.", "error")
+    return redirect(url_for("places.places_page"))
+
+
+# ---------- Settings ----------
+
+@places_bp.route("/settings", methods=["GET", "POST"])
+def settings_page():
+    user_id = current_user_id()
+    if request.method == "POST":
+        try:
+            prefs = clean_preferences(request.form)
+        except ValueError as e:
+            flash(str(e), "error")
+            return redirect(url_for("places.settings_page"))
+        try:
+            save_preferences(user_id, prefs)
+        except Exception:
+            flash("Your settings didn't save. Please try again.", "error")
+            return redirect(url_for("places.settings_page"))
+        flash("Your settings are saved.", "success")
+        return redirect(url_for("places.settings_page"))
+
+    try:
+        prefs = get_preferences(user_id)
+    except Exception:
+        flash("Could not load your settings. Showing the defaults.", "error")
+        prefs = Preferences()
+    return render_template("settings.html", prefs=prefs,
+                           preset=preset_of(prefs))

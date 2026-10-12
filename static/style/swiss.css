@@ -354,27 +354,35 @@ input {
   color: var(--accent-ink);
 }
 
-/* ---------- Today: the poster ---------- */
+/* ---------- Today: the weather (70%) and what it's good for (30%) ---------- */
 
+.top {
+  display: grid;
+  grid-template-columns: minmax(0, 7fr) minmax(0, 3fr);
+  column-gap: calc(var(--gap) * 2);
+  align-items: start;
+  padding-block: 32px 48px;
+}
+
+.top--full {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+/* Date across the top; the temperature with the conditions beside it */
 .now {
   display: grid;
-  grid-template-columns: repeat(12, minmax(0, 1fr));
-  column-gap: var(--gap);
-  align-items: start;
-  padding-block: 40px 56px;
+  grid-template-columns: auto minmax(0, 1fr);
+  column-gap: 40px;
+  align-items: end;
 }
 
 .now__date {
-  grid-column: 1 / span 3;
-  padding-top: 0.25em;
-  font-size: clamp(1.75rem, 2.9vw, 2.75rem);
+  grid-column: 1 / -1;
+  margin-bottom: 12px;
+  font-size: clamp(1.25rem, 1.7vw, 1.625rem);
   font-weight: 700;
-  line-height: 1.02;
-  letter-spacing: -0.025em;
-}
-
-.now__line {
-  display: block;
+  line-height: 1.15;
+  letter-spacing: -0.015em;
 }
 
 .now__city {
@@ -382,8 +390,7 @@ input {
 }
 
 .now__temp {
-  grid-column: 4 / span 6;
-  font-size: clamp(9rem, 21vw, 19rem);
+  font-size: clamp(7rem, 13vw, 13.5rem);
   font-weight: 800;
   line-height: 0.78;
   letter-spacing: -0.065em;
@@ -391,8 +398,7 @@ input {
 }
 
 .now__side {
-  grid-column: 10 / span 3;
-  padding-top: 0.5em;
+  padding-bottom: 0.25em;
 }
 
 .now__glyph {
@@ -405,7 +411,7 @@ input {
   position: relative;
   z-index: 1;
   display: block;
-  font-size: clamp(4rem, 7vw, 7rem);
+  font-size: clamp(3rem, 4.5vw, 4.5rem);
   will-change: transform;
 }
 
@@ -418,7 +424,7 @@ input {
 }
 
 .now__cond {
-  margin-top: 28px;
+  margin-top: 16px;
   font-size: var(--fs-xl);
   font-weight: 700;
   line-height: 1.1;
@@ -426,8 +432,8 @@ input {
 }
 
 .now__meta {
-  margin-top: 12px;
-  max-width: 30ch;
+  margin-top: 8px;
+  max-width: 34ch;
 }
 
 .now__meta span {
@@ -435,11 +441,51 @@ input {
 }
 
 .now__missing {
-  grid-column: 4 / span 6;
+  grid-column: 1 / -1;
   max-width: 28ch;
   font-size: var(--fs-xl);
   font-weight: 700;
   line-height: 1.15;
+}
+
+/* What today is good for */
+.today {
+  padding-top: 12px;
+  border-top: 3px solid var(--accent);
+}
+
+.today__title {
+  font-size: var(--fs-l);
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+}
+
+.picks--today {
+  margin-top: 8px;
+}
+
+.picks--today .pick {
+  grid-template-columns: minmax(0, 1fr) auto;
+  row-gap: 4px;
+  padding: 12px 0;
+}
+
+.picks--today .pick .fit {
+  grid-column: 1 / -1;
+}
+
+.today__note {
+  margin-top: 12px;
+  color: var(--grey);
+}
+
+.today__more {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--accent-ink);
+  font-weight: 700;
 }
 
 /* ---------- The day: one fixed column per hour, scrolled sideways ---------- */
@@ -917,7 +963,7 @@ input {
 
 .row__open {
   display: grid;
-  grid-template-columns: 8.5rem minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-columns: 8.5rem minmax(0, 1fr);
   align-items: baseline;
   column-gap: var(--gap);
   width: 100%;
@@ -946,13 +992,20 @@ input {
   text-underline-offset: 4px;
 }
 
-.row__place {
-  color: var(--grey);
+.row__main {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
 }
 
-.row__place .icon {
+.row__meta {
+  color: var(--grey);
+  font-size: var(--fs-s);
+}
+
+.row__meta .icon {
   margin-right: 6px;
-  font-size: 14px;
+  font-size: 13px;
 }
 
 .row--selected::before {
@@ -1112,36 +1165,6 @@ input {
 /* ---------- Medium screens: the day scrolls sideways ---------- */
 
 @media (max-width: 1023px) {
-  .now__date {
-    grid-column: 1 / span 4;
-  }
-
-  .now__temp {
-    grid-column: 5 / span 8;
-  }
-
-  .now__side {
-    grid-column: 1 / -1;
-    display: grid;
-    grid-template-columns: auto 1fr;
-    column-gap: var(--gap);
-    align-items: end;
-    margin-top: 32px;
-    padding-top: 0;
-  }
-
-  .now__glyph {
-    grid-row: 1 / span 2;
-  }
-
-  .now__cond {
-    margin-top: 0;
-  }
-
-  .now__meta {
-    max-width: none;
-  }
-
   .agenda,
   .editor {
     grid-column: 1 / -1;
@@ -1216,53 +1239,7 @@ input {
     font-size: var(--fs-s);
   }
 
-  .now {
-    padding-block: 24px 40px;
-  }
-
-  .now__date {
-    grid-column: 1 / -1;
-    font-size: 1.625rem;
-  }
-
-  .now__temp {
-    margin-top: 20px;
-    font-size: clamp(7.5rem, 42vw, 12rem);
-  }
-
   /* The glyph moves up beside the temperature */
-  .now__side {
-    display: contents;
-  }
-
-  .now__temp {
-    grid-column: 1 / span 9;
-    grid-row: 2;
-  }
-
-  .now__glyph {
-    grid-column: 10 / span 3;
-    grid-row: 2;
-    justify-self: end;
-    align-self: start;
-    margin-top: 20px;
-  }
-
-  .now__glyph .icon {
-    font-size: 3.5rem;
-  }
-
-  .now__cond {
-    grid-column: 1 / -1;
-    margin-top: 24px;
-    font-size: 1.5rem;
-  }
-
-  .now__meta {
-    grid-column: 1 / -1;
-    margin-top: 8px;
-  }
-
   .day__key {
     gap: 4px 16px;
     margin-left: 0;
@@ -1393,14 +1370,6 @@ input {
     padding-left: 12px;
   }
 
-  .row__place {
-    grid-column: 2;
-    font-size: var(--fs-s);
-  }
-
-  .row__place:empty {
-    display: none;
-  }
 
   .poster__title {
     font-size: clamp(3.5rem, 17vw, 5rem);
@@ -1434,5 +1403,706 @@ input {
   .bar__link,
   .row__bin {
     transition: background-color 120ms linear, color 120ms linear, border-color 120ms linear;
+  }
+}
+
+/* ==========================================================================
+   Places and suggestions
+   A fit is always an icon and a word as well as a colour.
+   ========================================================================== */
+
+.btn--small {
+  min-height: 44px;
+  padding: 0 14px;
+  font-size: var(--fs-s);
+}
+
+.btn--small .icon {
+  font-size: 15px;
+}
+
+/* ---------- Fit badges ---------- */
+
+.fit {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: var(--fs-s);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.fit .icon {
+  font-size: 17px;
+}
+
+.fit--great {
+  color: var(--accent-ink);
+}
+
+.fit--okay {
+  color: var(--ink);
+}
+
+.fit--poor {
+  color: var(--grey);
+}
+
+/* ---------- A list of suggestions ---------- */
+
+.picks {
+  display: grid;
+}
+
+.pick {
+  display: grid;
+  grid-template-columns: 6.5rem minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: 16px;
+  padding: 10px 0;
+  border-top: 1px solid var(--rule-soft);
+}
+
+.pick__body {
+  display: grid;
+  min-width: 0;
+}
+
+.pick__name {
+  font-weight: 700;
+}
+
+.pick__why {
+  color: var(--grey);
+  font-size: var(--fs-s);
+}
+
+.panel__note a,
+.today__note a {
+  color: var(--accent-ink);
+  font-weight: 700;
+}
+
+/* ---------- Month: days are links, good days marked ---------- */
+
+a.date {
+  color: inherit;
+  text-decoration: none;
+}
+
+a.date:hover {
+  background: var(--surface);
+}
+
+a.date:focus-visible {
+  outline-offset: -3px;
+}
+
+.date--chosen {
+  background: var(--surface);
+  box-shadow: inset 0 -4px 0 var(--ink);
+}
+
+.date__good {
+  margin-left: auto;
+  color: var(--accent-ink);
+  font-size: 18px;
+  line-height: 1;
+}
+
+.date__good + .date__glyph {
+  margin-left: 0;
+}
+
+.cal__legend {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  color: var(--grey);
+  font-size: var(--fs-s);
+}
+
+.cal__legend .icon {
+  color: var(--accent-ink);
+  font-size: 16px;
+}
+
+/* ---------- The day panel ---------- */
+
+.panel {
+  margin: 0 0 8px;
+  padding: 16px 0 24px;
+  border-top: 3px solid var(--ink);
+  border-bottom: 1px solid var(--rule);
+  background: var(--surface);
+  scroll-margin-top: 16px;
+}
+
+.panel:focus {
+  outline: none;
+}
+
+.panel__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 16px;
+}
+
+.panel__title {
+  font-size: var(--fs-xl);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.panel__close {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  color: inherit;
+  font-weight: 500;
+}
+
+.panel__close:hover {
+  color: var(--accent-ink);
+}
+
+.panel__cols {
+  display: grid;
+  grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+  column-gap: var(--gap);
+  padding: 0 16px;
+}
+
+.panel__label {
+  margin-top: 20px;
+  margin-bottom: 6px;
+  font-size: var(--fs-s);
+  font-weight: 700;
+}
+
+.panel__weather {
+  display: flex;
+  gap: 12px;
+}
+
+.panel__weather > .icon {
+  font-size: 32px;
+}
+
+.panel__weather > span {
+  display: grid;
+}
+
+.panel__sure,
+.panel__note {
+  color: var(--grey);
+}
+
+.panel__events {
+  margin-bottom: 14px;
+}
+
+.panel__events li {
+  padding: 4px 0;
+}
+
+.panel__events .num {
+  margin-right: 8px;
+  font-weight: 500;
+}
+
+/* ---------- Places ---------- */
+
+.row__open.place {
+  grid-template-columns: minmax(0, 5fr) minmax(0, 4fr) minmax(0, 4fr);
+  align-items: start;
+}
+
+.place__when {
+  display: grid;
+  gap: 2px;
+}
+
+.place__next {
+  color: var(--grey);
+  font-size: var(--fs-s);
+}
+
+.place__suits {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+}
+
+.suit {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--fs-s);
+}
+
+.place__today {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--fs-s);
+}
+
+select.input {
+  padding-right: 36px;
+  background-image: linear-gradient(45deg, transparent 50%, var(--ink) 50%),
+    linear-gradient(135deg, var(--ink) 50%, transparent 50%);
+  background-position: calc(100% - 18px) 50%, calc(100% - 12px) 50%;
+  background-size: 6px 6px;
+  background-repeat: no-repeat;
+  background-color: var(--surface);
+}
+
+.input--area {
+  font-family: inherit;
+  min-height: 96px;
+  resize: vertical;
+  line-height: 1.4;
+}
+
+.field__help {
+  margin-top: 6px;
+  color: var(--grey);
+  font-size: var(--fs-s);
+}
+
+.choices {
+  border: 0;
+  padding: 0;
+}
+
+.choices .field__label {
+  margin-bottom: 6px;
+}
+
+.choice {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  cursor: pointer;
+}
+
+.choice input {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--ink);
+}
+
+.choice .icon {
+  font-size: 18px;
+}
+
+/* ---------- Settings ---------- */
+
+.settings {
+  max-width: 720px;
+}
+
+.settings__group {
+  border: 0;
+  border-top: 3px solid var(--rule);
+  padding: 10px 0 0;
+}
+
+/* A legend normally sits in its fieldset's border; floated, it sits under
+   the rule like every other section title */
+.settings__title {
+  float: left;
+  width: 100%;
+  padding-top: 10px;
+  margin-bottom: 8px;
+  font-size: var(--fs-l);
+  font-weight: 700;
+}
+
+.settings__title + * {
+  clear: both;
+}
+
+.settings__days {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 20px;
+  padding-left: 30px;
+}
+
+.settings__days[hidden] {
+  display: none;
+}
+
+.settings__windows {
+  display: grid;
+  gap: 20px;
+  margin-top: 12px;
+}
+
+/* ---------- The places map ---------- */
+
+.map {
+  margin-top: 40px;
+  border-top: 3px solid var(--rule);
+}
+
+.map__canvas {
+  height: 420px;
+  margin-top: 16px;
+  background: var(--surface);
+  /* Above Leaflet's own panes, below the top bar */
+  z-index: 0;
+}
+
+/* OpenStreetMap's colours, quietened to sit on the sand */
+.map__canvas .leaflet-tile-pane {
+  filter: grayscale(1) sepia(0.25) contrast(0.9) brightness(1.04);
+}
+
+.map__canvas--picking,
+.map__canvas--picking .leaflet-interactive {
+  cursor: crosshair;
+}
+
+.map__canvas--picking {
+  box-shadow: 0 0 0 3px var(--accent);
+}
+
+.map__key {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 20px;
+  margin-top: 12px;
+  font-size: var(--fs-s);
+}
+
+.map__key-label {
+  font-weight: 700;
+}
+
+.map__key-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.map__unpinned {
+  margin-left: auto;
+  color: var(--grey);
+}
+
+/* Pins: a square with today's fit as a glyph and a colour */
+.pin {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: 2px solid var(--ink);
+  font-size: 15px;
+  line-height: 1;
+}
+
+.pin--great {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+.pin--okay {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.pin--poor {
+  background: var(--paper);
+  color: var(--ink);
+}
+
+.pin--none {
+  border-color: var(--grey);
+  background: var(--paper);
+  color: var(--grey);
+}
+
+.pin--key {
+  width: 20px;
+  height: 20px;
+  border-width: 1px;
+  font-size: 11px;
+}
+
+.pin--selected {
+  outline: 3px solid var(--ink);
+  outline-offset: 2px;
+}
+
+.pin--draft {
+  border-style: dashed;
+  background: var(--surface);
+  color: var(--ink);
+}
+
+/* Leaflet's popup, squared off to match */
+.leaflet-container {
+  font-family: var(--font);
+}
+
+.leaflet-popup-content-wrapper,
+.leaflet-popup-tip {
+  border-radius: 0;
+  background: var(--paper);
+  color: var(--ink);
+  box-shadow: 0 0 0 2px var(--ink);
+}
+
+.leaflet-popup-content {
+  margin: 14px 16px;
+  font-size: var(--fs-s);
+  line-height: 1.4;
+}
+
+.leaflet-bar,
+.leaflet-bar a {
+  border-radius: 0 !important;
+}
+
+.leaflet-container a.leaflet-popup-close-button {
+  width: 32px;
+  height: 32px;
+  font-size: 20px;
+  line-height: 30px;
+}
+
+.card {
+  display: grid;
+  gap: 4px;
+}
+
+.card__name {
+  font-size: var(--fs-m);
+}
+
+.card__meta,
+.card__why {
+  color: var(--grey);
+}
+
+.card__fit {
+  margin-top: 4px;
+}
+
+.fit--none {
+  color: var(--grey);
+}
+
+.card__links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  margin-top: 6px;
+}
+
+.leaflet-container a.card__link {
+  color: var(--accent-ink);
+  font-weight: 700;
+}
+
+/* The pin controls in the place form */
+.pin-field {
+  border: 0;
+  padding: 0;
+}
+
+.pin-field__state {
+  margin: 6px 0 10px;
+}
+
+.pin-field__search {
+  display: flex;
+  gap: 8px;
+}
+
+.pin-field__search[hidden],
+.pin-field__actions[hidden] {
+  display: none;
+}
+
+.pin-field__results:empty {
+  display: none;
+}
+
+.pin-field__results {
+  margin-top: 8px;
+  border-top: 1px solid var(--rule-soft);
+}
+
+.pin-field__result {
+  display: grid;
+  width: 100%;
+  min-height: 44px;
+  padding: 8px 4px;
+  border: 0;
+  border-bottom: 1px solid var(--rule-soft);
+  background: none;
+  text-align: left;
+  font-size: var(--fs-s);
+  cursor: pointer;
+}
+
+.pin-field__result:hover {
+  background: var(--surface);
+}
+
+.pin-field__result span {
+  color: var(--grey);
+}
+
+.pin-field__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  margin-top: 6px;
+}
+
+.editor__links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  margin-top: 24px;
+}
+
+.editor__links a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  color: var(--accent-ink);
+  font-weight: 700;
+}
+
+/* ---------- The event form: date, then start and end ---------- */
+
+.form__when {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr) minmax(0, 1fr);
+  gap: 8px 16px;
+}
+
+.form__when-help {
+  grid-column: 1 / -1;
+  margin-top: 0;
+}
+
+.editor__note {
+  margin-top: 12px;
+  padding-left: 12px;
+  border-left: 3px solid var(--accent);
+}
+
+/* ---------- Narrower screens ---------- */
+
+@media (max-width: 1023px) {
+  /* The weather, then what today is good for, one under the other */
+  .top {
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: 32px;
+    padding-block: 24px 40px;
+  }
+
+  .now__temp {
+    font-size: clamp(7rem, 20vw, 12rem);
+  }
+
+  .bar__name {
+    display: none;
+  }
+
+  .bar__account .bar__link {
+    white-space: nowrap;
+  }
+
+  .row__open.place {
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: 6px;
+  }
+}
+
+@media (max-width: 639px) {
+  /* The glyph sits beside the temperature; the words go underneath */
+  .now {
+    grid-template-columns: minmax(0, 1fr) auto;
+    column-gap: 16px;
+  }
+
+  .now__temp {
+    font-size: clamp(6.5rem, 34vw, 10rem);
+  }
+
+  .now__side {
+    display: contents;
+  }
+
+  .now__glyph {
+    grid-column: 2;
+    grid-row: 2;
+    align-self: start;
+    margin-top: 8px;
+  }
+
+  .now__glyph .icon {
+    font-size: 3.25rem;
+  }
+
+  .now__cond {
+    grid-column: 1 / -1;
+    font-size: 1.375rem;
+  }
+
+  .now__meta {
+    grid-column: 1 / -1;
+  }
+
+  .form__when {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+
+  .form__date {
+    grid-column: 1 / -1;
+  }
+
+  .map__canvas {
+    height: 300px;
+  }
+
+  .map__unpinned {
+    margin-left: 0;
+  }
+
+  .pick {
+    grid-template-columns: minmax(0, 1fr) auto;
+    row-gap: 4px;
+  }
+
+  .pick .fit {
+    grid-column: 1 / -1;
+  }
+
+  .panel__cols {
+    grid-template-columns: 1fr;
+  }
+
+  .date__good {
+    font-size: 14px;
+  }
+
+  .bar__account .bar__link:not(.bar__out) {
+    padding-inline: 6px;
   }
 }

@@ -5,8 +5,9 @@ This module provides dataclasses for representing weather information
 retrieved from the Open-Meteo API, including weather codes and readings.
 """
 
-from dataclasses import dataclass
-from typing import Optional
+from dataclasses import dataclass, field
+from datetime import date
+from typing import List, Optional
 
 
 @dataclass
@@ -56,3 +57,36 @@ class WeatherReading:
             "weather_code": self.weather_code.to_dict(),
             "rain_chance": self.rain_chance,
         }
+
+
+@dataclass
+class HourOutlook:
+    """One forecast hour of a day: what the time-window search looks at."""
+    hour: int
+    temperature: Optional[float]
+    code: Optional[int]
+    rain_chance: Optional[int]
+    is_day: Optional[bool] = None   # None when the source doesn't say
+
+
+@dataclass
+class DayOutlook:
+    """One forecast day, as the suggestions see it.
+
+    Attributes:
+        day: the London date
+        weather_code: the day's overall conditions
+        high, low: the day's temperatures in °C (rounded), None if unknown
+        rain_chance: the day's highest chance of rain in percent, None if
+            the source doesn't give one (MET Norway)
+        wind: the day's strongest wind in km/h, None if unknown
+        hours: the day's forecast hours in order; may be few or none far
+            ahead, or on the backup source
+    """
+    day: date
+    weather_code: WeatherCode
+    high: Optional[int]
+    low: Optional[int]
+    rain_chance: Optional[int]
+    wind: Optional[float]
+    hours: List[HourOutlook] = field(default_factory=list)

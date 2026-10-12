@@ -14,12 +14,17 @@ Both sources return a "forecast bundle":
         "source": "open-meteo" | "met-norway",
         "current": {"temperature": 14.2, "code": 61},
         "hourly": [{"time": datetime, "temperature": 14.2, "code": 61,
-                    "rain_chance": 80}, ...],      # London time, naive
+                    "rain_chance": 80, "is_day": True}, ...],
+                    # London time, naive; is_day None when unknown
         "daily": {"2026-10-09": 61, ...},
+        "days": {"2026-10-09": {"high": 17.2, "low": 11.0,
+                                "rain_chance": 80, "wind": 24.1}, ...},
     }
 
 `rain_chance` is None when the source doesn't provide it (MET Norway has
-no chance of precipitation for the UK).
+no chance of precipitation for the UK). In "days", `high` and `low` are
+the day's temperatures in °C and `wind` its strongest wind in km/h; any of
+them may be None.
 """
 
 import logging
@@ -65,14 +70,20 @@ def fetch_open_meteo() -> Dict[str, Any]:
         "latitude": Config.LONDON_LAT,
         "longitude": Config.LONDON_LON,
         "current": "temperature_2m,weather_code",
-        "hourly": "temperature_2m,weather_code,precipitation_probability",
-        "daily": "weather_code",
+        "hourly": (
+            "temperature_2m,weather_code,precipitation_probability,is_day"
+        ),
+        "daily": (
+            "weather_code,temperature_2m_max,temperature_2m_min,"
+            "precipitation_probability_max,wind_speed_10m_max"
+        ),
         "timezone": Config.TIMEZONE,
         "forecast_days": 16,
     })
     current = data.get("current", {})
     hourly = data.get("hourly", {})
     rain = hourly.get("precipitation_probability") or []
+    day_light = hourly.get("is_day") or []
     daily = data.get("daily", {})
     return {
         "source": "open-meteo",
@@ -86,6 +97,11 @@ def fetch_open_meteo() -> Dict[str, Any]:
                 "temperature": temp,
                 "code": code,
                 "rain_chance": rain[i] if i < len(rain) else None,
+                "is_day": (
+                    bool(day_light[i])
+                    if i < len(day_light) and day_light[i] is not None
+                    else None
+                ),
             }
             for i, (time, temp, code) in enumerate(zip(
                 hourly.get("time", []),
@@ -99,6 +115,27 @@ def fetch_open_meteo() -> Dict[str, Any]:
                                  daily.get("weather_code", []))
             if code is not None
         },
+        "days": _open_meteo_days(daily),
+    }
+
+
+def _open_meteo_days(daily: Dict[str, Any]) -> Dict[str, Dict[str, Any]]:
+    """Each day's high, low, highest rain chance and strongest wind."""
+    days = daily.get("time", [])
+
+    def column(name):
+        values = daily.get(name) or []
+        return values + [None] * (len(days) - len(values))
+
+    return {
+        day: {"high": high, "low": low, "rain_chance": rain, "wind": wind}
+        for day, high, low, rain, wind in zip(
+            days,
+            column("temperature_2m_max"),
+            column("temperature_2m_min"),
+            column("precipitation_probability_max"),
+            column("wind_speed_10m_max"),
+        )
     }
 
 
@@ -135,6 +172,15 @@ def _symbol(point: Dict[str, Any], *periods: str) -> Optional[str]:
     return None
 
 
+def _daylight(symbol: Optional[str]) -> Optional[bool]:
+    """MET Norway marks symbols that look different by night: 'fair_day',
+    'fair_night'; polar twilight counts as dark. Others (cloudy, rain)
+    don't say."""
+    if not symbol or "_" not in symbol:
+        return None
+    return symbol.endswith("_day")
+
+
 def fetch_met_norway() -> Dict[str, Any]:
     """The same forecast from MET Norway (api.met.no), converted to
     Open-Meteo's shape and WMO codes, in London time."""
@@ -157,6 +203,7 @@ def fetch_met_norway() -> Dict[str, Any]:
                 "air_temperature"),
             "code": met_symbol_to_wmo(_symbol(p, "next_1_hours")),
             "rain_chance": None,
+            "is_day": _daylight(_symbol(p, "next_1_hours")),
         }
         for p in points if "next_1_hours" in p["data"]
     ]
@@ -175,6 +222,26 @@ def fetch_met_norway() -> Dict[str, Any]:
         if met_symbol_to_wmo(min(options)[1]) is not None
     }
 
+    # A day's high, low and strongest wind from every point that day. MET
+    # Norway gives wind in m/s; the bundle uses km/h like Open-Meteo.
+    temps, winds = defaultdict(list), defaultdict(list)
+    for p in points:
+        details = p["data"]["instant"]["details"]
+        day = local(p).date().isoformat()
+        if details.get("air_temperature") is not None:
+            temps[day].append(details["air_temperature"])
+        if details.get("wind_speed") is not None:
+            winds[day].append(details["wind_speed"] * 3.6)
+    days = {
+        day: {
+            "high": max(temps[day]) if temps[day] else None,
+            "low": min(temps[day]) if temps[day] else None,
+            "rain_chance": None,
+            "wind": round(max(winds[day]), 1) if winds[day] else None,
+        }
+        for day in sorted(set(temps) | set(winds))
+    }
+
     return {
         "source": "met-norway",
         "current": {
@@ -185,6 +252,7 @@ def fetch_met_norway() -> Dict[str, Any]:
         },
         "hourly": hourly,
         "daily": daily,
+        "days": days,
     }
 
 

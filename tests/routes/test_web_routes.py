@@ -1,11 +1,14 @@
 """Tests for the web pages and their forms, scoped to the current account."""
 
+from datetime import datetime
 from types import SimpleNamespace
 from unittest.mock import patch
 
 import pytest
 
 from app import create_app
+from models.api_models.suggestion import Preferences
+from services.planner import AccountPlans
 from utils.response import StatusCode, build_response
 
 USER = 7
@@ -32,7 +35,10 @@ def client():
              patch("routes.web_routes.get_today_detail",
                    return_value={"year": 2025, "month": 12, "day": 6, "hour": 9}), \
              patch("routes.web_routes.get_full_calendar", return_value=[]), \
-             patch("routes.web_routes.get_hourly_forecast_today", return_value=[]):
+             patch("routes.web_routes.get_hourly_forecast_today", return_value=[]), \
+             patch("routes.web_routes.account_plans",
+                   return_value=AccountPlans(now=datetime(2025, 12, 6, 9),
+                                             prefs=Preferences())):
             yield client
 
 

@@ -1,16 +1,21 @@
 """Web routes blueprint for HTML pages and form handling."""
 
+from datetime import date, datetime, timedelta
+
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 
 from database.db_event import (
+    events_between,
     get_events,
     get_event_by_id,
     create_event,
     update_event,
     delete_event,
 )
+from database.db_place import get_place_by_id, list_places
 from services.calendar_service import get_full_calendar
 from services.datetime_service import get_today_detail
+from services.planner import account_plans
 from services.weather_service import get_hourly_forecast_today
 from utils.current_user import current_user_id
 from utils.datafeed import (
@@ -38,8 +43,11 @@ def _events_or_flash(response):
 
 def _form_with_times():
     """The posted form with start/end parsed into datetimes, or None if the
-    times are missing or malformed."""
+    times are missing or malformed. The form sends a date and two times;
+    a start sent as one date-and-time also works."""
     data = request.form.to_dict()
+    if data.get("date"):
+        data["start_time"] = f"{data['date']}T{data.get('start_time', '')}"
     try:
         times = parse_incoming_start_and_end_time(
             data.get("start_time", ""), data.get("end_time", "")
@@ -53,9 +61,38 @@ def _form_with_times():
 # ========== Routes ==========
 
 
+def _chosen_day(value):
+    """The ?day=YYYY-MM-DD the day panel is open for, if valid."""
+    try:
+        return date.fromisoformat(value) if value else None
+    except ValueError:
+        return None
+
+
+def _day_panel(user_id, day, plans):
+    """What the day panel shows: the day's events, and its plan if the
+    forecast reaches it."""
+    start = datetime.combine(day, datetime.min.time())
+    try:
+        events = events_between(user_id, start, start + timedelta(days=1))
+    except Exception:
+        events = []
+    today = plans.now.date()
+    return {
+        "day": day,
+        "events": events,
+        "plan": plans.plan_for(day),
+        "past": day < today,
+        "beyond": day > today and plans.plan_for(day) is None,
+        "includes": plans.prefs.includes(day),
+    }
+
+
 @web_bp.route("/")
 def homepage():
-    """Homepage with today's weather and the month's calendar."""
+    """Homepage with today's weather and the month's calendar, plus the
+    suggestions: today's at the top, the good days ahead, marks on good
+    days in the month, and the panel for a chosen day."""
     user_id = current_user_id()
     today = get_today_detail()
     calendar_matrix = get_full_calendar(today["year"], today["month"])
@@ -64,6 +101,13 @@ def homepage():
 
     response, _ = get_events(user_id, today["year"], today["month"])
     monthly_event_data = _events_or_flash(response)
+
+    plans = account_plans(user_id)
+    chosen = _chosen_day(request.args.get("day"))
+    great_days = {
+        d.day for d in plans.great_days
+        if (d.year, d.month) == (today["year"], today["month"])
+    }
 
     return render_template(
         "index.html",
@@ -74,6 +118,9 @@ def homepage():
             monthly_event_data, today["day"]
         ),
         hourly_forecast=hourly_forecast,
+        plans=plans,
+        great_days=great_days,
+        panel=_day_panel(user_id, chosen, plans) if chosen else None,
     )
 
 
@@ -109,12 +156,60 @@ def web_management():
             "error",
         )
 
+    try:
+        places = list_places(user_id)
+    except Exception:
+        places = []
+
     return render_template(
         "management.html",
         all_event=all_event,
         selected_event=selected_event,
         selected_eventid=selected_eventid,
+        form=_event_form(user_id, selected_event),
+        places=places,
     )
+
+
+def _event_form(user_id, selected_event):
+    """What the event form starts with: the chosen event; a suggestion
+    (?place=&start=&end=, from "Add" on a suggestion); a day (?day=, from
+    the day panel); or nothing."""
+    if selected_event:
+        start = selected_event["start_time"]   # "YYYY-MM-DDTHH:MM"
+        return {
+            "name": selected_event["name"],
+            "date": start[:10], "start": start[11:16],
+            "end": selected_event["end_time"],
+            "location": selected_event["location"],
+            "place_id": selected_event.get("place_id"),
+        }
+
+    placeid = safe_int(request.args.get("place"), 0)
+    if placeid:
+        response, status = get_place_by_id(placeid, user_id)
+        try:
+            start = datetime.fromisoformat(request.args.get("start", ""))
+            end = datetime.fromisoformat(request.args.get("end", ""))
+        except ValueError:
+            start = end = None
+        if status == 200 and start and end and start.date() == end.date():
+            place = response.get_json()["data"]
+            return {
+                "name": place["name"][:60],
+                "date": start.date().isoformat(),
+                "start": f"{start:%H:%M}", "end": f"{end:%H:%M}",
+                "location": place["address"] or place["name"],
+                "place_id": place["id"],
+                "from_suggestion": True,
+            }
+
+    chosen = _chosen_day(request.args.get("day"))
+    return {
+        "name": "", "location": "", "place_id": None,
+        "date": chosen.isoformat() if chosen else "",
+        "start": "09:00" if chosen else "", "end": "10:00" if chosen else "",
+    }
 
 
 @web_bp.route("/management/event/load", methods=["POST"])

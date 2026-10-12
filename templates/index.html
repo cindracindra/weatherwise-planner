@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "_macros.html" import icon, weather_glyph, sky_kind, hhmm %}
+{% from "_macros.html" import icon, weather_glyph, sky_kind, hhmm, suggestion_row %}
 {% set active = "calendar" %}
 
 {% set now_hour = today_detail.hour if today_detail.hour is defined else none %}
@@ -7,42 +7,126 @@
 {% set temps = hourly_forecast|map(attribute="temperature")|reject("none")|list %}
 {% set rain = hourly_forecast|map(attribute="rain_chance")|reject("none")|list %}
 
-{% block content %}
-  <!-- Today, set as a poster: date block, the temperature, the conditions -->
-  <section class="now" aria-labelledby="today-title" data-wind-zone>
-    <h1 id="today-title" class="now__date">
-      <span class="now__line">{{ today_detail.day_name }}</span>
-      <span class="now__line num">{{ today_detail.day }} {{ today_detail.month_name }}</span><span class="sr-only">,</span>
-      <span class="now__line now__city">London</span>
-    </h1>
+{% set kinds = {"sunny": "Sunny", "cloudy": "Dry, cloudy", "rainy": "Rain likely", "severe": "Snow or storms"} %}
 
-    {% if now_reading and now_reading.temperature is not none %}
-      <p class="now__temp num"><span class="sr-only">Now </span>{{ now_reading.temperature }}°</p>
+{#- The chosen day: its forecast, events and suggestions -#}
+{% macro day_panel(panel) %}
+  {% set d = panel.day %}
+  {% set plan = panel.plan %}
+  <section class="panel" id="day-panel" aria-labelledby="panel-title" tabindex="-1">
+    <div class="panel__head">
+      <h3 id="panel-title" class="panel__title num">{{ d.strftime('%A') }} {{ d.day }} {{ d.strftime('%B') }}</h3>
+      <a href="{{ url_for('web.homepage') }}#month-title" class="panel__close">{{ icon("x") }}<span>Close</span></a>
+    </div>
 
-      <div class="now__side">
-        {% set kind = sky_kind(now_reading.weather_code.code) %}
-        {#- Rain and snow are drawn falling, so the icon is the bare cloud -#}
-        <span class="now__glyph" data-sky="{{ kind }}">
-          {{ icon("cloud" if kind in ["rain", "snow"] else weather_glyph(now_reading.weather_code.code, now_hour), weight="fill") }}
-        </span>
-        <p class="now__cond">{{ now_reading.weather_code.label or "Now" }}</p>
-        {% if temps %}
-          <p class="now__meta">
-            <span class="num">Between {{ temps|min }}° and {{ temps|max }}° today.</span>
-            {% if rain and rain|max >= 30 %}
-              {% for h in range(hourly_forecast|length) if hourly_forecast[h].rain_chance == rain|max %}
-                {% if loop.first %}<span class="num">Rain most likely around {{ "%02d"|format(h) }}:00 ({{ rain|max }}%).</span>{% endif %}
-              {% endfor %}
-            {% elif rain %}
-              <span>Little chance of rain.</span>
-            {% endif %}
+    <div class="panel__cols">
+      <div class="panel__col">
+        <h4 class="panel__label">Weather</h4>
+        {% if plan %}
+          {% set o = plan.outlook %}
+          <p class="panel__weather">
+            {{ icon(weather_glyph(o.weather_code.code), o.weather_code.label, weight="fill") }}
+            <span><strong>{{ kinds[plan.kind] }}</strong>
+            <span class="num">{% if o.high is not none %}{{ o.low }}° to {{ o.high }}°{% endif %}{% if o.rain_chance is not none %}, {{ o.rain_chance }}% chance of rain{% endif %}</span>
+            <span class="panel__sure">{{ plan.confidence }}</span></span>
           </p>
+        {% elif panel.past %}
+          <p class="panel__note">This day has passed.</p>
+        {% else %}
+          <p class="panel__note">No forecast yet. It reaches 16 days ahead.</p>
+        {% endif %}
+
+        <h4 class="panel__label">Your events</h4>
+        {% if panel.events %}
+          <ul class="panel__events">
+            {% for e in panel.events %}
+              <li><span class="num">{{ e.start_time.strftime('%H:%M') }}-{{ e.end_time.strftime('%H:%M') }}</span> {{ e.name }}</li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <p class="panel__note">Nothing planned.</p>
+        {% endif %}
+        {% if not panel.past %}
+          <a href="{{ url_for('web.web_management', day=d.isoformat()) }}" class="btn btn--line btn--small">{{ icon("plus") }}Add event on this day</a>
         {% endif %}
       </div>
-    {% else %}
-      <p class="now__missing">The forecast isn't available right now. Try refreshing in a minute.</p>
-    {% endif %}
+
+      {% if not panel.past %}
+        <div class="panel__col">
+          <h4 class="panel__label">Great for</h4>
+          {% if not plans.places %}
+            <p class="panel__note">Add the places you like and WeatherWise will suggest days that suit them. <a href="{{ url_for('places.places_page') }}">Add places</a></p>
+          {% elif plan and plan.busy and plans.prefs.skip_busy_days %}
+            <p class="panel__note">You've asked for no suggestions on days that already have events.</p>
+          {% elif plan and plan.picks %}
+            <ul class="picks">
+              {% for sg in plan.picks %}{{ suggestion_row(sg) }}{% endfor %}
+            </ul>
+          {% elif plan %}
+            <p class="panel__note">None of your places is a great fit for this day's weather{% if d == plans.now.date() %} for the rest of today{% endif %}.</p>
+          {% endif %}
+        </div>
+      {% endif %}
+    </div>
   </section>
+{% endmacro %}
+
+{% block content %}
+  {#- Today: the weather on the left (70%), what it's good for on the right (30%) -#}
+  {% set tp = plans.today %}
+  {% set side = plans.prefs.show_today %}
+  <div class="top{% if not side %} top--full{% endif %}">
+    <section class="now" aria-labelledby="today-title" data-wind-zone>
+      <h1 id="today-title" class="now__date num">{{ today_detail.day_name }} {{ today_detail.day }} {{ today_detail.month_name }}<span class="now__city">, London</span></h1>
+
+      {% if now_reading and now_reading.temperature is not none %}
+        <p class="now__temp num"><span class="sr-only">Now </span>{{ now_reading.temperature }}°</p>
+
+        <div class="now__side">
+          {% set kind = sky_kind(now_reading.weather_code.code) %}
+          {#- Rain and snow are drawn falling, so the icon is the bare cloud -#}
+          <span class="now__glyph" data-sky="{{ kind }}">
+            {{ icon("cloud" if kind in ["rain", "snow"] else weather_glyph(now_reading.weather_code.code, now_hour), weight="fill") }}
+          </span>
+          <p class="now__cond">{{ now_reading.weather_code.label or "Now" }}</p>
+          {% if temps %}
+            <p class="now__meta">
+              <span class="num">Between {{ temps|min }}° and {{ temps|max }}° today.</span>
+              {% if rain and rain|max >= 30 %}
+                {% for h in range(hourly_forecast|length) if hourly_forecast[h].rain_chance == rain|max %}
+                  {% if loop.first %}<span class="num">Rain most likely around {{ "%02d"|format(h) }}:00 ({{ rain|max }}%).</span>{% endif %}
+                {% endfor %}
+              {% elif rain %}
+                <span>Little chance of rain.</span>
+              {% endif %}
+            </p>
+          {% endif %}
+        </div>
+      {% else %}
+        <p class="now__missing">The forecast isn't available right now. Try refreshing in a minute.</p>
+      {% endif %}
+    </section>
+
+    {% if side %}
+      {#- Today's great fits; from the evening, tomorrow's -#}
+      {% set is_today = not tp or tp.day == plans.now.date() %}
+      <aside class="today" aria-labelledby="today-picks-title">
+        <h2 id="today-picks-title" class="today__title">{{ "Today" if is_today else "Tomorrow" }}, good for</h2>
+        {% if tp %}
+          <ul class="picks picks--today">
+            {% for sg in tp.picks[:3] %}{{ suggestion_row(sg) }}{% endfor %}
+          </ul>
+          {% if tp.picks|length > 3 %}
+            <a href="{{ url_for('web.homepage', day=tp.day.isoformat()) }}#day-panel" class="today__more">{{ tp.picks|length - 3 }} more for {{ "today" if is_today else "tomorrow" }}</a>
+          {% endif %}
+        {% elif not plans.places %}
+          <p class="today__note">Add the places you like, and WeatherWise will tell you when the weather suits them. <a href="{{ url_for('places.places_page') }}">Add places</a></p>
+        {% else %}
+          <p class="today__note">None of your places is a great fit for the rest of today. Choose a day in the month to see what suits it.</p>
+        {% endif %}
+      </aside>
+    {% endif %}
+  </div>
 
   <!-- The day on a 24-column grid: one column per hour -->
   {% if hourly_forecast %}
@@ -143,6 +227,9 @@
       </div>
     </div>
 
+    {% set chosen_here = panel and panel.day.year == today_detail.year and panel.day.month == today_detail.month %}
+    {% if panel and not chosen_here %}{{ day_panel(panel) }}{% endif %}
+
     <div class="cal">
       <div class="cal__weekdays" aria-hidden="true">
         {% for name in ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"] %}<span>{{ name }}</span>{% endfor %}
@@ -161,9 +248,16 @@
               {% set holidays = day.holidays or [] %}
               {% set shown = [3 - holidays|length, 1]|max %}
 
-              <div class="date {% if day.day == today_detail.day %}date--today{% elif day.day < today_detail.day %}date--past{% endif %}{% if holidays %} date--holiday{% endif %}">
+              {% set iso = "%04d-%02d-%02d"|format(today_detail.year, today_detail.month, day.day) %}
+              {% set chosen = chosen_here and panel.day.day == day.day %}
+              <a href="{{ url_for('web.homepage', day=iso) }}#day-panel"
+                 class="date {% if day.day == today_detail.day %}date--today{% elif day.day < today_detail.day %}date--past{% endif %}{% if holidays %} date--holiday{% endif %}{% if chosen %} date--chosen{% endif %}"
+                 {% if chosen %}aria-current="date"{% endif %}>
                 <div class="date__top">
                   <span class="date__number num">{{ day.day }}{% if day.day == today_detail.day %}<span class="sr-only"> (today)</span>{% endif %}</span>
+                  {% if day.day in great_days %}
+                    <span class="date__good" title="Good day for your places">{{ icon("check-circle", weight="fill") }}<span class="sr-only">, good day for your places</span></span>
+                  {% endif %}
                   {% if day.weather and day.weather.code is not none %}
                     <span class="date__glyph" title="{{ day.weather.label }}">
                       {{ icon(weather_glyph(day.weather.code), day.weather.label, weight="fill") }}
@@ -186,12 +280,19 @@
                 {% if dn.events %}
                   <span class="date__count num">{{ dn.events|length }}<span class="sr-only"> {{ "event" if dn.events|length == 1 else "events" }}</span></span>
                 {% endif %}
-              </div>
+              </a>
             {% endif %}
           {% endfor %}
         </div>
+        {% if chosen_here and panel.day.day in week.days|map(attribute="day")|list %}{{ day_panel(panel) }}{% endif %}
       {% endfor %}
     </div>
+
+    {% if great_days %}
+      <p class="cal__legend">{{ icon("check-circle", weight="fill") }} Good day for one of your places. Choose a day to see what suits it.</p>
+    {% else %}
+      <p class="cal__legend">Choose a day to see its forecast and events.</p>
+    {% endif %}
   </section>
 {% endblock %}
 

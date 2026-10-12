@@ -32,10 +32,12 @@
                 <form action="{{ url_for('web.web_load_event') }}" method="post" class="row__form">
                   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                   <input type="hidden" name="eventid" value="{{ event.id }}">
-                  <button type="submit" class="row__open" {% if selected %}aria-current="true"{% endif %}>
+                  <button type="submit" class="row__open row__open--event" {% if selected %}aria-current="true"{% endif %}>
                     <span class="row__time num">{{ event.start_time.strftime('%H:%M') }}-{{ event.end_time.strftime('%H:%M') }}</span>
-                    <span class="row__name">{{ event.name }}</span>
-                    <span class="row__place">{% if event.location %}{{ icon("map-pin") }}{{ event.location }}{% endif %}</span>
+                    <span class="row__main">
+                      <span class="row__name">{{ event.name }}</span>
+                      {% if event.location %}<span class="row__meta">{{ icon("map-pin") }}{{ event.location }}</span>{% endif %}
+                    </span>
                   </button>
                 </form>
 
@@ -54,9 +56,12 @@
       {% endfor %}
     </section>
 
-    <!-- Form -->
+    <!-- Form: what, when, where -->
     <section class="editor" aria-labelledby="form-title">
       <h2 id="form-title" class="editor__title">{{ "Change event" if selected_event else "New event" }}</h2>
+      {% if form.from_suggestion %}
+        <p class="editor__note">Filled in from a suggestion. Change anything, then add it.</p>
+      {% endif %}
 
       <form action="{{ url_for('web.web_update_event') if selected_event else url_for('web.web_create_event') }}"
             method="post" class="form">
@@ -67,36 +72,69 @@
 
         <div class="field">
           <label for="name" class="field__label">Name</label>
-          <input id="name" type="text" name="name" class="input" maxlength="30" required
-                 value="{{ selected_event.name if selected_event else '' }}" placeholder="Picnic in Hyde Park">
+          <input id="name" type="text" name="name" class="input" maxlength="60" required
+                 value="{{ form.name }}" placeholder="Picnic in Hyde Park">
         </div>
 
-        <div class="form__pair">
+        <div class="form__when">
+          <div class="field form__date">
+            <label for="date" class="field__label">Date</label>
+            <input id="date" type="date" name="date" class="input num" required value="{{ form.date }}">
+          </div>
           <div class="field">
             <label for="start_time" class="field__label">Starts</label>
-            <input id="start_time" type="datetime-local" name="start_time" class="input num" required
-                   value="{{ selected_event.start_time if selected_event else '' }}">
+            <input id="start_time" type="time" name="start_time" class="input num" required value="{{ form.start }}">
           </div>
           <div class="field">
-            <label for="end_time" class="field__label">Ends, same day</label>
-            <input id="end_time" type="time" name="end_time" class="input num" required
-                   value="{{ selected_event.end_time if selected_event else '' }}">
+            <label for="end_time" class="field__label">Ends</label>
+            <input id="end_time" type="time" name="end_time" class="input num" required value="{{ form.end }}">
           </div>
+          <p class="field__help form__when-help">An event starts and ends on the same day.</p>
         </div>
+
+        {% if places %}
+          <div class="field">
+            <label for="place_id" class="field__label">Place</label>
+            <select id="place_id" name="place_id" class="input" data-place-select>
+              <option value="" {% if not form.place_id %}selected{% endif %}>Not one of my places</option>
+              {% for place in places %}
+                <option value="{{ place.id }}" data-where="{{ place.address or place.name }}"
+                        {% if form.place_id == place.id %}selected{% endif %}>{{ place.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        {% endif %}
 
         <div class="field">
           <label for="location" class="field__label">Where</label>
-          <input id="location" type="text" name="location" class="input" required
-                 value="{{ selected_event.location if selected_event else '' }}" placeholder="Hyde Park, London">
+          <input id="location" type="text" name="location" class="input" maxlength="200" required
+                 value="{{ form.location }}" placeholder="Hyde Park, London W2" data-where>
         </div>
 
         <div class="form__actions">
           <button type="submit" class="btn btn--primary">{{ "Save changes" if selected_event else "Add event" }}</button>
-          {% if selected_event %}
+          {% if selected_event or form.from_suggestion %}
             <a href="{{ url_for('web.web_management') }}" class="btn btn--text">Cancel</a>
           {% endif %}
         </div>
       </form>
     </section>
   </div>
+{% endblock %}
+
+{% block scripts %}
+  <script>
+    (function () {
+      // Choosing one of your places fills in Where, unless you've typed your own
+      var select = document.querySelector("[data-place-select]");
+      var where = document.querySelector("[data-where]");
+      if (!select || !where) return;
+      var filled = select.selectedOptions[0] ? select.selectedOptions[0].dataset.where || "" : "";
+      select.addEventListener("change", function () {
+        var next = select.selectedOptions[0].dataset.where || "";
+        if (!where.value.trim() || where.value === filled) where.value = next;
+        filled = next;
+      });
+    })();
+  </script>
 {% endblock %}

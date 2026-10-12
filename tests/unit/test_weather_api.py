@@ -58,7 +58,7 @@ def test_open_meteo_is_one_request_with_everything():
     assert bundle["current"] == {"temperature": 14.2, "code": 61}
     assert bundle["hourly"][1] == {"time": datetime(2026, 10, 9, 1),
                                    "temperature": 11.5, "code": 61,
-                                   "rain_chance": 70}
+                                   "rain_chance": 70, "is_day": None}
     assert bundle["daily"] == {"2026-10-09": 61}
 
 
@@ -113,3 +113,64 @@ def test_both_failing_raises():
          patch.object(weather_api, "fetch_met_norway", side_effect=WeatherAPIError("down")):
         with pytest.raises(WeatherAPIError):
             fetch_forecast()
+
+
+# ---------- Each day's high, low, rain chance and wind ----------
+
+def test_open_meteo_asks_for_and_keeps_each_days_details():
+    data = dict(OPEN_METEO, daily={
+        "time": ["2026-10-09", "2026-10-10"],
+        "weather_code": [61, 0],
+        "temperature_2m_max": [17.2, 21.0],
+        "temperature_2m_min": [11.0, 12.5],
+        "precipitation_probability_max": [80, 5],
+        "wind_speed_10m_max": [24.1, 9.0],
+    })
+    with patch("api.weather_api.requests.get", return_value=response(data)) as get:
+        bundle = fetch_open_meteo()
+    asked = get.call_args.kwargs["params"]["daily"]
+    for field in ("temperature_2m_max", "temperature_2m_min",
+                  "precipitation_probability_max", "wind_speed_10m_max"):
+        assert field in asked
+    assert bundle["days"]["2026-10-09"] == {
+        "high": 17.2, "low": 11.0, "rain_chance": 80, "wind": 24.1}
+    assert bundle["days"]["2026-10-10"]["rain_chance"] == 5
+
+
+def test_open_meteo_days_survive_missing_columns():
+    with patch("api.weather_api.requests.get", return_value=response(OPEN_METEO)):
+        bundle = fetch_open_meteo()
+    assert bundle["days"]["2026-10-09"] == {
+        "high": None, "low": None, "rain_chance": None, "wind": None}
+
+
+def test_met_norway_days_from_its_points_with_wind_in_kmh():
+    data = {"properties": {"timeseries": [
+        {"time": "2026-10-09T09:00:00Z", "data": {
+            "instant": {"details": {"air_temperature": 16.9, "wind_speed": 5.0}},
+            "next_1_hours": {"summary": {"symbol_code": "cloudy"}}}},
+        {"time": "2026-10-09T13:00:00Z", "data": {
+            "instant": {"details": {"air_temperature": 19.4, "wind_speed": 7.5}},
+            "next_1_hours": {"summary": {"symbol_code": "fair_day"}}}},
+    ]}}
+    with patch("api.weather_api.requests.get", return_value=response(data)):
+        bundle = fetch_met_norway()
+    assert bundle["days"]["2026-10-09"] == {
+        "high": 19.4, "low": 16.9, "rain_chance": None, "wind": 27.0}
+
+
+# ---------- Daylight ----------
+
+def test_open_meteo_hours_say_whether_it_is_day():
+    data = dict(OPEN_METEO, hourly=dict(OPEN_METEO["hourly"], is_day=[0, 1]))
+    with patch("api.weather_api.requests.get", return_value=response(data)) as get:
+        bundle = fetch_open_meteo()
+    assert "is_day" in get.call_args.kwargs["params"]["hourly"]
+    assert [h["is_day"] for h in bundle["hourly"]] == [False, True]
+
+
+def test_met_norway_reads_day_and_night_from_its_symbols():
+    with patch("api.weather_api.requests.get", return_value=response(MET)):
+        bundle = fetch_met_norway()
+    # lightrainshowers_day, then cloudy (which looks the same by night)
+    assert [h["is_day"] for h in bundle["hourly"]] == [True, None]
