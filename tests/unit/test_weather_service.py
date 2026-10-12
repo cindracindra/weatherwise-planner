@@ -148,3 +148,31 @@ def test_fetches_straight_away_on_a_freshly_started_machine():
          fetch(BUNDLE) as fetcher:
         assert get_forecast() is BUNDLE
     assert fetcher.call_count == 1
+
+
+# ---------- Day outlooks for suggestions ----------
+
+def test_day_outlooks_from_today_with_details_and_hours(clock):
+    bundle = dict(BUNDLE, days={
+        "2026-10-09": {"high": 21.6, "low": 10.2, "rain_chance": 92, "wind": 30.5},
+        "2026-10-10": {"high": 18.0, "low": 9.0, "rain_chance": 3, "wind": 8.0},
+    }, daily={"2026-10-08": 0, "2026-10-09": 61, "2026-10-10": 0})
+    with fetch(bundle):
+        days = weather_service.get_day_outlooks(today=TODAY.date())
+    assert [d.day.isoformat() for d in days] == ["2026-10-09", "2026-10-10"]
+    first = days[0]
+    assert (first.high, first.low, first.rain_chance, first.wind) == (22, 10, 92, 30.5)
+    assert first.weather_code.code == 61
+    assert [h.hour for h in first.hours] == list(range(24))
+    assert days[1].hours[0].code == 0
+
+
+def test_day_outlooks_without_details_still_work(clock):
+    with fetch(BUNDLE):
+        days = weather_service.get_day_outlooks(today=TODAY.date())
+    assert days[0].high is None and days[0].rain_chance is None
+
+
+def test_day_outlooks_empty_without_a_forecast(clock):
+    with fetch(WeatherAPIError("down")):
+        assert weather_service.get_day_outlooks(today=TODAY.date()) == []

@@ -13,11 +13,14 @@ on every page view.
 """
 
 import time
-from datetime import datetime
+from collections import defaultdict
+from datetime import date, datetime
 from typing import Any, Dict, List, Optional
 
 from api import weather_api
-from models.api_models.weather import WeatherCode, WeatherReading
+from models.api_models.weather import (
+    DayOutlook, HourOutlook, WeatherCode, WeatherReading,
+)
 from utils.converters import round_temperature, weather_code_to_info
 
 FRESH_FOR = 30 * 60        # seconds a forecast is reused
@@ -112,6 +115,43 @@ def get_daily_forecast() -> Dict[str, WeatherCode]:
         if weather.icon is not None:
             daily[day] = weather
     return daily
+
+
+def get_day_outlooks(today: Optional[date] = None) -> List[DayOutlook]:
+    """Every forecast day from today (London) onwards, in order, with its
+    high, low, rain chance, wind and hours. Days without a weather code
+    are left out, since nothing can be judged about them. Empty if there
+    is no forecast."""
+    bundle = get_forecast()
+    if not bundle:
+        return []
+    today = today or datetime.now(weather_api.LONDON).date()
+    details = bundle.get("days", {})
+    hours_by_day = defaultdict(list)
+    for h in bundle["hourly"]:
+        hours_by_day[h["time"].date()].append(HourOutlook(
+            hour=h["time"].hour,
+            temperature=h.get("temperature"),
+            code=h.get("code"),
+            rain_chance=h.get("rain_chance"),
+        ))
+
+    outlooks = []
+    for day_text, code in sorted(bundle["daily"].items()):
+        day = date.fromisoformat(day_text)
+        if day < today or code is None:
+            continue
+        info = details.get(day_text, {})
+        outlooks.append(DayOutlook(
+            day=day,
+            weather_code=_code(code),
+            high=round_temperature(info.get("high")),
+            low=round_temperature(info.get("low")),
+            rain_chance=info.get("rain_chance"),
+            wind=info.get("wind"),
+            hours=sorted(hours_by_day.get(day, []), key=lambda h: h.hour),
+        ))
+    return outlooks
 
 
 def forecast_source() -> Optional[str]:
