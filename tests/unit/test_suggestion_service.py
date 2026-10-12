@@ -10,7 +10,7 @@ from models.api_models.suggestion import (
 )
 from models.api_models.weather import DayOutlook, HourOutlook, WeatherCode
 from services.suggestion_service import (
-    base_fit, best_time, classify, confidence, judge_day,
+    base_fit, best_time, classify, judge_day,
     plan_day, plan_days, today_pick,
 )
 
@@ -76,11 +76,6 @@ def test_an_any_weather_place_is_never_what_makes_a_day_good():
     assert [s.place.name for s in plan.picks] == ["Hyde Park"]
     alone = plan_day(outlook(code=95), [market], Preferences(), NOW)
     assert alone.picks == []
-
-
-def test_confidence_fades_with_distance():
-    assert [confidence(date(2026, 10, d), SAT) for d in (17, 19, 20, 23, 24)] \
-        == ["Likely", "Likely", "Possible", "Possible", "Early look"]
 
 
 # ---------- The best time ----------

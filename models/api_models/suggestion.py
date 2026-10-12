@@ -89,7 +89,6 @@ class DayPlan:
     """A forecast day and the places that suit it."""
     outlook: DayOutlook
     kind: str                    # the day as a whole
-    confidence: str              # how far the forecast can be trusted
     busy: bool                   # the day already has events
     # Every place judged, best first
     suggestions: List[Suggestion] = field(default_factory=list)

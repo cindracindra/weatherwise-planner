@@ -68,7 +68,6 @@ Each forecast day and hour is **sunny**, **dry but cloudy**, **rain likely** or 
 - Only **Great** fits are suggested. A place that suits any weather is Okay every day, so it is never what makes a day good.
 - For each place the best time for a visit of its usual length is searched hour by hour inside your hours (by default weekdays 18:00-21:00 and weekends 09:00-18:00), avoiding the wettest hours.
 - Today only suggests what can still start; a place already planned that day isn't suggested again.
-- Each day says how far the forecast can be trusted: **Likely** (the next 3 days), **Possible** (up to a week), **Early look** (beyond).
 - Fits are always an icon and a word as well as a colour, so they don't depend on telling colours apart.
 
 The weather is London's, from one point in the centre, wherever a place is.

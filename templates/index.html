@@ -16,7 +16,7 @@
   <section class="panel" id="day-panel" aria-labelledby="panel-title" tabindex="-1">
     <div class="panel__head">
       <h3 id="panel-title" class="panel__title num">{{ d.strftime('%A') }} {{ d.day }} {{ d.strftime('%B') }}</h3>
-      <a href="{{ url_for('web.homepage') }}#month-title" class="panel__close">{{ icon("x") }}<span>Close</span></a>
+      <a href="{{ url_for('web.homepage') }}#month-title" class="panel__close link--icon">{{ icon("x") }}<span class="link__text">Close</span></a>
     </div>
 
     <div class="panel__cols">
@@ -29,8 +29,7 @@
           <p class="panel__weather">
             {{ icon(weather_glyph(o.weather_code.code), o.weather_code.label, weight="fill") }}
             <span><strong>{{ kinds[plan.kind] }}</strong>
-            <span class="num">{% if o.high is not none %}{{ o.low }}° to {{ o.high }}°{% endif %}{% if wettest and wettest.rain_chance >= 30 %}, wettest around {{ "%02d"|format(wettest.hour) }}:00 ({{ wettest.rain_chance }}%){% elif o.rain_chance is not none %}, {{ o.rain_chance }}% chance of rain{% endif %}</span>
-            <span class="panel__sure">{{ plan.confidence }}</span></span>
+            <span class="num">{% if o.high is not none %}{{ o.low }}° to {{ o.high }}°{% endif %}{% if wettest and wettest.rain_chance >= 30 %}, wettest around {{ "%02d"|format(wettest.hour) }}:00 ({{ wettest.rain_chance }}%){% elif o.rain_chance is not none %}, {{ o.rain_chance }}% chance of rain{% endif %}</span></span>
           </p>
           {#- What suggestions are judged on: your hours that day -#}
           {% if plan.window_label %}

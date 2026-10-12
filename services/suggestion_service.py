@@ -100,16 +100,6 @@ def _adjust(place, fit: str, low: Optional[float], high: Optional[float],
     return fit, reasons
 
 
-def confidence(day: date, today: date) -> str:
-    """How far ahead the forecast is, in words."""
-    ahead = (day - today).days
-    if ahead <= 2:
-        return "Likely"
-    if ahead <= 6:
-        return "Possible"
-    return "Early look"
-
-
 # ---------- The best time on a day ----------
 
 def _visit_hours(place, window_len: int) -> int:
@@ -219,7 +209,6 @@ def plan_day(outlook: DayOutlook, places: Iterable, prefs: Preferences,
     plan = DayPlan(
         outlook=outlook,
         kind=classify(outlook.weather_code.code, outlook.rain_chance),
-        confidence=confidence(outlook.day, now.date()),
         busy=bool(busy),
     )
     _describe_window(plan, start_hour, end_hour)

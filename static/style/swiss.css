@@ -100,6 +100,25 @@ input {
   line-height: 1;
 }
 
+/* A link or text button with an icon underlines its words only: the
+   control has no underline and its .link__text carries it. (A flex
+   control passes its own underline to the icon, so it can't be removed
+   from the icon alone.) */
+.link--icon,
+.btn--text.link--icon {
+  text-decoration: none;
+}
+
+.link--icon .link__text {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 5px;
+}
+
+.link--icon:hover .link__text {
+  text-decoration-thickness: 2px;
+}
+
 :focus-visible {
   outline: 3px solid var(--focus);
   outline-offset: 2px;
@@ -1602,7 +1621,6 @@ a.date:focus-visible {
   border-left: 3px solid var(--accent);
 }
 
-.panel__sure,
 .panel__note {
   color: var(--grey);
 }
