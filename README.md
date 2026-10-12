@@ -15,13 +15,13 @@ A personal calendar with London's weather beside it, so you can plan around the 
 - **The month:** daily weather and UK public holidays on every day, with your events. Choose any day to open its forecast, events and suggestions.
 - **Events:** add, change and delete events from one page.
 - **Places:** keep the places you like (parks, museums, cafés...) with the weather each one suits and, if you like, a temperature range. Pin them on a map by address search or by clicking, and open any of them in Google Maps.
-- **Suggestions:** your places are matched against the 16-day forecast, hour by hour, to find the best time for a visit: today's best fit at the top of the calendar, the good days ahead below the hours, a ✓ on good days in the month. One click turns a suggestion into an event, with Undo.
+- **Suggestions:** your places are matched against the 16-day forecast, hour by hour, to find the best time for a visit. What today is good for sits beside today's weather, and a ✓ marks good days in the month. **Add** on a suggestion opens the event form filled in, to change anything before saving.
 - **Settings:** which days to get suggestions for (every day, weekends, or chosen days), the hours to search on weekdays and at weekends, and whether to skip days that already have plans.
 - **Accounts:** sign in with Google; each person has their own private calendar and places.
 
 ## Screenshots
 
-**Today, hour by hour.** The current weather and the day's range, then each hour's temperature and chance of rain, with today's events along the same hours.
+**Today.** The current weather and the day's range, with what today is good for beside it; then each hour's temperature and chance of rain, with today's events along the same hours.
 
 ![Home page: today's weather, the hourly temperature and rain chart, and today's events](docs/screenshots/home.png)
 
@@ -29,11 +29,7 @@ A personal calendar with London's weather beside it, so you can plan around the 
 
 ![The month: daily weather icons, events and good-day marks, with today highlighted](docs/screenshots/month.png)
 
-**Good days ahead.** The coming days that suit your places, with the best time and how sure the forecast is.
-
-![Good days ahead: each coming day with its weather, the best time and the places that suit it](docs/screenshots/good-days.png)
-
-**A day, opened from the month.** Its weather, your events, and the places that suit it, each with the best time and one-click Add.
+**A day, opened from the month.** Its weather, your events, and the places that are a great fit, each with the best time and an Add button.
 
 ![A day's panel: weather, events and suggestions with Add buttons](docs/screenshots/day.png)
 
@@ -69,7 +65,7 @@ Each forecast day and hour is **sunny**, **dry but cloudy**, **rain likely** or 
 | Snow or storms | – Okay if indoors | ✕ Not ideal |
 
 - A temperature outside the place's range, or strong wind at an outdoor place, lowers the fit a step, and the suggestion says why. Outdoor places don't fit after dark.
-- A place that suits any weather is Okay every day: it's put forward only when nothing fits better, so it never makes every day look good.
+- Only **Great** fits are suggested. A place that suits any weather is Okay every day, so it is never what makes a day good.
 - For each place the best time for a visit of its usual length is searched hour by hour inside your hours (by default weekdays 18:00-21:00 and weekends 09:00-18:00), avoiding the wettest hours.
 - Today only suggests what can still start; a place already planned that day isn't suggested again.
 - Each day says how far the forecast can be trusted: **Likely** (the next 3 days), **Possible** (up to a week), **Early look** (beyond).
