@@ -1,6 +1,7 @@
-{#- Phosphor icon (light weight). Decorative unless a label is given. -#}
-{% macro icon(name, label=none, cls="") -%}
-  <i class="ph-light ph-{{ name }} icon {{ cls }}" {% if label %}role="img" aria-label="{{ label }}"{% else %}aria-hidden="true"{% endif %}></i>
+{#- Phosphor icon. Bold for interface marks, fill for weather pictograms.
+    Decorative unless a label is given. -#}
+{% macro icon(name, label=none, cls="", weight="bold") -%}
+  <i class="ph-{{ weight }} ph-{{ name }} icon {{ cls }}" {% if label %}role="img" aria-label="{{ label }}"{% else %}aria-hidden="true"{% endif %}></i>
 {%- endmacro %}
 
 {#- Phosphor glyph for a WMO weather code; moon variants between 19:00 and 07:00 -#}

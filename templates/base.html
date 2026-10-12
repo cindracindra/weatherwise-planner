@@ -4,43 +4,41 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="theme-color" content="#121314">
+    <meta name="theme-color" content="#e9dccd">
+    <meta name="color-scheme" content="light">
     <meta name="description" content="Plan your week around London's weather: hourly forecast, rain chance and your events in one calendar.">
     <title>{% block title %}{% endblock %}WeatherWise Planner</title>
+    <link rel="icon" href="{{ url_for('static', filename='favicon.svg') }}" type="image/svg+xml">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..700&display=swap">
-    <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.2/src/light/style.css">
-    <link rel="stylesheet" href="{{ url_for('static', filename='style/app.css') }}">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;700;800&display=swap">
+    <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.2/src/bold/style.css">
+    <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.2/src/fill/style.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style/swiss.css') }}">
   </head>
 
   <body>
     <a href="#main" class="skip-link">Skip to content</a>
 
-    <header class="masthead">
-      <div class="wrap masthead__inner">
-        <a href="{{ url_for('web.homepage') }}" class="brand">
-          {{ icon("cloud-sun") }}WeatherWise
-        </a>
+    <header class="bar">
+      <div class="wrap bar__inner">
+        <a href="{{ url_for('web.homepage') }}" class="bar__brand">WeatherWise</a>
 
         {% if current_user.is_authenticated %}
-          <nav class="nav" aria-label="Main">
+          <nav class="bar__nav" aria-label="Main">
             {% for key, label, endpoint in [
                  ("calendar", "Calendar", "web.homepage"),
                  ("events", "Events", "web.web_management")] %}
-              <a href="{{ url_for(endpoint) }}" class="nav__link"
-                 {% if active == key %}aria-current="page"{% endif %}>
-                {{ label }}
-                {% if active == key %}<span class="nav__indicator" aria-hidden="true"></span>{% endif %}
-              </a>
+              <a href="{{ url_for(endpoint) }}" class="bar__link"
+                 {% if active == key %}aria-current="page"{% endif %}>{{ label }}</a>
             {% endfor %}
           </nav>
 
-          <div class="account">
-            <span class="account__name">{{ current_user.name }}</span>
+          <div class="bar__account">
+            <span class="bar__name">{{ current_user.name }}</span>
             <form action="{{ url_for('auth.logout') }}" method="post">
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-              <button type="submit" class="btn btn--quiet">Sign out</button>
+              <button type="submit" class="bar__link bar__out">Sign out</button>
             </form>
           </div>
         {% endif %}
@@ -48,14 +46,15 @@
     </header>
 
     {% if current_user.is_authenticated and current_user.is_demo %}
-      <div class="demo-banner">
-        <div class="wrap demo-banner__inner">
-          You're exploring a demo calendar. Changes are kept until you sign out, and deleted within a day.
-        </div>
+      <div class="demo">
+        <p class="wrap demo__inner">
+          <span class="demo__mark" aria-hidden="true"></span>
+          <span>You're exploring a demo calendar. Changes are kept until you sign out, and deleted within a day.</span>
+        </p>
       </div>
     {% endif %}
 
-    <div class="wrap flash-stack" role="status">
+    <div class="wrap flashes" role="status">
       {%- with messages = get_flashed_messages(with_categories=true) -%}
         {%- for category, message in messages -%}
           <input type="checkbox" id="flash-{{ loop.index }}" class="flash-toggle" checked>

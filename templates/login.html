@@ -4,46 +4,42 @@
 {% block title %}Sign in | {% endblock %}
 
 {% block content %}
-  <section class="choose signin" aria-labelledby="signin-title">
-    <div class="choose__figure">
-      <div data-hairline-host="vane"></div>
-      <p class="choose__read num" data-hairline-read="vane" aria-hidden="true"></p>
-    </div>
-    <div class="choose__body">
-      <h1 id="signin-title" class="page-head__title display">Plan around the weather</h1>
-      <p class="choose__lede">Your calendar with London's hourly forecast beside it. Sign in to see your events.</p>
+  <section class="poster" aria-labelledby="signin-title">
+    <h1 id="signin-title" class="poster__title">Plan around the weather</h1>
+    <div class="poster__block" aria-hidden="true"></div>
+    <p class="poster__lede">Your calendar with London's hourly forecast beside it. Sign in to see your events.</p>
 
-      <div class="signin__actions">
+    <div class="poster__actions">
+      <div class="poster__action">
         {% if google %}
-          <a href="{{ url_for('auth.login_google', next=next or None) }}" class="btn btn--primary">
+          <a href="{{ url_for('auth.login_google', next=next or None) }}" class="btn btn--primary btn--wide">
             {{ icon("google-logo") }}Sign in with Google
           </a>
+          <p class="poster__note">Keep your events between visits.</p>
         {% else %}
-          <button type="button" class="btn btn--primary" disabled>Sign in with Google</button>
-          <p class="signin__note">Google sign-in isn't set up here: GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET are missing.</p>
+          <button type="button" class="btn btn--primary btn--wide" disabled>Sign in with Google</button>
+          <p class="poster__note">Google sign-in isn't set up here: GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET are missing.</p>
         {% endif %}
+      </div>
 
+      <div class="poster__action">
         <form action="{{ url_for('auth.login_demo') }}" method="post">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-          <button type="submit" class="btn">Try the demo</button>
+          <button type="submit" class="btn btn--line btn--wide">Try the demo</button>
         </form>
-        <p class="signin__note">No account needed. You get a fresh sample calendar, deleted when you sign out or within a day.</p>
+        <p class="poster__note">No account needed. You get a fresh sample calendar, deleted when you sign out or within a day.</p>
+      </div>
 
-        {% if dev_login %}
+      {% if dev_login %}
+        <div class="poster__action">
           <form action="{{ url_for('auth.login_dev') }}" method="post">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <input type="hidden" name="next" value="{{ next }}">
-            <button type="submit" class="btn">{{ icon("code") }}Continue as local developer</button>
+            <button type="submit" class="btn btn--line btn--wide">{{ icon("code") }}Continue as local developer</button>
           </form>
-          <p class="signin__note">The local developer sign-in only appears on your own machine.</p>
-        {% endif %}
-      </div>
+          <p class="poster__note">The local developer sign-in only appears on your own machine.</p>
+        </div>
+      {% endif %}
     </div>
   </section>
-{% endblock %}
-
-{% block scripts %}
-  <script src="{{ url_for('static', filename='hairline/kernel.js') }}"></script>
-  <script src="{{ url_for('static', filename='hairline/host.js') }}"></script>
-  <script type="module" src="{{ url_for('static', filename='hairline/vane.js') }}"></script>
 {% endblock %}

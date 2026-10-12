@@ -8,6 +8,9 @@
  *
  * Runs only while the hero is on screen and the tab is visible. Under
  * prefers-reduced-motion it draws one still frame and does not move.
+ *
+ * Swiss edition: rain is straight, square-ended strokes and snow is small
+ * squares, both in the colour of the glyph's --rain property (Swiss red).
  */
 (() => {
   const glyph = document.querySelector("[data-sky]");
@@ -22,7 +25,7 @@
   let wind = 0, gust = 0;
   const MAX_GUST = 2;
 
-  let canvas = null, ctx = null, drops = [], w = 0, h = 0, top = 0, colour = "#2f80ff";
+  let canvas = null, ctx = null, drops = [], w = 0, h = 0, top = 0, colour = "#b4532f";
   const falling = sky === "rain" || sky === "snow";
 
   function size() {
@@ -43,19 +46,20 @@
     d.x = (w - iw) / 2 + iw * (0.22 + Math.random() * 0.56);
     d.y = anywhere ? top + Math.random() * (h - top) : top;
     d.v = sky === "snow" ? 0.45 + Math.random() * 0.3 : 1.3 + Math.random() * 0.7;
-    d.len = sky === "snow" ? 0 : 5 + Math.random() * 4;
-    d.a = 0.7 + Math.random() * 0.3;
+    d.len = sky === "snow" ? 0 : 8 + Math.random() * 6;
+    d.a = 1;
     d.phase = Math.random() * Math.PI * 2;
     return d;
   }
 
   if (falling) {
     canvas = document.createElement("canvas");
-    canvas.className = "today__weather-canvas";
+    canvas.className = "now__canvas";
     canvas.setAttribute("aria-hidden", "true");
     glyph.appendChild(canvas);
     ctx = canvas.getContext("2d");
-    colour = getComputedStyle(glyph).color || colour;
+    const css = getComputedStyle(glyph);
+    colour = css.getPropertyValue("--rain").trim() || css.color || colour;
     size();
     drops = Array.from({ length: sky === "snow" ? 16 : 18 }, () => spawn({}, true));
     window.addEventListener("resize", size);
@@ -65,8 +69,8 @@
     ctx.clearRect(0, 0, w, h);
     ctx.strokeStyle = colour;
     ctx.fillStyle = colour;
-    ctx.lineCap = "round";
-    ctx.lineWidth = 2.4;
+    ctx.lineCap = "butt";
+    ctx.lineWidth = 2;
     for (const d of drops) {
       if (dt) {
         d.phase += 0.05 * dt;
@@ -79,9 +83,7 @@
       const t = (d.y - top) / (h - top);
       ctx.globalAlpha = d.a * Math.min(1, t * 4) * Math.min(1, (1 - t) * 3);
       if (sky === "snow") {
-        ctx.beginPath();
-        ctx.arc(d.x, d.y, 2.4, 0, Math.PI * 2);
-        ctx.fill();
+        ctx.fillRect(Math.round(d.x - 2), Math.round(d.y - 2), 4, 4);
       } else {
         // The streak lies along the drop's velocity, so wind slants it
         const k = d.len / Math.hypot(wind * 0.8, d.v);

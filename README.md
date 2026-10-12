@@ -11,18 +11,18 @@
 A personal calendar with London's weather beside it, so you can plan around the forecast.
 
 - **Today at a glance:** current temperature and conditions, the day's range and when rain is most likely, with rain that sways as your cursor passes like a gust of wind.
-- **Hour by hour:** a scrollable strip of today's hourly forecast, with your events laid along the same timeline.
+- **Hour by hour:** today's forecast as a chart, one column per hour: temperature bars, the chance of rain, and your events laid along the same hours.
 - **The month:** daily weather and UK public holidays on every day, with your events.
 - **Events:** add, change and delete events from one page.
 - **Accounts:** sign in with Google; each person has their own private calendar.
 
 ## Screenshots
 
-**Today and the hour-by-hour strip.** The current weather, the day's range, and the hourly forecast with today's events laid along the same timeline.
+**Today, hour by hour.** The current weather and the day's range, then each hour's temperature and chance of rain, with today's events along the same hours.
 
-![Home page: today's weather, the hourly forecast and today's events](docs/screenshots/home.png)
+![Home page: today's weather, the hourly temperature and rain chart, and today's events](docs/screenshots/home.png)
 
-**The month.** Each day's forecast and events; today is marked in blue.
+**The month.** Each day's forecast and events; today is marked in terracotta.
 
 ![The month: daily weather icons and events, with today highlighted](docs/screenshots/month.png)
 
@@ -32,12 +32,12 @@ A personal calendar with London's weather beside it, so you can plan around the 
 
 <table>
   <tr>
-    <td width="62%"><img src="docs/screenshots/sign-in.png" alt="Sign-in page with the weather vane, Sign in with Google and Try the demo"></td>
+    <td width="62%"><img src="docs/screenshots/sign-in.png" alt="Sign-in page with Sign in with Google and Try the demo"></td>
     <td width="38%"><img src="docs/screenshots/phone.png" alt="The home page on a phone"></td>
   </tr>
   <tr>
-    <td><b>Sign in</b> with Google, or try a demo calendar without an account. The weather vane turns to follow your cursor.</td>
-    <td><b>On a phone</b>, the hourly strip scrolls sideways and the month collapses to dots.</td>
+    <td><b>Sign in</b> with Google, or try a demo calendar without an account.</td>
+    <td><b>On a phone</b>, the hourly chart scrolls sideways and each day in the month shows how many events it has.</td>
   </tr>
 </table>
 

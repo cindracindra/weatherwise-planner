@@ -8,158 +8,190 @@
 {% set rain = hourly_forecast|map(attribute="rain_chance")|reject("none")|list %}
 
 {% block content %}
-  <!-- Today -->
-  <section class="today" aria-labelledby="today-title" data-wind-zone>
-    <h1 id="today-title" class="today__date" data-enter="0">
-      {{ today_detail.day_name }} {{ today_detail.day }} {{ today_detail.month_name }}, London
+  <!-- Today, set as a poster: date block, the temperature, the conditions -->
+  <section class="now" aria-labelledby="today-title" data-wind-zone>
+    <h1 id="today-title" class="now__date">
+      <span class="now__line">{{ today_detail.day_name }}</span>
+      <span class="now__line num">{{ today_detail.day }} {{ today_detail.month_name }}</span><span class="sr-only">,</span>
+      <span class="now__line now__city">London</span>
     </h1>
 
     {% if now_reading and now_reading.temperature is not none %}
-      <div class="today__now">
+      <p class="now__temp num"><span class="sr-only">Now </span>{{ now_reading.temperature }}°</p>
+
+      <div class="now__side">
         {% set kind = sky_kind(now_reading.weather_code.code) %}
         {#- Rain and snow are drawn falling, so the icon is the bare cloud -#}
-        <span class="today__glyph" data-enter="1" data-sky="{{ kind }}">
-          {{ icon("cloud" if kind in ["rain", "snow"] else weather_glyph(now_reading.weather_code.code, now_hour)) }}
+        <span class="now__glyph" data-sky="{{ kind }}">
+          {{ icon("cloud" if kind in ["rain", "snow"] else weather_glyph(now_reading.weather_code.code, now_hour), weight="fill") }}
         </span>
-        <div>
-          <p class="today__temp display num" data-enter="2">{{ now_reading.temperature }}°</p>
-          <p class="today__cond" data-enter="3">{{ now_reading.weather_code.label or "Now" }}</p>
-        </div>
+        <p class="now__cond">{{ now_reading.weather_code.label or "Now" }}</p>
+        {% if temps %}
+          <p class="now__meta">
+            <span class="num">Between {{ temps|min }}° and {{ temps|max }}° today.</span>
+            {% if rain and rain|max >= 30 %}
+              {% for h in range(hourly_forecast|length) if hourly_forecast[h].rain_chance == rain|max %}
+                {% if loop.first %}<span class="num">Rain most likely around {{ "%02d"|format(h) }}:00 ({{ rain|max }}%).</span>{% endif %}
+              {% endfor %}
+            {% elif rain %}
+              <span>Little chance of rain.</span>
+            {% endif %}
+          </p>
+        {% endif %}
       </div>
     {% else %}
-      <p class="today__cond">The forecast isn't available right now. Try refreshing in a minute.</p>
-    {% endif %}
-
-    {% if temps %}
-      <p class="today__range" data-enter="4">
-        Between {{ temps|min }}° and {{ temps|max }}° today.
-        {% if rain and rain|max >= 30 %}
-          {% for h in range(hourly_forecast|length) if hourly_forecast[h].rain_chance == rain|max %}
-            {% if loop.first %}Rain most likely around {{ "%02d"|format(h) }}:00 ({{ rain|max }}%).{% endif %}
-          {% endfor %}
-        {% elif rain %}
-          Little chance of rain.
-        {% endif %}
-      </p>
+      <p class="now__missing">The forecast isn't available right now. Try refreshing in a minute.</p>
     {% endif %}
   </section>
 
-  <!-- Hour by hour -->
+  <!-- The day on a 24-column grid: one column per hour -->
   {% if hourly_forecast %}
-    {% set hour_w = 76 %}
-    <section class="hours" aria-labelledby="hours-title">
-      <h2 id="hours-title" class="sr-only">Today, hour by hour</h2>
+    {% set tmin = temps|min if temps else 0 %}
+    {% set tmax = temps|max if temps else 0 %}
+    {% set tspan = tmax - tmin %}
 
-      <div class="strip" data-strip tabindex="0" role="region" aria-label="Hourly forecast and today's events"
-           style="--hour-w: {{ hour_w }}px; --hours: {{ hourly_forecast|length }}">
-        <ol class="strip__hours">
-          {% for entry in hourly_forecast %}
-            {% set h = loop.index0 %}
-            <li class="hour {% if h == now_hour %}hour--now{% elif now_hour is not none and h < now_hour %}hour--past{% endif %}"
-                style="--i: {{ h }}" {% if h == now_hour %}aria-current="time" data-now{% endif %}>
-              <span class="hour__time num">{{ "Now" if h == now_hour else "%02d:00"|format(h) }}</span>
-              <span class="hour__glyph">
-                {{ icon(weather_glyph(entry.weather_code.code if entry.weather_code else none, h), entry.weather_code.label if entry.weather_code else none) }}
-              </span>
-              <span class="hour__temp display num">{{ entry.temperature if entry.temperature is not none else "-" }}°</span>
-            </li>
-          {% endfor %}
-        </ol>
-
-        {% if daily_event_list %}
-          {#- Lay events along the hours; short ones still get room for their name -#}
-          {% set ns = namespace(lanes=[], placed=[], lane=none) %}
-          {% for event in daily_event_list|sort(attribute="start_int") %}
-            {% set visual_end = [event.end_int, event.start_int + 2]|max %}
-            {% set ns.lane = none %}
-            {% for i in range(ns.lanes|length) if ns.lane is none and ns.lanes[i] <= event.start_int %}
-              {% set ns.lane = i %}
-            {% endfor %}
-            {% if ns.lane is none %}
-              {% set ns.lane = ns.lanes|length %}
-              {% set ns.lanes = ns.lanes + [visual_end] %}
-            {% else %}
-              {% set ns.lanes = ns.lanes[:ns.lane] + [visual_end] + ns.lanes[ns.lane + 1:] %}
-            {% endif %}
-            {% set ns.placed = ns.placed + [(event, ns.lane)] %}
-          {% endfor %}
-
-          <ul class="strip__events" style="--lanes: {{ ns.lanes|length }}" aria-label="Today's events">
-            {% for event, lane in ns.placed %}
-              <li class="event-bar"
-                  style="--start: {{ event.start_int }}; --span: {{ [event.duration, 2]|max }}; --lane: {{ lane }}">
-                <strong>{{ event.name }}</strong>
-                <span class="num">{{ hhmm(event.start_time) }}-{{ hhmm(event.end_time) }}</span>{% if event.location %}<span>, {{ event.location }}</span>{% endif %}
-              </li>
-            {% endfor %}
-          </ul>
-        {% endif %}
+    <section class="day" aria-labelledby="day-title">
+      <div class="day__head">
+        <h2 id="day-title" class="day__title">Today, hour by hour</h2>
+        <div class="day__steps">
+          <button type="button" class="day__step" data-step="-1" aria-label="Earlier hours" aria-controls="day-strip">{{ icon("caret-left") }}</button>
+          <button type="button" class="day__step" data-step="1" aria-label="Later hours" aria-controls="day-strip">{{ icon("caret-right") }}</button>
+        </div>
+        <p class="day__key" aria-hidden="true">
+          <span><i class="key key--temp"></i>Temperature</span>
+          <span><i class="key key--rain"></i>Chance of rain</span>
+          <span><i class="key key--event"></i>Your events</span>
+        </p>
       </div>
 
-      {% if not daily_event_list %}
-        <p class="note">Nothing planned today.</p>
-      {% endif %}
+      <div class="day__scroll" id="day-strip" data-strip tabindex="0" role="region" aria-label="Hourly forecast and today's events">
+        <div class="day__grid" style="--hours: {{ hourly_forecast|length }}{% if now_hour is not none %}; --now: {{ now_hour }}{% endif %}">
+          {% if now_hour is not none %}<span class="day__rule" aria-hidden="true"></span>{% endif %}
+
+          <ol class="hours">
+            {% for entry in hourly_forecast %}
+              {% set h = loop.index0 %}
+              {% set code = entry.weather_code.code if entry.weather_code else none %}
+              <li class="hour {% if h == now_hour %}hour--now{% elif now_hour is not none and h < now_hour %}hour--past{% endif %}"
+                  {% if h == now_hour %}aria-current="time" data-now{% endif %}>
+                <span class="hour__time num">{% if h == now_hour %}Now<span class="sr-only">, {{ "%02d"|format(h) }}:00</span>{% else %}{{ "%02d"|format(h) }}{% endif %}</span>
+                <span class="hour__glyph">
+                  {{ icon(weather_glyph(code, h), entry.weather_code.label if entry.weather_code else none, weight="fill") }}
+                </span>
+                <span class="hour__temp">
+                  {% if entry.temperature is not none %}
+                    {% set t = ((entry.temperature - tmin) / tspan) if tspan else 0.5 %}
+                    <span class="hour__bar" style="--t: {{ '%.3f'|format(t) }}"><span class="hour__deg num">{{ entry.temperature }}°</span></span>
+                  {% else %}
+                    <span class="hour__deg hour__deg--none">-</span>
+                  {% endif %}
+                </span>
+                <span class="hour__rain">
+                  {% if entry.rain_chance %}
+                    <span class="hour__pct num">{{ entry.rain_chance }}%<span class="sr-only"> chance of rain</span></span>
+                    <span class="hour__drop" style="--r: {{ entry.rain_chance }}"></span>
+                  {% endif %}
+                </span>
+              </li>
+            {% endfor %}
+          </ol>
+
+          {% if daily_event_list %}
+            {#- Lay events along the hours; short ones still get room for their name -#}
+            {% set ns = namespace(lanes=[], placed=[], lane=none) %}
+            {% for event in daily_event_list|sort(attribute="start_int") %}
+              {% set visual_end = [event.end_int, event.start_int + 2]|max %}
+              {% set ns.lane = none %}
+              {% for i in range(ns.lanes|length) if ns.lane is none and ns.lanes[i] <= event.start_int %}
+                {% set ns.lane = i %}
+              {% endfor %}
+              {% if ns.lane is none %}
+                {% set ns.lane = ns.lanes|length %}
+                {% set ns.lanes = ns.lanes + [visual_end] %}
+              {% else %}
+                {% set ns.lanes = ns.lanes[:ns.lane] + [visual_end] + ns.lanes[ns.lane + 1:] %}
+              {% endif %}
+              {% set ns.placed = ns.placed + [(event, ns.lane)] %}
+            {% endfor %}
+
+            <ul class="lanes" style="--lanes: {{ ns.lanes|length }}" aria-label="Today's events">
+              {% for event, lane in ns.placed %}
+                <li class="slot {% if now_hour is not none and event.end_int <= now_hour %}slot--past{% endif %}"
+                    style="--start: {{ event.start_int }}; --span: {{ [event.duration, 2]|max }}; --lane: {{ lane }}">
+                  <strong class="slot__name">{{ event.name }}</strong>
+                  <span class="slot__meta"><span class="num">{{ hhmm(event.start_time) }}-{{ hhmm(event.end_time) }}</span>{% if event.location %}<span>, {{ event.location }}</span>{% endif %}</span>
+                </li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <p class="day__empty">Nothing planned today.</p>
+          {% endif %}
+        </div>
+      </div>
     </section>
   {% endif %}
 
-  <!-- Month -->
+  <!-- Month: a timetable of days -->
   <section class="month" aria-labelledby="month-title">
-    <div class="section-head">
-      <h2 id="month-title" class="section-title display">{{ today_detail.month_name }} {{ today_detail.year }}</h2>
-      <div class="actions">
+    <div class="month__head">
+      <h2 id="month-title" class="month__title num">{{ today_detail.month_name }} {{ today_detail.year }}</h2>
+      <div class="month__actions">
         <form action="{{ url_for('web.reload_calendar') }}" method="get">
-          <button type="submit" class="btn btn--square" title="Refresh forecast">
-            {{ icon("arrows-clockwise") }}<span class="sr-only">Refresh forecast</span>
-          </button>
+          <button type="submit" class="btn btn--line">{{ icon("arrows-clockwise") }}<span class="btn__text">Refresh forecast</span></button>
         </form>
         <a href="{{ url_for('web.web_management') }}" class="btn btn--primary">{{ icon("plus") }}Add event</a>
       </div>
     </div>
 
-    <div class="weekdays" aria-hidden="true">
-      {% for name in ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"] %}<span>{{ name }}</span>{% endfor %}
-    </div>
-
-    {% for week in calendar_matrix.weeks %}
-      <div class="week">
-        {% for day in week.days %}
-          {% if day.day == 0 %}
-            <div aria-hidden="true"></div>
-          {% else %}
-            {% set dn = namespace(events=[]) %}
-            {% for daily in monthly_event_list if daily.day == day.day %}
-              {% set dn.events = daily.daily_events %}
-            {% endfor %}
-            {% set shown = [3 - (day.holidays|length if day.holidays else 0), 1]|max %}
-
-            <div class="date {% if day.day == today_detail.day %}date--today{% elif day.day < today_detail.day %}date--past{% endif %}">
-              <div class="date__top">
-                <span class="date__number display num">
-                  {{ day.day }}{% if day.day == today_detail.day %}<span class="sr-only"> (today)</span>{% endif %}
-                </span>
-                {% if day.weather and day.weather.code is not none %}
-                  <span class="date__glyph" title="{{ day.weather.label }}">
-                    {{ icon(weather_glyph(day.weather.code), day.weather.label) }}
-                  </span>
-                {% endif %}
-              </div>
-
-              <div class="date__items">
-                {% for holiday in day.holidays or [] %}
-                  <div class="date__item date__item--holiday" title="{{ holiday }}">{{ icon("flag") }}{{ holiday }}</div>
-                {% endfor %}
-                {% for event in dn.events[:shown] %}
-                  <div class="date__item" title="{{ event.name }}"><span class="num">{{ hhmm(event.start_time) }}</span> {{ event.name }}</div>
-                {% endfor %}
-                {% if dn.events|length > shown %}
-                  <div class="date__more">{{ dn.events|length - shown }} more</div>
-                {% endif %}
-              </div>
-            </div>
-          {% endif %}
-        {% endfor %}
+    <div class="cal">
+      <div class="cal__weekdays" aria-hidden="true">
+        {% for name in ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"] %}<span>{{ name }}</span>{% endfor %}
       </div>
-    {% endfor %}
+
+      {% for week in calendar_matrix.weeks %}
+        <div class="cal__week">
+          {% for day in week.days %}
+            {% if day.day == 0 %}
+              <div class="date date--pad" aria-hidden="true"></div>
+            {% else %}
+              {% set dn = namespace(events=[]) %}
+              {% for daily in monthly_event_list if daily.day == day.day %}
+                {% set dn.events = daily.daily_events %}
+              {% endfor %}
+              {% set holidays = day.holidays or [] %}
+              {% set shown = [3 - holidays|length, 1]|max %}
+
+              <div class="date {% if day.day == today_detail.day %}date--today{% elif day.day < today_detail.day %}date--past{% endif %}{% if holidays %} date--holiday{% endif %}">
+                <div class="date__top">
+                  <span class="date__number num">{{ day.day }}{% if day.day == today_detail.day %}<span class="sr-only"> (today)</span>{% endif %}</span>
+                  {% if day.weather and day.weather.code is not none %}
+                    <span class="date__glyph" title="{{ day.weather.label }}">
+                      {{ icon(weather_glyph(day.weather.code), day.weather.label, weight="fill") }}
+                    </span>
+                  {% endif %}
+                </div>
+
+                <div class="date__items">
+                  {% for holiday in holidays %}
+                    <div class="date__item date__item--holiday" title="{{ holiday }}">{{ icon("flag", weight="fill") }}{{ holiday }}</div>
+                  {% endfor %}
+                  {% for event in dn.events[:shown] %}
+                    <div class="date__item" title="{{ event.name }}"><span class="num date__time">{{ hhmm(event.start_time) }}</span> {{ event.name }}</div>
+                  {% endfor %}
+                  {% if dn.events|length > shown %}
+                    <div class="date__more">{{ dn.events|length - shown }} more</div>
+                  {% endif %}
+                </div>
+
+                {% if dn.events %}
+                  <span class="date__count num">{{ dn.events|length }}<span class="sr-only"> {{ "event" if dn.events|length == 1 else "events" }}</span></span>
+                {% endif %}
+              </div>
+            {% endif %}
+          {% endfor %}
+        </div>
+      {% endfor %}
+    </div>
   </section>
 {% endblock %}
 
@@ -167,18 +199,64 @@
   <script src="{{ url_for('static', filename='js/weather-motion.js') }}" defer></script>
   <script>
     (function () {
+      // The day is wider than the screen at every size. Mouse, keyboard and touch can all move along it.
       var strip = document.querySelector("[data-strip]");
       if (!strip) return;
       var still = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-      var hourW = parseFloat(getComputedStyle(strip).getPropertyValue("--hour-w")) || 76;
+      var behavior = still ? "auto" : "smooth";
+      var steps = document.querySelectorAll("[data-step]");
+      var col = function () {
+        var first = strip.querySelector(".hour");
+        return first ? first.getBoundingClientRect().width : 120;
+      };
+      var max = function () { return strip.scrollWidth - strip.clientWidth; };
 
-      // Bring the current hour into view once the tiles have come in
+      // Prev / next show when they have nowhere further to go
+      function sync() {
+        steps.forEach(function (b) {
+          var dir = Number(b.dataset.step);
+          var end = dir < 0 ? strip.scrollLeft <= 1 : strip.scrollLeft >= max() - 1;
+          b.setAttribute("aria-disabled", end ? "true" : "false"); // stays focusable at the ends
+        });
+      }
+      steps.forEach(function (b) {
+        b.addEventListener("click", function () {
+          strip.scrollBy({ left: Number(b.dataset.step) * col() * 6, behavior: behavior });
+        });
+      });
+      strip.addEventListener("scroll", sync, { passive: true });
+      window.addEventListener("resize", sync);
+
+      // Arrow keys move one hour at a time while the region has focus
+      strip.addEventListener("keydown", function (e) {
+        if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
+        e.preventDefault();
+        strip.scrollBy({ left: (e.key === "ArrowLeft" ? -1 : 1) * col(), behavior: behavior });
+      });
+
+      // A vertical wheel over the grid moves it sideways, but only while it can still move that way,
+      // so the page scrolls on as normal at either end
+      strip.addEventListener("wheel", function (e) {
+        if (e.shiftKey || e.ctrlKey || Math.abs(e.deltaX) >= Math.abs(e.deltaY)) return;
+        var dy = e.deltaMode === 1 ? e.deltaY * 32 : e.deltaY;
+        var room = dy > 0 ? strip.scrollLeft < max() - 1 : strip.scrollLeft > 1;
+        if (!room) return;
+        e.preventDefault();
+        strip.scrollLeft += dy;
+      }, { passive: false });
+
+      // Start with the current hour near the left, one earlier hour showing for context.
+      // If an event bar would be cut by the left edge, start at that bar instead.
       var now = strip.querySelector("[data-now]");
       if (now) {
-        setTimeout(function () {
-          strip.scrollTo({ left: now.offsetLeft - hourW, behavior: still ? "auto" : "smooth" });
-        }, still ? 0 : 450);
+        var left = now.offsetLeft - now.offsetWidth;
+        strip.querySelectorAll(".slot").forEach(function (bar) {
+          if (bar.offsetLeft < left && bar.offsetLeft + bar.offsetWidth > left) left = bar.offsetLeft;
+        });
+        left = Math.floor(left / now.offsetWidth) * now.offsetWidth; // start on a whole hour
+        strip.scrollLeft = Math.max(0, left);
       }
+      sync();
     })();
   </script>
 {% endblock %}
