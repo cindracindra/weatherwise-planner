@@ -29,7 +29,7 @@ login_manager = LoginManager()
 DEV_SUB = "local-dev"
 
 # Blueprints that need a signed-in user
-PROTECTED = {"web", "api"}
+PROTECTED = {"web", "places", "api"}
 
 # Google publishes its sign-in endpoints and signing keys here; Authlib
 # reads it so nothing about Google's servers is hard-coded.

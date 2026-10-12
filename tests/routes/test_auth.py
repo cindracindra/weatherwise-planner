@@ -1,6 +1,7 @@
 """Tests for sign-in: protected pages, the API's 401, the local developer
 sign-in, sign-out, and the ?next= redirect check."""
 
+import re
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -267,7 +268,7 @@ def test_every_page_and_api_route_needs_sign_in(app):
             area = rule.endpoint.split(".")[0]
             if area in open_routes:
                 continue
-            url = rule.rule.replace("<int:eventid>", "1")
+            url = re.sub(r"<int:\w+>", "1", rule.rule)
             for method in rule.methods - {"HEAD", "OPTIONS"}:
                 response = client.open(url, method=method)
                 assert response.status_code in (302, 401), (method, url)
