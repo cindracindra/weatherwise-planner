@@ -16,7 +16,7 @@
   <section class="panel" id="day-panel" aria-labelledby="panel-title" tabindex="-1">
     <div class="panel__head">
       <h3 id="panel-title" class="panel__title num">{{ d.strftime('%A') }} {{ d.day }} {{ d.strftime('%B') }}</h3>
-      <a href="{{ url_for('web.homepage') }}#month-title" class="panel__close">{{ icon("x") }}<span>Close</span></a>
+      <a href="{{ url_for('web.homepage') }}#month-title" class="panel__close link--icon">{{ icon("x") }}<span class="link__text">Close</span></a>
     </div>
 
     <div class="panel__cols">
@@ -24,12 +24,17 @@
         <h4 class="panel__label">Weather</h4>
         {% if plan %}
           {% set o = plan.outlook %}
+          {#- The day as a whole, and when it's wettest -#}
+          {% set wettest = o.hours|selectattr("rain_chance")|sort(attribute="rain_chance", reverse=true)|first %}
           <p class="panel__weather">
             {{ icon(weather_glyph(o.weather_code.code), o.weather_code.label, weight="fill") }}
             <span><strong>{{ kinds[plan.kind] }}</strong>
-            <span class="num">{% if o.high is not none %}{{ o.low }}° to {{ o.high }}°{% endif %}{% if o.rain_chance is not none %}, {{ o.rain_chance }}% chance of rain{% endif %}</span>
-            <span class="panel__sure">{{ plan.confidence }}</span></span>
+            <span class="num">{% if o.high is not none %}{{ o.low }}° to {{ o.high }}°{% endif %}{% if wettest and wettest.rain_chance >= 30 %}, wettest around {{ "%02d"|format(wettest.hour) }}:00 ({{ wettest.rain_chance }}%){% elif o.rain_chance is not none %}, {{ o.rain_chance }}% chance of rain{% endif %}</span></span>
           </p>
+          {#- What suggestions are judged on: your hours that day -#}
+          {% if plan.window_label %}
+            <p class="panel__window num">Your hours, {{ "%02d"|format(plan.window_start) }}:00-{{ "%02d"|format(plan.window_end) }}:00: <strong>{{ plan.window_label|lower }}</strong>{% if plan.dark_from is not none and plan.dark_from != plan.window_start %}, dark from {{ "%02d"|format(plan.dark_from) }}:00{% endif %}</p>
+          {% endif %}
         {% elif panel.past %}
           <p class="panel__note">This day has passed.</p>
         {% else %}
@@ -63,7 +68,7 @@
               {% for sg in plan.picks %}{{ suggestion_row(sg) }}{% endfor %}
             </ul>
           {% elif plan %}
-            <p class="panel__note">None of your places is a great fit for this day's weather{% if d == plans.now.date() %} for the rest of today{% endif %}.</p>
+            <p class="panel__note">None of your places is a great fit in your hours{% if d == plans.now.date() %} for the rest of today{% endif %}.</p>
           {% endif %}
         </div>
       {% endif %}

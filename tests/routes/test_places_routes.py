@@ -330,3 +330,9 @@ def test_why_a_place_is_not_rated_today():
     assert today_note(PARK, today, plans) == "Your suggestion hours are over for today"
     plans.now = datetime(2026, 10, 17, 10, 0)
     assert today_note(PARK, today, plans) == "No forecast left for today's hours"
+
+
+def test_the_panel_says_when_its_wettest_and_what_your_hours_are_like(home):
+    page = home.get("/?day=2026-10-18").data.decode()
+    assert "Your hours, 09:00-18:00: <strong>sunny</strong>" in page
+    assert "dark from 18:00" not in page     # the window ends as it gets dark

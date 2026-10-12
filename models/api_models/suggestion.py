@@ -89,10 +89,23 @@ class DayPlan:
     """A forecast day and the places that suit it."""
     outlook: DayOutlook
     kind: str                    # the day as a whole
-    confidence: str              # how far the forecast can be trusted
     busy: bool                   # the day already has events
     # Every place judged, best first
     suggestions: List[Suggestion] = field(default_factory=list)
+    # The weather in the account's hours that day, which suggestions are
+    # judged on and can differ from the day as a whole
+    window_start: Optional[int] = None
+    window_end: Optional[int] = None
+    window_kind: Optional[str] = None
+    dark_from: Optional[int] = None  # first hour in the window after dark
+
+    @property
+    def window_label(self) -> Optional[str]:
+        if self.window_kind is None:
+            return None
+        if self.window_kind == SUNNY and self.dark_from == self.window_start:
+            return "Clear"
+        return KIND_LABELS[self.window_kind]
 
     @property
     def day(self) -> date:

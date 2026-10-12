@@ -122,7 +122,6 @@ def api_get_suggestions():
             "high": o.high,
             "low": o.low,
             "rain_chance": o.rain_chance,
-            "confidence": plan.confidence,
             "in_your_days": plans.prefs.includes(plan.day),
             "busy": plan.busy,
             "picks": [s.place.id for s in plan.picks],

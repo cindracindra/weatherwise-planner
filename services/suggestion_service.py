@@ -100,16 +100,6 @@ def _adjust(place, fit: str, low: Optional[float], high: Optional[float],
     return fit, reasons
 
 
-def confidence(day: date, today: date) -> str:
-    """How far ahead the forecast is, in words."""
-    ahead = (day - today).days
-    if ahead <= 2:
-        return "Likely"
-    if ahead <= 6:
-        return "Possible"
-    return "Early look"
-
-
 # ---------- The best time on a day ----------
 
 def _visit_hours(place, window_len: int) -> int:
@@ -125,6 +115,7 @@ def best_time(place, outlook: DayOutlook, start_hour: int, end_hour: int
         h.hour: h for h in outlook.hours
         if h.code is not None and start_hour <= h.hour < end_hour
     }
+    every = {h.hour: h for h in outlook.hours}
     length = _visit_hours(place, end_hour - start_hour)
     best = None
     for first in range(start_hour, end_hour - length + 1):
@@ -139,14 +130,18 @@ def best_time(place, outlook: DayOutlook, start_hour: int, end_hour: int
         low = min(temps) if temps else None
         high = max(temps) if temps else None
         fit, reasons = _adjust(place, fit, low, high, outlook.wind)
-        dark = any(h.is_day is False for h in block)
+        # is_day is read at the top of each hour, so a visit is in the dark
+        # if it is dark when any of its hours starts or when it ends
+        ends = every.get(first + length)
+        dark = any(h.is_day is False for h in block) or (
+            ends is not None and ends.is_day is False)
         if dark and not place.suits_rainy:
             # Outdoors needs daylight
             fit = POOR
             reasons.append("after dark")
         wettest = max((h.rain_chance or 0) for h in block)
         # Worst kind in the block describes it
-        kind = max(kinds, key=[SUNNY, CLOUDY, RAINY, SEVERE].index)
+        kind = max(kinds, key=KIND_ORDER.index)
         rank = (FIT_ORDER[fit], wettest, first)
         if best is None or rank < best[0]:
             start = datetime.combine(outlook.day, datetime.min.time()) \
@@ -179,6 +174,25 @@ def judge_day(place, outlook: DayOutlook, start_hour: int, end_hour: int
 
 # ---------- Plans ----------
 
+KIND_ORDER = [SUNNY, CLOUDY, RAINY, SEVERE]
+
+
+def _describe_window(plan: DayPlan, start_hour: int, end_hour: int) -> None:
+    """The weather in the account's hours that day: the worst kind of
+    any hour in them, and when it gets dark."""
+    if start_hour >= end_hour:
+        return
+    hours = [h for h in plan.outlook.hours
+             if start_hour <= h.hour < end_hour and h.code is not None]
+    plan.window_start, plan.window_end = start_hour, end_hour
+    if not hours:
+        return
+    plan.window_kind = max((classify(h.code, h.rain_chance) for h in hours),
+                           key=KIND_ORDER.index)
+    dark = [h.hour for h in hours if h.is_day is False]
+    plan.dark_from = min(dark) if dark else None
+
+
 def plan_day(outlook: DayOutlook, places: Iterable, prefs: Preferences,
              now: datetime, busy: Optional[Set] = None) -> DayPlan:
     """Every place judged for one day, best first.
@@ -195,9 +209,9 @@ def plan_day(outlook: DayOutlook, places: Iterable, prefs: Preferences,
     plan = DayPlan(
         outlook=outlook,
         kind=classify(outlook.weather_code.code, outlook.rain_chance),
-        confidence=confidence(outlook.day, now.date()),
         busy=bool(busy),
     )
+    _describe_window(plan, start_hour, end_hour)
     if start_hour >= end_hour or (prefs.skip_busy_days and busy):
         return plan
 

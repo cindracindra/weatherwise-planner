@@ -187,7 +187,7 @@
           </div>
           <ul class="pin-field__results" data-pin-results></ul>
           <div class="pin-field__actions" hidden data-pin-tools>
-            <button type="button" class="btn btn--text btn--small" data-pin-pick aria-pressed="false">{{ icon("map-pin") }}Choose on the map</button>
+            <button type="button" class="btn btn--text btn--small link--icon" data-pin-pick aria-pressed="false">{{ icon("map-pin") }}<span class="link__text">Choose on the map</span></button>
             <button type="button" class="btn btn--text btn--small" data-pin-clear>Remove pin</button>
           </div>
           <p class="field__help">Search uses OpenStreetMap. Places are matched to London's weather wherever the pin is.</p>
@@ -203,8 +203,8 @@
 
       {% if selected_links %}
         <p class="editor__links">
-          <a href="{{ selected_links.maps_url }}" target="_blank" rel="noopener">{{ icon("arrow-square-out") }}Open in Google Maps<span class="sr-only"> (opens in a new tab)</span></a>
-          <a href="{{ selected_links.directions_url }}" target="_blank" rel="noopener">{{ icon("path") }}Directions<span class="sr-only"> (opens in a new tab)</span></a>
+          <a href="{{ selected_links.maps_url }}" target="_blank" rel="noopener" class="link--icon">{{ icon("arrow-square-out") }}<span class="link__text">Open in Google Maps</span><span class="sr-only"> (opens in a new tab)</span></a>
+          <a href="{{ selected_links.directions_url }}" target="_blank" rel="noopener" class="link--icon">{{ icon("path") }}<span class="link__text">Directions</span><span class="sr-only"> (opens in a new tab)</span></a>
         </p>
       {% endif %}
     </section>
