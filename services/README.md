@@ -66,6 +66,6 @@ Matches places against the forecast, with no database or web code, so it is test
 - `base_fit(place, kind)`: great, okay or poor (see "How suggestions work" in the main README).
 - `best_time(place, day, start_hour, end_hour)`: slides a visit of the place's length through the hours, hour by hour, and keeps the best fit, then the driest; temperature, wind and darkness are taken into account. `judge_day` judges the whole day when there are no hours.
 - `plan_day` / `plan_days`: every place for each day, best first, honouring the settings window, what is still ahead today, and the account's events that day.
-- `today_pick`, `good_days_ahead`: what the calendar puts forward.
+- `today_pick`: what today (or, from the evening, tomorrow) is good for. A day's picks are its great fits only.
 
 `planner.py` gathers the inputs for an account (places, settings, forecast, the next 16 days' events) and calls it. Address search is paced to one request a second and cached for a day, as Nominatim's usage policy asks; it only runs when someone presses Search.

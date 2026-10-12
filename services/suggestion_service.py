@@ -10,7 +10,7 @@ fits a kind well (GREAT), acceptably (OKAY) or not (POOR):
     snow, storms   OKAY if indoors        POOR
 
 A place that ticks all three suits any weather, so no day is special for
-it: it is OKAY every day, put forward only when nothing fits better.
+it: it is OKAY every day, and only great fits are put forward.
 
 A temperature outside the place's range, or strong wind at an outdoor
 place, lowers the fit one step; an outdoor place after dark doesn't fit.
@@ -245,16 +245,3 @@ def today_pick(plans: List[DayPlan], prefs: Preferences, now: datetime,
         if tomorrow and tomorrow.has_great and prefs.includes(tomorrow.day):
             return tomorrow
     return None
-
-
-def good_days_ahead(plans: List[DayPlan], prefs: Preferences, now: datetime,
-                    days: int = 7) -> List[DayPlan]:
-    """The coming days (after today) worth a look: in the account's days,
-    within `days`, where at least one place fits great (the same days
-    the month marks)."""
-    last = now.date() + timedelta(days=days)
-    return [
-        p for p in plans
-        if now.date() < p.day <= last and prefs.includes(p.day)
-        and p.has_great
-    ]

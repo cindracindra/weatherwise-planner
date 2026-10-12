@@ -1,17 +1,13 @@
-"""Places, suggestion settings, and turning a suggestion into an event."""
+"""Places, their map, and suggestion settings."""
 
-from datetime import datetime
 from types import SimpleNamespace
 from urllib.parse import quote_plus
 
 from flask import (
-    Blueprint, flash, jsonify, redirect, render_template, request, session,
-    url_for,
+    Blueprint, flash, jsonify, redirect, render_template, request, url_for,
 )
 
 from api import geocode_api
-
-from database.db_event import create_event, delete_event
 from database.db_place import (
     create_place, delete_place, get_place_by_id, list_places, update_place,
 )
@@ -21,7 +17,6 @@ from database.db_settings import (
 from models.api_models.suggestion import Preferences
 from models.db_models.place import CATEGORIES
 from services.planner import account_plans
-from utils.auth import is_safe_next
 from utils.current_user import current_user_id
 from utils.helpers import safe_int
 
@@ -29,25 +24,10 @@ places_bp = Blueprint("places", __name__)
 
 # Visit lengths the form offers, in minutes
 VISIT_CHOICES = [30, 60, 90, 120, 180, 240, 360]
-ADDED = "added_event"   # session key for the "Added ... Undo" notice
 
 
 def _error(response) -> str:
     return response[0].get_json().get("data", {}).get("error", "")
-
-
-def _back(default_endpoint="web.homepage"):
-    """Back to the page the form came from, if it is one of ours."""
-    target = request.form.get("next")
-    if is_safe_next(target):
-        return redirect(target)
-    return redirect(url_for(default_endpoint))
-
-
-@places_bp.app_context_processor
-def added_notice():
-    """The notice after adding a suggestion, shown once on the next page."""
-    return {"added_notice": session.pop(ADDED, None)}
 
 
 # ---------- The places page ----------
@@ -67,11 +47,22 @@ def google_maps_urls(place) -> dict:
     }
 
 
+def today_note(place, today_plan, plans) -> str:
+    """Why a place has no fit for today, in words."""
+    if plans.planned(place.id, plans.now.date()):
+        return "Already planned today"
+    if today_plan is None:
+        return "No forecast for today"
+    _, end = plans.prefs.window(plans.now.date())
+    if plans.now.hour + 1 >= end:
+        return "Your suggestion hours are over for today"
+    return "No forecast left for today's hours"
+
+
 def map_place(place, today_plan, plans) -> dict:
     """What the map's pin and card show for a place."""
     fit = today_plan.fit_for(place.id) if today_plan else None
     upcoming = plans.next_great(place.id)
-    planned = plans.planned(place.id, plans.now.date())
     return {
         "id": place.id,
         "name": place.name,
@@ -82,7 +73,7 @@ def map_place(place, today_plan, plans) -> dict:
         "fit": fit.fit if fit else None,
         "fit_label": fit.fit_label if fit else None,
         "fit_why": fit.summary if fit else None,
-        "planned_today": planned,
+        "today_note": None if fit else today_note(place, today_plan, plans),
         "next": (f"{upcoming.start:%a} {upcoming.start.day} "
                  f"{upcoming.start:%b}, {upcoming.start:%H:%M}"
                  if upcoming else None),
@@ -111,6 +102,10 @@ def places_page():
         "places.html",
         places=places,
         map_places=[map_place(p, today_plan, plans) for p in places],
+        today_notes={
+            p.id: today_note(p, today_plan, plans) for p in places
+            if not (today_plan and today_plan.fit_for(p.id))
+        },
         selected_links=(
             google_maps_urls(SimpleNamespace(**selected)) if selected
             else None),
@@ -199,60 +194,3 @@ def settings_page():
         prefs = Preferences()
     return render_template("settings.html", prefs=prefs,
                            preset=preset_of(prefs))
-
-
-# ---------- From a suggestion to an event ----------
-
-def _parse(value):
-    try:
-        return datetime.fromisoformat(value or "")
-    except ValueError:
-        return None
-
-
-@places_bp.route("/suggestions/add", methods=["POST"])
-def add_suggestion():
-    """One click: the suggested visit becomes an event at the place."""
-    user_id = current_user_id()
-    placeid = safe_int(request.form.get("placeid"), 0)
-    start, end = (_parse(request.form.get("start")),
-                  _parse(request.form.get("end")))
-    response, status = get_place_by_id(placeid, user_id)
-    if status != 200 or not start or not end or end <= start:
-        flash("That suggestion couldn't be added. Please try again.",
-              "error")
-        return _back()
-    place = response.get_json()["data"]
-    result = create_event({
-        "name": place["name"],
-        "start_time": start.isoformat(),
-        "end_time": end.isoformat(),
-        "location": place["address"] or place["name"],
-        "place_id": place["id"],
-    }, user_id)
-    if result[1] != 201:
-        flash(_error(result) or "That suggestion couldn't be added.",
-              "error")
-        return _back()
-    event = result[0].get_json()["data"]
-    session[ADDED] = {
-        "id": event["id"],
-        "name": place["name"],
-        "text": (f"Added {place['name']}, "
-                 f"{start:%a} {start.day} {start:%b} "
-                 f"{start:%H:%M}-{end:%H:%M}."),
-    }
-    return _back()
-
-
-@places_bp.route("/suggestions/undo", methods=["POST"])
-def undo_suggestion():
-    """Take back an event just added from a suggestion."""
-    eventid = safe_int(request.form.get("eventid"), 0)
-    result = delete_event(eventid, current_user_id())
-    if result[1] == 200:
-        name = (request.form.get("name") or "").strip()[:60] or "It"
-        flash(f"Removed {name} from your calendar.", "success")
-    else:
-        flash("That event was already gone.", "error")
-    return _back()

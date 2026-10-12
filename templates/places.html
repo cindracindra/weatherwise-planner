@@ -27,7 +27,7 @@
     <div class="map__canvas" id="places-map" data-map></div>
     <p class="map__key">
       <span class="map__key-label">Today:</span>
-      {% for fit, glyph, label in [("great", "check", "Great"), ("okay", "minus", "Okay"), ("poor", "x", "Not ideal"), ("none", "circle", "No suggestion")] %}
+      {% for fit, glyph, label in [("great", "check", "Great"), ("okay", "minus", "Okay"), ("poor", "x", "Not ideal"), ("none", "circle", "Not rated today")] %}
         <span class="map__key-item"><span class="pin pin--{{ fit }} pin--key">{{ icon(glyph) }}</span>{{ label }}</span>
       {% endfor %}
       {% if unpinned %}<span class="map__unpinned">{{ unpinned }} {{ "place has" if unpinned == 1 else "places have" }} no pin yet</span>{% endif %}
@@ -54,9 +54,9 @@
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <input type="hidden" name="placeid" value="{{ place.id }}">
                 <button type="submit" class="row__open place" {% if selected %}aria-current="true"{% endif %}>
-                  <span class="place__main">
+                  <span class="row__main">
                     <span class="row__name">{{ place.name }}</span>
-                    <span class="place__cat">{{ place.category|capitalize }}{% if place.address %}, {{ place.address }}{% endif %}</span>
+                    <span class="row__meta">{{ place.category|capitalize }}{% if place.address %}, {{ place.address }}{% endif %}</span>
                   </span>
                   <span class="place__suits">
                     <span class="sr-only">Suits: </span>
@@ -72,7 +72,8 @@
                     {% endif %}
                   </span>
                   <span class="place__when">
-                    {% if today_fit %}<span class="place__today">Today {{ fit_badge(today_fit) }}</span>{% endif %}
+                    {% if today_fit %}<span class="place__today">Today {{ fit_badge(today_fit) }}</span>
+                    {% elif place.id in today_notes %}<span class="place__next">Today: {{ today_notes[place.id]|lower }}</span>{% endif %}
                     <span class="place__next num">
                       {% if place.suits_sunny and place.suits_cloudy and place.suits_rainy %}Good in any weather
                       {% elif next %}Next great: {{ next.start.strftime('%a') }} {{ next.start.day }} {{ next.start.strftime('%b') }}, {{ next.start.strftime('%H:%M') }}

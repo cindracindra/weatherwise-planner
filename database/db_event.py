@@ -238,6 +238,19 @@ def update_event(
                 event.name = data["name"]
             if "location" in data and data["location"]:
                 event.location = data["location"]
+            if "place_id" in data:
+                # One of the account's places, or "" for none
+                if data["place_id"] in (None, ""):
+                    event.place_id = None
+                else:
+                    place_id = validate_id(data["place_id"])
+                    if place_id == StatusCode.BAD_REQUEST.value or not \
+                            owned_place(session, place_id, user_id):
+                        return build_response(
+                            StatusCode.BAD_REQUEST,
+                            {"error": "That place wasn't found."},
+                        )
+                    event.place_id = place_id
 
             session.commit()
             session.refresh(event)

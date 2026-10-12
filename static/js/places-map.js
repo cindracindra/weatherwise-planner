@@ -68,8 +68,7 @@
     box.append(text("strong", "card__name", p.name));
     box.append(text("span", "card__meta", [p.category, p.address].filter(Boolean).join(", ")));
     const today = text("span", `card__fit fit fit--${p.fit || "none"}`,
-      p.fit ? `Today: ${p.fit_label}`
-        : p.planned_today ? "Already planned today" : "No suggestion for today");
+      p.fit ? `Today: ${p.fit_label}` : p.today_note);
     box.append(today);
     if (p.fit_why) box.append(text("span", "card__why", p.fit_why));
     if (p.next) box.append(text("span", "card__why", `Next great: ${p.next}`));
@@ -84,8 +83,7 @@
   let selectedMarker = null;
   data.places.forEach((p) => {
     if (p.latitude === null || p.longitude === null) return;
-    const label = `${p.name}: ${p.fit ? p.fit_label + " today"
-      : p.planned_today ? "already planned today" : "no suggestion for today"}`;
+    const label = `${p.name}: ${p.fit ? p.fit_label + " today" : p.today_note.toLowerCase()}`;
     const marker = L.marker([p.latitude, p.longitude], {
       icon: pinIcon(p.fit, p.id === data.selected ? " pin--selected" : ""),
       title: label,

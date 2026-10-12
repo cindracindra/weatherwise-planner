@@ -53,11 +53,6 @@ class AccountPlans:
         return suggestion_service.today_pick(self.plans, self.prefs, self.now)
 
     @property
-    def ahead(self) -> List[DayPlan]:
-        return suggestion_service.good_days_ahead(
-            self.plans, self.prefs, self.now)
-
-    @property
     def great_days(self) -> Set[date]:
         """Days in the account's days with a great fit still ahead, for
         the marks in the month."""

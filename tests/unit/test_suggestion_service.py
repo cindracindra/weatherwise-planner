@@ -10,7 +10,7 @@ from models.api_models.suggestion import (
 )
 from models.api_models.weather import DayOutlook, HourOutlook, WeatherCode
 from services.suggestion_service import (
-    base_fit, best_time, classify, confidence, good_days_ahead, judge_day,
+    base_fit, best_time, classify, confidence, judge_day,
     plan_day, plan_days, today_pick,
 )
 
@@ -75,7 +75,7 @@ def test_an_any_weather_place_is_never_what_makes_a_day_good():
     plan = plan_day(outlook(), [market, PARK], Preferences(), NOW)
     assert [s.place.name for s in plan.picks] == ["Hyde Park"]
     alone = plan_day(outlook(code=95), [market], Preferences(), NOW)
-    assert [s.fit for s in alone.picks] == [OKAY]
+    assert alone.picks == []
 
 
 def test_confidence_fades_with_distance():
@@ -175,9 +175,10 @@ def test_a_wet_day_puts_indoor_places_forward():
     assert plan.fit_for(1).fit == POOR
 
 
-def test_okay_places_are_picks_only_when_nothing_is_great():
+def test_only_great_fits_are_put_forward():
     plan = plan_day(outlook(), [MUSEUM], Preferences(), NOW)
-    assert [s.fit for s in plan.picks] == [OKAY]
+    assert [s.fit for s in plan.suggestions] == [OKAY]
+    assert plan.picks == []
 
 
 def test_weekdays_use_the_evening_window():
@@ -236,17 +237,3 @@ def test_today_pick_respects_the_switch_and_the_days():
     assert today_pick(plans(), Preferences(show_today=False), NOW) is None
     weekdays = Preferences(days="01234")
     assert today_pick(plans(weekdays), weekdays, NOW) is None
-
-
-def test_good_days_ahead_needs_a_great_fit():
-    prefs = Preferences()
-    only_okay = plan_days([outlook(day=date(2026, 10, 18))], [MUSEUM], prefs, NOW)
-    assert only_okay[0].picks and good_days_ahead(only_okay, prefs, NOW) == []
-
-
-def test_good_days_ahead_skips_today_bad_days_and_other_days():
-    days = [p.day.day for p in good_days_ahead(plans(), Preferences(), NOW)]
-    assert days == [18, 20, 21, 22, 23, 24]   # not 17 (today), not wet 19
-    weekend = Preferences(days="56")
-    assert [p.day.day for p in good_days_ahead(plans(weekend), weekend, NOW)] \
-        == [18, 24]

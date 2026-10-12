@@ -100,12 +100,8 @@ class DayPlan:
 
     @property
     def picks(self) -> List[Suggestion]:
-        """What to put forward: the great fits, or if there are none the
-        okay ones. Never the poor ones."""
-        great = [s for s in self.suggestions if s.fit == GREAT]
-        if great:
-            return great
-        return [s for s in self.suggestions if s.fit == OKAY]
+        """What to put forward: the great fits only."""
+        return [s for s in self.suggestions if s.fit == GREAT]
 
     @property
     def has_great(self) -> bool:

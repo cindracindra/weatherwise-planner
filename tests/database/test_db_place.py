@@ -166,3 +166,23 @@ def test_an_event_cannot_be_linked_to_someone_elses_place(app):
         status, body = payload(create_event(dict(EVENT, place_id=3), OWNER))
     assert status == 400 and body["data"]["error"] == "That place wasn't found."
     s.return_value.__enter__.return_value.add.assert_not_called()
+
+
+def test_an_events_place_can_be_changed_or_cleared(app):
+    from database.db_event import update_event
+    event = MagicMock(user_id=OWNER, place_id=None, start_time=None, end_time=None)
+    from datetime import datetime
+    event.start_time, event.end_time = datetime(2026, 10, 17, 11), datetime(2026, 10, 17, 13)
+    event.id, event.name, event.location = 5, "Picnic", "Hyde Park"
+    with patch("database.db_event.Session") as s, \
+         patch("database.db_event.owned_place", return_value=make_place()):
+        s.return_value.__enter__.return_value.get.return_value = event
+        assert payload(update_event(5, {"place_id": "3"}, OWNER))[0] == 200
+        assert event.place_id == 3
+        assert payload(update_event(5, {"place_id": ""}, OWNER))[0] == 200
+        assert event.place_id is None
+    with patch("database.db_event.Session") as s, \
+         patch("database.db_event.owned_place", return_value=None):
+        s.return_value.__enter__.return_value.get.return_value = event
+        status, body = payload(update_event(5, {"place_id": "8"}, OWNER))
+    assert status == 400 and body["data"]["error"] == "That place wasn't found."

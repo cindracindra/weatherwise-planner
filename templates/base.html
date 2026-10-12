@@ -70,23 +70,6 @@
           </div>
         {%- endfor -%}
       {%- endwith -%}
-
-      {#- After adding a suggestion: what was added, with Undo and Change -#}
-      {% if added_notice %}
-        <div class="flash flash--success flash--added">
-          <span class="flash__text">{{ added_notice.text }}</span>
-          <span class="flash__actions">
-            <form action="{{ url_for('places.undo_suggestion') }}" method="post">
-              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-              <input type="hidden" name="eventid" value="{{ added_notice.id }}">
-              <input type="hidden" name="name" value="{{ added_notice.name }}">
-              <input type="hidden" name="next" value="{{ request.full_path.rstrip('?') }}{% if request.args.get('day') %}#day-panel{% endif %}">
-              <button type="submit" class="flash__action">Undo</button>
-            </form>
-            <a href="{{ url_for('web.web_management', selected_eventid=added_notice.id) }}" class="flash__action">Change</a>
-          </span>
-        </div>
-      {% endif %}
     </div>
 
     <main id="main" class="wrap page">

@@ -36,9 +36,9 @@ Every sign-in starts a fresh session. Real accounts keep it for 30 days; a demo'
 
 | Route | Method | What it does |
 |---|---|---|
-| `/` | GET | Today's suggestion, today's weather, the hourly chart with today's events, the good days ahead, and the month; `?day=YYYY-MM-DD` opens that day's panel |
+| `/` | GET | Today's weather with what today is good for beside it, the hourly chart with today's events, and the month; `?day=YYYY-MM-DD` opens that day's panel |
 | `/reload` | GET | Back to `/` (the refresh button) |
-| `/management/event` | GET | All your events, and the form to add or change one (`?selected_eventid=` picks one; `?day=` starts a new one on that day) |
+| `/management/event` | GET | All your events, and the form to add or change one. `?selected_eventid=` picks one; `?place=&start=&end=` fills in a suggestion (from **Add**); `?day=` starts a new one on that day |
 | `/management/event/load` | POST | Selects an event to change |
 | `/management/event/create` | POST | Adds an event |
 | `/management/event/update` | POST | Changes an event |
@@ -69,8 +69,6 @@ All responses use `{"statusCode", "statusMessage", "data"}` (`utils/response.py`
 | `/places/load` | POST | Selects a place to change |
 | `/places/create`, `/places/update`, `/places/delete` | POST | Adds, changes or deletes a place (deleting keeps its events) |
 | `/places/search` | GET | Address search for the map (`?q=`), as JSON; see `api/geocode_api.py` |
-| `/settings` | GET, POST | Which days to suggest, the weekday and weekend hours, skipping busy days, the today strip |
-| `/suggestions/add` | POST | Turns a suggestion into an event at the place (`placeid`, `start`, `end`), then back to `next` |
-| `/suggestions/undo` | POST | Deletes the event just added |
+| `/settings` | GET, POST | Which days to suggest, the weekday and weekend hours, skipping busy days, showing what today is good for |
 
-After `/suggestions/add` the session holds the new event's id for one page, which shows "Added ..." with **Undo** and **Change**. `next` is only followed to paths on this site.
+The event form posts `date`, `start_time` and `end_time` (times on that date) and an optional `place_id`, one of the account's places.

@@ -145,71 +145,51 @@ def test_bad_settings_are_not_saved(client):
     assert flashes(client) == ["Choose at least one day for suggestions."]
 
 
-# ---------- From a suggestion to an event, and back ----------
+# ---------- From a suggestion to the event form ----------
 
-SUGGESTION = {"placeid": "3", "start": "2026-10-17T11:00:00",
-              "end": "2026-10-17T13:00:00", "next": "/?day=2026-10-17"}
+def form_page(client, query):
+    with patch("routes.web_routes.get_events", return_value=ok({"events": []})), \
+         patch("routes.web_routes.list_places", return_value=[PARK]), \
+         patch("routes.web_routes.get_place_by_id",
+               return_value=ok(dict(PLACE_JSON))) as get:
+        page = client.get("/management/event" + query).data.decode()
+    return page, get
 
 
-def test_one_click_adds_the_event_at_the_place(client):
-    with patch("routes.places_routes.get_place_by_id", return_value=ok(PLACE_JSON)), \
-         patch("routes.places_routes.create_event",
-               return_value=ok({"id": 41}, StatusCode.CREATED)) as create:
-        response = client.post("/suggestions/add", data=SUGGESTION)
+def test_a_suggestion_opens_the_event_form_filled_in(client):
+    page, get = form_page(
+        client, "?place=3&start=2026-10-17T11:00&end=2026-10-17T13:30")
+    get.assert_called_once_with(3, USER)
+    assert "Filled in from a suggestion" in page
+    assert 'value="Hyde Park"' in page                       # name
+    assert 'name="date" class="input num" required value="2026-10-17"' in page
+    assert 'value="11:00"' in page and 'value="13:30"' in page
+    assert 'value="Hyde Park, London W2"' in page            # where
+    assert '<option value="3" data-where="Hyde Park, London W2"\n                        selected>' in page
+
+
+def test_a_bad_suggestion_link_opens_an_empty_form(client):
+    page, _ = form_page(client, "?place=3&start=soon&end=later")
+    assert "Filled in from a suggestion" not in page
+    assert 'name="date" class="input num" required value=""' in page
+
+
+def test_the_form_posts_a_date_and_two_times(client):
+    with patch("routes.web_routes.create_event",
+               return_value=ok({"id": 9}, StatusCode.CREATED)) as create:
+        client.post("/management/event/create", data={
+            "name": "Hyde Park", "date": "2026-10-17", "start_time": "11:00",
+            "end_time": "13:30", "location": "Hyde Park", "place_id": "3"})
     data, user = create.call_args[0]
-    assert user == USER and data["place_id"] == 3
-    assert data["name"] == "Hyde Park"
-    assert data["location"] == "Hyde Park, London W2"
-    assert data["start_time"] == "2026-10-17T11:00:00"
-    assert response.location.endswith("/?day=2026-10-17")
-    with client.session_transaction() as session:
-        assert session["added_event"]["id"] == 41
-        assert session["added_event"]["text"] == \
-            "Added Hyde Park, Sat 17 Oct 11:00-13:00."
+    assert data["start_time"] == datetime(2026, 10, 17, 11, 0)
+    assert data["end_time"] == datetime(2026, 10, 17, 13, 30)
+    assert data["place_id"] == "3" and user == USER
 
 
-def test_the_added_notice_shows_once_with_undo_and_change(client):
-    with client.session_transaction() as session:
-        session["added_event"] = {"id": 41, "name": "Hyde Park",
-                                  "text": "Added Hyde Park, Sat 17 Oct 11:00-13:00."}
-    with patch("routes.places_routes.get_preferences", return_value=Preferences()):
-        page = client.get("/settings").data.decode()
-        again = client.get("/settings").data.decode()
-    assert "Added Hyde Park" in page and ">Undo<" in page
-    assert "selected_eventid=41" in page
-    assert "Added Hyde Park" not in again
-
-
-def test_an_unknown_place_or_bad_times_add_nothing(client):
-    with patch("routes.places_routes.get_place_by_id",
-               return_value=ok({"error": "x"}, StatusCode.NOT_FOUND)), \
-         patch("routes.places_routes.create_event") as create:
-        client.post("/suggestions/add", data=SUGGESTION)
-    create.assert_not_called()
-    with patch("routes.places_routes.get_place_by_id", return_value=ok(PLACE_JSON)), \
-         patch("routes.places_routes.create_event") as create:
-        client.post("/suggestions/add", data=dict(SUGGESTION, end="2026-10-17T10:00"))
-    create.assert_not_called()
-
-
-def test_add_never_redirects_off_site(client):
-    with patch("routes.places_routes.get_place_by_id", return_value=ok(PLACE_JSON)), \
-         patch("routes.places_routes.create_event",
-               return_value=ok({"id": 41}, StatusCode.CREATED)):
-        response = client.post("/suggestions/add",
-                               data=dict(SUGGESTION, next="https://evil.example/"))
-    assert "evil.example" not in response.location
-
-
-def test_undo_deletes_the_event_and_names_it(client):
-    with patch("routes.places_routes.delete_event",
-               return_value=ok({"message": "deleted"})) as delete:
-        response = client.post("/suggestions/undo",
-                               data={"eventid": "41", "name": "Hyde Park",
-                                     "next": "/?day=2026-10-17#day-panel"})
-    delete.assert_called_once_with(41, USER)
-    assert response.location.endswith("#day-panel")
-    assert flashes(client) == ["Removed Hyde Park from your calendar."]
+def test_add_event_on_this_day_starts_the_form_there(client):
+    page, _ = form_page(client, "?day=2026-10-18")
+    assert 'required value="2026-10-18"' in page
+    assert 'value="09:00"' in page and 'value="10:00"' in page
 
 
 # ---------- Suggestions on the home page ----------
@@ -234,18 +214,28 @@ def home(client):
         yield client
 
 
-def test_home_shows_todays_pick_and_good_days_ahead(home):
+def test_home_shows_what_today_is_good_for_beside_the_weather(home):
     page = home.get("/").data.decode()
+    assert 'class="top"' in page and 'class="today"' in page
     assert "Today, good for" in page and "Hyde Park" in page
-    assert "Good days ahead" in page and "Sun 18" in page
+    assert "/management/event?place=3&amp;start=2026-10-17T09:00" in page
+    assert "Good days ahead" not in page
     assert "good day for your places" in page            # the mark in the month
+
+
+def test_the_side_goes_when_switched_off(home):
+    plans = plans_with_park()
+    plans.prefs = Preferences(show_today=False)
+    with patch("routes.web_routes.account_plans", return_value=plans):
+        page = home.get("/").data.decode()
+    assert "top--full" in page and "Today, good for" not in page
 
 
 def test_choosing_a_day_opens_its_panel(home):
     page = home.get("/?day=2026-10-18").data.decode()
     assert 'id="day-panel"' in page and "Sunday 18 October" in page
     assert "Add event on this day" in page
-    assert 'name="placeid" value="3"' in page             # the Add button
+    assert "/management/event?place=3&amp;start=2026-10-18" in page  # Add
 
 
 def test_a_day_past_the_forecast_says_so(home):
@@ -256,12 +246,6 @@ def test_a_day_past_the_forecast_says_so(home):
 def test_a_bad_day_is_ignored(home):
     page = home.get("/?day=someday").data.decode()
     assert 'id="day-panel"' not in page
-
-
-def test_add_event_on_this_day_starts_the_form_there(client):
-    with patch("routes.web_routes.get_events", return_value=ok({"events": []})):
-        page = client.get("/management/event?day=2026-10-18").data.decode()
-    assert 'value="2026-10-18T09:00"' in page
 
 
 # ---------- The API ----------
@@ -329,5 +313,20 @@ def test_places_page_gives_the_map_its_pins_safely(client):
     import json
     places = json.loads(data)["places"]
     assert places[0]["fit"] == "great" and places[0]["latitude"] is None
-    assert places[1]["planned_today"] is True
+    assert places[0]["today_note"] is None
+    assert places[1]["today_note"] == "Already planned today"
     assert "leaflet@1.9.4" in page and "integrity=" in page
+
+
+def test_why_a_place_is_not_rated_today():
+    from routes.places_routes import today_note
+    plans = plans_with_park()
+    today = plans.plan_for(NOW.date())
+    plans.busy = {NOW.date(): {3}}
+    assert today_note(PARK, today, plans) == "Already planned today"
+    plans.busy = {}
+    assert today_note(PARK, None, plans) == "No forecast for today"
+    plans.now = datetime(2026, 10, 17, 17, 30)      # weekend hours end at 18
+    assert today_note(PARK, today, plans) == "Your suggestion hours are over for today"
+    plans.now = datetime(2026, 10, 17, 10, 0)
+    assert today_note(PARK, today, plans) == "No forecast left for today's hours"
