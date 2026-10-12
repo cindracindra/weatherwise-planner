@@ -1,10 +1,15 @@
 """Places, suggestion settings, and turning a suggestion into an event."""
 
 from datetime import datetime
+from types import SimpleNamespace
+from urllib.parse import quote_plus
 
 from flask import (
-    Blueprint, flash, redirect, render_template, request, session, url_for,
+    Blueprint, flash, jsonify, redirect, render_template, request, session,
+    url_for,
 )
+
+from api import geocode_api
 
 from database.db_event import create_event, delete_event
 from database.db_place import (
@@ -47,6 +52,45 @@ def added_notice():
 
 # ---------- The places page ----------
 
+def google_maps_urls(place) -> dict:
+    """Links to the place in Google Maps: no API key needed. By the pin
+    if there is one, else by name and address."""
+    if place.latitude is not None and place.longitude is not None:
+        where = f"{place.latitude},{place.longitude}"
+    else:
+        where = ", ".join(x for x in (place.name, place.address) if x)
+    where = quote_plus(where)
+    return {
+        "maps_url": f"https://www.google.com/maps/search/?api=1&query={where}",
+        "directions_url": (
+            f"https://www.google.com/maps/dir/?api=1&destination={where}"),
+    }
+
+
+def map_place(place, today_plan, plans) -> dict:
+    """What the map's pin and card show for a place."""
+    fit = today_plan.fit_for(place.id) if today_plan else None
+    upcoming = plans.next_great(place.id)
+    planned = plans.planned(place.id, plans.now.date())
+    return {
+        "id": place.id,
+        "name": place.name,
+        "category": place.category.capitalize(),
+        "address": place.address,
+        "latitude": place.latitude,
+        "longitude": place.longitude,
+        "fit": fit.fit if fit else None,
+        "fit_label": fit.fit_label if fit else None,
+        "fit_why": fit.summary if fit else None,
+        "planned_today": planned,
+        "next": (f"{upcoming.start:%a} {upcoming.start.day} "
+                 f"{upcoming.start:%b}, {upcoming.start:%H:%M}"
+                 if upcoming else None),
+        "edit_url": url_for("places.places_page", selected_placeid=place.id),
+        **google_maps_urls(place),
+    }
+
+
 @places_bp.route("/places")
 def places_page():
     user_id = current_user_id()
@@ -66,6 +110,10 @@ def places_page():
     return render_template(
         "places.html",
         places=places,
+        map_places=[map_place(p, today_plan, plans) for p in places],
+        selected_links=(
+            google_maps_urls(SimpleNamespace(**selected)) if selected
+            else None),
         selected=selected,
         selected_id=selected_id,
         categories=CATEGORIES,
@@ -73,6 +121,17 @@ def places_page():
         plans=plans,
         today_plan=today_plan,
     )
+
+
+@places_bp.route("/places/search")
+def search_address():
+    """Address search for the place form's map (see api.geocode_api)."""
+    try:
+        results = geocode_api.search(request.args.get("q", ""))
+    except geocode_api.GeocodeError:
+        return jsonify({"error": "Address search isn't reachable right "
+                                 "now. Try again, or click the map."}), 502
+    return jsonify({"results": results})
 
 
 @places_bp.route("/places/load", methods=["POST"])

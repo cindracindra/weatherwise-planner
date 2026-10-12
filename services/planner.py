@@ -34,6 +34,11 @@ class AccountPlans:
     prefs: Preferences
     places: List = field(default_factory=list)
     plans: List[DayPlan] = field(default_factory=list)
+    # {day: place ids with events that day}, for "already planned"
+    busy: Dict[date, Set] = field(default_factory=dict)
+
+    def planned(self, place_id: int, day: date) -> bool:
+        return place_id in self.busy.get(day, set())
 
     @property
     def by_day(self) -> Dict[date, DayPlan]:
@@ -102,6 +107,7 @@ def account_plans(user_id: int, now: Optional[datetime] = None
     except Exception:
         logger.exception("Could not read events for suggestions")
         events = []
+    result.busy = busy_by_day(events)
     result.plans = suggestion_service.plan_days(
-        outlooks, places, prefs, now, busy_by_day(events))
+        outlooks, places, prefs, now, result.busy)
     return result

@@ -283,3 +283,51 @@ def test_places_api_is_scoped_to_the_account(client):
          patch("routes.api_routes.current_user_id", return_value=USER):
         client.get("/api/places")
     get.assert_called_once_with(USER)
+
+
+# ---------- The map ----------
+
+def test_address_search_route(client):
+    with patch("routes.places_routes.geocode_api.search",
+               return_value=[{"name": "Kew", "short": "Kew", "address": "Kew",
+                              "latitude": 51.47, "longitude": -0.29}]) as search:
+        body = client.get("/places/search?q=Kew Gardens").get_json()
+    search.assert_called_once_with("Kew Gardens")
+    assert body["results"][0]["latitude"] == 51.47
+
+
+def test_address_search_failure_is_a_plain_message(client):
+    from api.geocode_api import GeocodeError
+    with patch("routes.places_routes.geocode_api.search",
+               side_effect=GeocodeError("timeout")):
+        response = client.get("/places/search?q=Kew")
+    assert response.status_code == 502
+    assert "isn't reachable" in response.get_json()["error"]
+
+
+def test_google_maps_links_use_the_pin_or_the_address():
+    from routes.places_routes import google_maps_urls
+    pinned = SimpleNamespace(name="Kew", address=None, latitude=51.47, longitude=-0.29)
+    assert google_maps_urls(pinned)["maps_url"] == \
+        "https://www.google.com/maps/search/?api=1&query=51.47%2C-0.29"
+    unpinned = SimpleNamespace(name="Hyde Park", address="London W2",
+                               latitude=None, longitude=None)
+    assert google_maps_urls(unpinned)["directions_url"] == \
+        "https://www.google.com/maps/dir/?api=1&destination=Hyde+Park%2C+London+W2"
+
+
+def test_places_page_gives_the_map_its_pins_safely(client):
+    sneaky = SimpleNamespace(**dict(vars(PARK), id=9, name="</script><b>x",
+                                    latitude=51.5, longitude=-0.1))
+    plans = plans_with_park()
+    plans.busy = {NOW.date(): {9}}
+    with patch("routes.places_routes.list_places", return_value=[PARK, sneaky]), \
+         patch("routes.places_routes.account_plans", return_value=plans):
+        page = client.get("/places").data.decode()
+    data = page.split('id="places-data">')[1].split("</script>")[0]
+    assert "</script><b>" not in data          # escaped inside the JSON
+    import json
+    places = json.loads(data)["places"]
+    assert places[0]["fit"] == "great" and places[0]["latitude"] is None
+    assert places[1]["planned_today"] is True
+    assert "leaflet@1.9.4" in page and "integrity=" in page

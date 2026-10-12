@@ -9,11 +9,31 @@
      ("suits_cloudy", "cloud", "Cloudy"),
      ("suits_rainy", "cloud-rain", "Rainy, indoors")] %}
 
+{% block head %}
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+{% endblock %}
+
 {% block content %}
   <div class="head">
     <h1 class="head__title">Places</h1>
     <p class="head__lede">The places you like and the weather that suits them. WeatherWise matches them against the forecast.</p>
   </div>
+
+  <!-- Map: a pin for each place, marked with how it suits today -->
+  {% set unpinned = places|selectattr("latitude", "none")|list|length %}
+  <section class="map" aria-labelledby="map-title">
+    <h2 id="map-title" class="sr-only">Map of your places</h2>
+    <div class="map__canvas" id="places-map" data-map></div>
+    <p class="map__key">
+      <span class="map__key-label">Today:</span>
+      {% for fit, glyph, label in [("great", "check", "Great"), ("okay", "minus", "Okay"), ("poor", "x", "Not ideal"), ("none", "circle", "No suggestion")] %}
+        <span class="map__key-item"><span class="pin pin--{{ fit }} pin--key">{{ icon(glyph) }}</span>{{ label }}</span>
+      {% endfor %}
+      {% if unpinned %}<span class="map__unpinned">{{ unpinned }} {{ "place has" if unpinned == 1 else "places have" }} no pin yet</span>{% endif %}
+    </p>
+    <noscript><p class="map__note">The map needs JavaScript. Everything else on this page works without it.</p></noscript>
+  </section>
 
   <div class="timetable">
     <!-- The account's places -->
@@ -152,8 +172,25 @@
                     placeholder="Bring a blanket; the café shuts at 17:00">{{ p.notes or '' }}</textarea>
         </div>
 
-        <input type="hidden" name="latitude" value="{{ p.latitude if p.latitude is not none else '' }}" data-lat>
-        <input type="hidden" name="longitude" value="{{ p.longitude if p.longitude is not none else '' }}" data-lng>
+        <fieldset class="field pin-field" data-pin-field>
+          <legend class="field__label">Map pin</legend>
+          <input type="hidden" name="latitude" value="{{ p.latitude if p.latitude is not none else '' }}" data-lat>
+          <input type="hidden" name="longitude" value="{{ p.longitude if p.longitude is not none else '' }}" data-lng>
+          <p class="pin-field__state" data-pin-state aria-live="polite">
+            {%- if p.latitude is not none %}Pinned on the map.{% else %}No pin yet.{% endif -%}
+          </p>
+          <div class="pin-field__search" hidden data-pin-tools>
+            <label for="pin-q" class="sr-only">Search for an address in London</label>
+            <input id="pin-q" type="search" class="input" placeholder="Search London, e.g. Kew Gardens" data-pin-q autocomplete="off">
+            <button type="button" class="btn btn--line btn--small" data-pin-search>{{ icon("magnifying-glass") }}Search</button>
+          </div>
+          <ul class="pin-field__results" data-pin-results></ul>
+          <div class="pin-field__actions" hidden data-pin-tools>
+            <button type="button" class="btn btn--text btn--small" data-pin-pick aria-pressed="false">{{ icon("map-pin") }}Choose on the map</button>
+            <button type="button" class="btn btn--text btn--small" data-pin-clear>Remove pin</button>
+          </div>
+          <p class="field__help">Search uses OpenStreetMap. Places are matched to London's weather wherever the pin is.</p>
+        </fieldset>
 
         <div class="form__actions">
           <button type="submit" class="btn btn--primary">{{ "Save changes" if selected else "Add place" }}</button>
@@ -162,6 +199,20 @@
           {% endif %}
         </div>
       </form>
+
+      {% if selected_links %}
+        <p class="editor__links">
+          <a href="{{ selected_links.maps_url }}" target="_blank" rel="noopener">{{ icon("arrow-square-out") }}Open in Google Maps<span class="sr-only"> (opens in a new tab)</span></a>
+          <a href="{{ selected_links.directions_url }}" target="_blank" rel="noopener">{{ icon("path") }}Directions<span class="sr-only"> (opens in a new tab)</span></a>
+        </p>
+      {% endif %}
     </section>
   </div>
+{% endblock %}
+
+{% block scripts %}
+  <script type="application/json" id="places-data">{{ {"places": map_places, "selected": selected_id}|tojson }}</script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+          integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script src="{{ url_for('static', filename='js/places-map.js') }}"></script>
 {% endblock %}

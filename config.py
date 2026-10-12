@@ -11,6 +11,10 @@ class Config:
         "https://api.met.no/weatherapi/locationforecast/2.0/complete"
     )
     NAGER_DATE_BASE_URL = "https://date.nager.at/api/v3/PublicHolidays"
+    # Address search for places (OpenStreetMap's Nominatim)
+    NOMINATIM_URL = "https://nominatim.openstreetmap.org/search"
+    # Greater London: west, north, east, south
+    LONDON_VIEWBOX = "-0.5104,51.6919,0.3340,51.2868"
 
     # Defaults
     DEFAULT_COUNTRY_CODE = "GB"

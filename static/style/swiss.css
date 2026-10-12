@@ -1815,6 +1815,7 @@ select.input {
 }
 
 .input--area {
+  font-family: inherit;
   min-height: 96px;
   resize: vertical;
   line-height: 1.4;
@@ -1923,6 +1924,248 @@ select.input {
   color: var(--accent-ink);
 }
 
+/* ---------- The places map ---------- */
+
+.map {
+  margin-top: 40px;
+  border-top: 3px solid var(--rule);
+}
+
+.map__canvas {
+  height: 420px;
+  margin-top: 16px;
+  background: var(--surface);
+  /* Above Leaflet's own panes, below the top bar */
+  z-index: 0;
+}
+
+/* OpenStreetMap's colours, quietened to sit on the sand */
+.map__canvas .leaflet-tile-pane {
+  filter: grayscale(1) sepia(0.25) contrast(0.9) brightness(1.04);
+}
+
+.map__canvas--picking,
+.map__canvas--picking .leaflet-interactive {
+  cursor: crosshair;
+}
+
+.map__canvas--picking {
+  box-shadow: 0 0 0 3px var(--accent);
+}
+
+.map__key {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 20px;
+  margin-top: 12px;
+  font-size: var(--fs-s);
+}
+
+.map__key-label {
+  font-weight: 700;
+}
+
+.map__key-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.map__unpinned {
+  margin-left: auto;
+  color: var(--grey);
+}
+
+/* Pins: a square with today's fit as a glyph and a colour */
+.pin {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: 2px solid var(--ink);
+  font-size: 15px;
+  line-height: 1;
+}
+
+.pin--great {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+.pin--okay {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.pin--poor {
+  background: var(--paper);
+  color: var(--ink);
+}
+
+.pin--none {
+  border-color: var(--grey);
+  background: var(--paper);
+  color: var(--grey);
+}
+
+.pin--key {
+  width: 20px;
+  height: 20px;
+  border-width: 1px;
+  font-size: 11px;
+}
+
+.pin--selected {
+  outline: 3px solid var(--ink);
+  outline-offset: 2px;
+}
+
+.pin--draft {
+  border-style: dashed;
+  background: var(--surface);
+  color: var(--ink);
+}
+
+/* Leaflet's popup, squared off to match */
+.leaflet-container {
+  font-family: var(--font);
+}
+
+.leaflet-popup-content-wrapper,
+.leaflet-popup-tip {
+  border-radius: 0;
+  background: var(--paper);
+  color: var(--ink);
+  box-shadow: 0 0 0 2px var(--ink);
+}
+
+.leaflet-popup-content {
+  margin: 14px 16px;
+  font-size: var(--fs-s);
+  line-height: 1.4;
+}
+
+.leaflet-bar,
+.leaflet-bar a {
+  border-radius: 0 !important;
+}
+
+.leaflet-container a.leaflet-popup-close-button {
+  width: 32px;
+  height: 32px;
+  font-size: 20px;
+  line-height: 30px;
+}
+
+.card {
+  display: grid;
+  gap: 4px;
+}
+
+.card__name {
+  font-size: var(--fs-m);
+}
+
+.card__meta,
+.card__why {
+  color: var(--grey);
+}
+
+.card__fit {
+  margin-top: 4px;
+}
+
+.fit--none {
+  color: var(--grey);
+}
+
+.card__links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  margin-top: 6px;
+}
+
+.leaflet-container a.card__link {
+  color: var(--accent-ink);
+  font-weight: 700;
+}
+
+/* The pin controls in the place form */
+.pin-field {
+  border: 0;
+  padding: 0;
+}
+
+.pin-field__state {
+  margin: 6px 0 10px;
+}
+
+.pin-field__search {
+  display: flex;
+  gap: 8px;
+}
+
+.pin-field__search[hidden],
+.pin-field__actions[hidden] {
+  display: none;
+}
+
+.pin-field__results:empty {
+  display: none;
+}
+
+.pin-field__results {
+  margin-top: 8px;
+  border-top: 1px solid var(--rule-soft);
+}
+
+.pin-field__result {
+  display: grid;
+  width: 100%;
+  min-height: 44px;
+  padding: 8px 4px;
+  border: 0;
+  border-bottom: 1px solid var(--rule-soft);
+  background: none;
+  text-align: left;
+  font-size: var(--fs-s);
+  cursor: pointer;
+}
+
+.pin-field__result:hover {
+  background: var(--surface);
+}
+
+.pin-field__result span {
+  color: var(--grey);
+}
+
+.pin-field__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  margin-top: 6px;
+}
+
+.editor__links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  margin-top: 24px;
+}
+
+.editor__links a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  color: var(--accent-ink);
+  font-weight: 700;
+}
+
 /* ---------- Narrower screens ---------- */
 
 @media (max-width: 1023px) {
@@ -1955,6 +2198,14 @@ select.input {
 }
 
 @media (max-width: 639px) {
+  .map__canvas {
+    height: 300px;
+  }
+
+  .map__unpinned {
+    margin-left: 0;
+  }
+
   .pick {
     grid-template-columns: minmax(0, 1fr) auto;
     row-gap: 4px;
