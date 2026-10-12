@@ -32,14 +32,17 @@ MUSEUM = place(id=2, name="British Museum", sunny=False, cloudy=False,
                rainy=True)
 
 
-def outlook(day=SAT, code=0, rain=0, high=20, low=10, wind=10, hours=None):
-    """A day; hours maps hour -> (code, rain chance, temperature)."""
+def outlook(day=SAT, code=0, rain=0, high=20, low=10, wind=10, hours=None,
+            dark_from=None):
+    """A day; hours maps hour -> (code, rain chance, temperature).
+    dark_from marks the hours from then on as after dark."""
     if hours is None:
         hours = {h: (code, rain, high) for h in range(24)}
     return DayOutlook(
         day=day, weather_code=WeatherCode(code=code, icon=None, label=None),
         high=high, low=low, rain_chance=rain, wind=wind,
-        hours=[HourOutlook(hour=h, code=c, rain_chance=r, temperature=t)
+        hours=[HourOutlook(hour=h, code=c, rain_chance=r, temperature=t,
+                           is_day=None if dark_from is None else h < dark_from)
                for h, (c, r, t) in sorted(hours.items())],
     )
 
@@ -63,6 +66,16 @@ def test_classify(code, rain, kind):
 ])
 def test_base_fit(p, kind, fit):
     assert base_fit(p, kind) == fit
+
+
+def test_an_any_weather_place_is_never_what_makes_a_day_good():
+    market = place(id=3, name="Borough Market", rainy=True)
+    for kind in (SUNNY, CLOUDY, RAINY, SEVERE):
+        assert base_fit(market, kind) == OKAY
+    plan = plan_day(outlook(), [market, PARK], Preferences(), NOW)
+    assert [s.place.name for s in plan.picks] == ["Hyde Park"]
+    alone = plan_day(outlook(code=95), [market], Preferences(), NOW)
+    assert [s.fit for s in alone.picks] == [OKAY]
 
 
 def test_confidence_fades_with_distance():
@@ -104,6 +117,21 @@ def test_whole_day_when_no_hours():
     s = judge_day(MUSEUM, outlook(code=63, rain=90, hours={}), 9, 18)
     assert s.fit == GREAT and s.kind == RAINY
     assert s.start == datetime(2026, 10, 17, 9)
+
+
+# ---------- Daylight ----------
+
+def test_outdoors_needs_daylight():
+    s = best_time(PARK, outlook(dark_from=18), 16, 21)
+    assert s.start.hour == 16 and s.fit == GREAT     # before dark
+    evening = best_time(PARK, outlook(dark_from=18), 18, 21)
+    assert evening.fit == POOR and "after dark" in evening.reasons
+    assert evening.kind_label == "Clear"
+
+
+def test_indoors_doesnt_mind_the_dark():
+    s = best_time(MUSEUM, outlook(code=63, rain=90, dark_from=18), 18, 21)
+    assert s.fit == GREAT and not s.reasons
 
 
 # ---------- Temperature and wind ----------
@@ -208,6 +236,12 @@ def test_today_pick_respects_the_switch_and_the_days():
     assert today_pick(plans(), Preferences(show_today=False), NOW) is None
     weekdays = Preferences(days="01234")
     assert today_pick(plans(weekdays), weekdays, NOW) is None
+
+
+def test_good_days_ahead_needs_a_great_fit():
+    prefs = Preferences()
+    only_okay = plan_days([outlook(day=date(2026, 10, 18))], [MUSEUM], prefs, NOW)
+    assert only_okay[0].picks and good_days_ahead(only_okay, prefs, NOW) == []
 
 
 def test_good_days_ahead_skips_today_bad_days_and_other_days():

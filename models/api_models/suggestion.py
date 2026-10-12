@@ -55,6 +55,7 @@ class Suggestion:
     end: datetime
     temperature: Optional[int]   # warmest in the window, or the day's high
     reasons: List[str] = field(default_factory=list)
+    dark: bool = False           # some of the window is after dark
 
     @property
     def fit_label(self) -> str:
@@ -65,9 +66,16 @@ class Suggestion:
         return FIT_ICONS[self.fit]
 
     @property
+    def kind_label(self) -> str:
+        """The weather in words; a clear night is 'Clear', not 'Sunny'."""
+        if self.kind == SUNNY and self.dark:
+            return "Clear"
+        return KIND_LABELS[self.kind]
+
+    @property
     def summary(self) -> str:
         """'Sunny 11:00-13:00, 22°' plus any reason it was marked down."""
-        text = (f"{KIND_LABELS[self.kind]} "
+        text = (f"{self.kind_label} "
                 f"{self.start:%H:%M}-{self.end:%H:%M}")
         if self.temperature is not None:
             text += f", {self.temperature}°"

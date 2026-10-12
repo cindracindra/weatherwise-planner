@@ -9,11 +9,15 @@ fits a kind well (GREAT), acceptably (OKAY) or not (POOR):
     rain likely    GREAT (an indoor pick) POOR
     snow, storms   OKAY if indoors        POOR
 
+A place that ticks all three suits any weather, so no day is special for
+it: it is OKAY every day, put forward only when nothing fits better.
+
 A temperature outside the place's range, or strong wind at an outdoor
-place, lowers the fit one step. For each place the best time for a visit
-of its usual length is searched hour by hour inside the account's window
-(after work on weekdays, most of the day at weekends); without hourly
-forecast the day as a whole is judged.
+place, lowers the fit one step; an outdoor place after dark doesn't fit.
+For each place the best time for a visit of its usual length is searched
+hour by hour inside the account's window (after work on weekdays, most of
+the day at weekends); without hourly forecast the day as a whole is
+judged.
 
 Nothing here touches the database or the web: callers pass in the
 forecast, the places, the preferences and when the account is busy.
@@ -52,8 +56,14 @@ def classify(code: Optional[int], rain_chance: Optional[int]) -> str:
     return CLOUDY
 
 
+def any_weather(place) -> bool:
+    return place.suits_sunny and place.suits_cloudy and place.suits_rainy
+
+
 def base_fit(place, kind: str) -> str:
     """How well a place suits a kind of weather, before temperature."""
+    if any_weather(place):
+        return OKAY
     if kind == SUNNY:
         return GREAT if place.suits_sunny else OKAY
     if kind == CLOUDY:
@@ -129,6 +139,11 @@ def best_time(place, outlook: DayOutlook, start_hour: int, end_hour: int
         low = min(temps) if temps else None
         high = max(temps) if temps else None
         fit, reasons = _adjust(place, fit, low, high, outlook.wind)
+        dark = any(h.is_day is False for h in block)
+        if dark and not place.suits_rainy:
+            # Outdoors needs daylight
+            fit = POOR
+            reasons.append("after dark")
         wettest = max((h.rain_chance or 0) for h in block)
         # Worst kind in the block describes it
         kind = max(kinds, key=[SUNNY, CLOUDY, RAINY, SEVERE].index)
@@ -141,7 +156,7 @@ def best_time(place, outlook: DayOutlook, start_hour: int, end_hour: int
                 start=start,
                 end=start + timedelta(minutes=place.visit_minutes),
                 temperature=round(high) if high is not None else None,
-                reasons=reasons,
+                reasons=reasons, dark=dark,
             ))
     return best[1] if best else None
 
@@ -235,9 +250,11 @@ def today_pick(plans: List[DayPlan], prefs: Preferences, now: datetime,
 def good_days_ahead(plans: List[DayPlan], prefs: Preferences, now: datetime,
                     days: int = 7) -> List[DayPlan]:
     """The coming days (after today) worth a look: in the account's days,
-    within `days`, with at least one place to put forward."""
+    within `days`, where at least one place fits great (the same days
+    the month marks)."""
     last = now.date() + timedelta(days=days)
     return [
         p for p in plans
-        if now.date() < p.day <= last and prefs.includes(p.day) and p.picks
+        if now.date() < p.day <= last and prefs.includes(p.day)
+        and p.has_great
     ]

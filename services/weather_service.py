@@ -134,6 +134,7 @@ def get_day_outlooks(today: Optional[date] = None) -> List[DayOutlook]:
             temperature=h.get("temperature"),
             code=h.get("code"),
             rain_chance=h.get("rain_chance"),
+            is_day=h.get("is_day"),
         ))
 
     outlooks = []

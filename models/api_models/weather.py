@@ -66,6 +66,7 @@ class HourOutlook:
     temperature: Optional[float]
     code: Optional[int]
     rain_chance: Optional[int]
+    is_day: Optional[bool] = None   # None when the source doesn't say
 
 
 @dataclass

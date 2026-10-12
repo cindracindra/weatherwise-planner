@@ -58,7 +58,7 @@ def test_open_meteo_is_one_request_with_everything():
     assert bundle["current"] == {"temperature": 14.2, "code": 61}
     assert bundle["hourly"][1] == {"time": datetime(2026, 10, 9, 1),
                                    "temperature": 11.5, "code": 61,
-                                   "rain_chance": 70}
+                                   "rain_chance": 70, "is_day": None}
     assert bundle["daily"] == {"2026-10-09": 61}
 
 
@@ -157,3 +157,20 @@ def test_met_norway_days_from_its_points_with_wind_in_kmh():
         bundle = fetch_met_norway()
     assert bundle["days"]["2026-10-09"] == {
         "high": 19.4, "low": 16.9, "rain_chance": None, "wind": 27.0}
+
+
+# ---------- Daylight ----------
+
+def test_open_meteo_hours_say_whether_it_is_day():
+    data = dict(OPEN_METEO, hourly=dict(OPEN_METEO["hourly"], is_day=[0, 1]))
+    with patch("api.weather_api.requests.get", return_value=response(data)) as get:
+        bundle = fetch_open_meteo()
+    assert "is_day" in get.call_args.kwargs["params"]["hourly"]
+    assert [h["is_day"] for h in bundle["hourly"]] == [False, True]
+
+
+def test_met_norway_reads_day_and_night_from_its_symbols():
+    with patch("api.weather_api.requests.get", return_value=response(MET)):
+        bundle = fetch_met_norway()
+    # lightrainshowers_day, then cloudy (which looks the same by night)
+    assert [h["is_day"] for h in bundle["hourly"]] == [True, None]

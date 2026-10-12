@@ -14,7 +14,8 @@ Both sources return a "forecast bundle":
         "source": "open-meteo" | "met-norway",
         "current": {"temperature": 14.2, "code": 61},
         "hourly": [{"time": datetime, "temperature": 14.2, "code": 61,
-                    "rain_chance": 80}, ...],      # London time, naive
+                    "rain_chance": 80, "is_day": True}, ...],
+                    # London time, naive; is_day None when unknown
         "daily": {"2026-10-09": 61, ...},
         "days": {"2026-10-09": {"high": 17.2, "low": 11.0,
                                 "rain_chance": 80, "wind": 24.1}, ...},
@@ -69,7 +70,9 @@ def fetch_open_meteo() -> Dict[str, Any]:
         "latitude": Config.LONDON_LAT,
         "longitude": Config.LONDON_LON,
         "current": "temperature_2m,weather_code",
-        "hourly": "temperature_2m,weather_code,precipitation_probability",
+        "hourly": (
+            "temperature_2m,weather_code,precipitation_probability,is_day"
+        ),
         "daily": (
             "weather_code,temperature_2m_max,temperature_2m_min,"
             "precipitation_probability_max,wind_speed_10m_max"
@@ -80,6 +83,7 @@ def fetch_open_meteo() -> Dict[str, Any]:
     current = data.get("current", {})
     hourly = data.get("hourly", {})
     rain = hourly.get("precipitation_probability") or []
+    day_light = hourly.get("is_day") or []
     daily = data.get("daily", {})
     return {
         "source": "open-meteo",
@@ -93,6 +97,11 @@ def fetch_open_meteo() -> Dict[str, Any]:
                 "temperature": temp,
                 "code": code,
                 "rain_chance": rain[i] if i < len(rain) else None,
+                "is_day": (
+                    bool(day_light[i])
+                    if i < len(day_light) and day_light[i] is not None
+                    else None
+                ),
             }
             for i, (time, temp, code) in enumerate(zip(
                 hourly.get("time", []),
@@ -163,6 +172,15 @@ def _symbol(point: Dict[str, Any], *periods: str) -> Optional[str]:
     return None
 
 
+def _daylight(symbol: Optional[str]) -> Optional[bool]:
+    """MET Norway marks symbols that look different by night: 'fair_day',
+    'fair_night'; polar twilight counts as dark. Others (cloudy, rain)
+    don't say."""
+    if not symbol or "_" not in symbol:
+        return None
+    return symbol.endswith("_day")
+
+
 def fetch_met_norway() -> Dict[str, Any]:
     """The same forecast from MET Norway (api.met.no), converted to
     Open-Meteo's shape and WMO codes, in London time."""
@@ -185,6 +203,7 @@ def fetch_met_norway() -> Dict[str, Any]:
                 "air_temperature"),
             "code": met_symbol_to_wmo(_symbol(p, "next_1_hours")),
             "rain_chance": None,
+            "is_day": _daylight(_symbol(p, "next_1_hours")),
         }
         for p in points if "next_1_hours" in p["data"]
     ]
