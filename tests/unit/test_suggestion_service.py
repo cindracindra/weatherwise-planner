@@ -122,11 +122,21 @@ def test_whole_day_when_no_hours():
 # ---------- Daylight ----------
 
 def test_outdoors_needs_daylight():
-    s = best_time(PARK, outlook(dark_from=18), 16, 21)
-    assert s.start.hour == 16 and s.fit == GREAT     # before dark
+    s = best_time(PARK, outlook(dark_from=19), 16, 21)
+    assert s.start.hour == 16 and s.fit == GREAT     # 16:00-18:00, before dark
     evening = best_time(PARK, outlook(dark_from=18), 18, 21)
     assert evening.fit == POOR and "after dark" in evening.reasons
     assert evening.kind_label == "Clear"
+
+
+def test_a_visit_must_end_before_dark_too():
+    # Light at 18:00, dark by 19:00 (sunset in between): an hour's visit
+    # at 18:00 would end in the dark, as on 13 October at Primrose Hill
+    hill = place(id=4, name="Primrose Hill", cloudy=False, minutes=60)
+    s = best_time(hill, outlook(dark_from=19), 18, 21)
+    assert s.fit == POOR and "after dark" in s.reasons
+    s = best_time(hill, outlook(dark_from=19), 17, 21)
+    assert s.fit == GREAT and (s.start.hour, s.end.hour) == (17, 18)
 
 
 def test_indoors_doesnt_mind_the_dark():
@@ -237,3 +247,18 @@ def test_today_pick_respects_the_switch_and_the_days():
     assert today_pick(plans(), Preferences(show_today=False), NOW) is None
     weekdays = Preferences(days="01234")
     assert today_pick(plans(weekdays), weekdays, NOW) is None
+
+
+def test_a_plan_describes_the_weather_in_your_hours():
+    # Wet at midday, clear in the weekday evening window, dark from 19:00
+    hours = {h: (0, 0, 18) for h in range(24)}
+    for h in (11, 12, 13):
+        hours[h] = (61, 70, 17)
+    plan = plan_day(outlook(day=MON, code=61, rain=70, hours=hours,
+                            dark_from=19), [PARK], Preferences(), NOW)
+    assert plan.kind == RAINY                       # the day as a whole
+    assert (plan.window_start, plan.window_end) == (18, 21)
+    assert plan.window_kind == SUNNY and plan.dark_from == 19
+    assert plan.window_label == "Sunny"
+    dark = plan_day(outlook(day=MON, dark_from=17), [PARK], Preferences(), NOW)
+    assert dark.window_label == "Clear"             # dark for all of it

@@ -1596,6 +1596,12 @@ a.date:focus-visible {
   display: grid;
 }
 
+.panel__window {
+  margin-top: 10px;
+  padding-left: 12px;
+  border-left: 3px solid var(--accent);
+}
+
 .panel__sure,
 .panel__note {
   color: var(--grey);
