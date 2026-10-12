@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+{% from "_macros.html" import icon, fit_badge %}
+{% set active = "places" %}
+
+{% block title %}Places | {% endblock %}
+
+{% set weather_marks = [
+     ("suits_sunny", "sun", "Sunny"),
+     ("suits_cloudy", "cloud", "Cloudy"),
+     ("suits_rainy", "cloud-rain", "Rainy, indoors")] %}
+
+{% block content %}
+  <div class="head">
+    <h1 class="head__title">Places</h1>
+    <p class="head__lede">The places you like and the weather that suits them. WeatherWise matches them against the forecast.</p>
+  </div>
+
+  <div class="timetable">
+    <!-- The account's places -->
+    <section class="agenda" aria-label="Your places">
+      {% if not places %}
+        <p class="agenda__empty">
+          <strong>No places yet</strong>
+          <span>Add somewhere you like to go, and say which weather suits it.</span>
+        </p>
+      {% else %}
+        <ul class="agenda__rows places">
+          {% for place in places %}
+            {% set selected = place.id == selected_id %}
+            {% set today_fit = today_plan.fit_for(place.id) if today_plan else none %}
+            {% set next = plans.next_great(place.id) %}
+            <li class="row row--place {% if selected %}row--selected{% endif %}">
+              <form action="{{ url_for('places.load_place') }}" method="post" class="row__form">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="placeid" value="{{ place.id }}">
+                <button type="submit" class="row__open place" {% if selected %}aria-current="true"{% endif %}>
+                  <span class="place__main">
+                    <span class="row__name">{{ place.name }}</span>
+                    <span class="place__cat">{{ place.category|capitalize }}{% if place.address %}, {{ place.address }}{% endif %}</span>
+                  </span>
+                  <span class="place__suits">
+                    <span class="sr-only">Suits: </span>
+                    {% for key, glyph, label in weather_marks if place[key] %}
+                      <span class="suit">{{ icon(glyph, weight="fill") }}<span class="suit__label">{{ label }}</span></span>
+                    {% endfor %}
+                    {% if place.temp_min is not none or place.temp_max is not none %}
+                      <span class="suit num">{{ icon("thermometer") }}<span class="suit__label">
+                        {%- if place.temp_min is not none and place.temp_max is not none %}{{ place.temp_min }}° to {{ place.temp_max }}°
+                        {%- elif place.temp_min is not none %}{{ place.temp_min }}° and up
+                        {%- else %}up to {{ place.temp_max }}°{% endif -%}
+                      </span></span>
+                    {% endif %}
+                  </span>
+                  <span class="place__when">
+                    {% if today_fit %}<span class="place__today">Today {{ fit_badge(today_fit) }}</span>{% endif %}
+                    <span class="place__next num">
+                      {% if place.suits_sunny and place.suits_cloudy and place.suits_rainy %}Good in any weather
+                      {% elif next %}Next great: {{ next.start.strftime('%a') }} {{ next.start.day }} {{ next.start.strftime('%b') }}, {{ next.start.strftime('%H:%M') }}
+                      {% elif plans.plans %}No great day in the forecast yet
+                      {% endif %}
+                    </span>
+                  </span>
+                </button>
+              </form>
+
+              <form action="{{ url_for('places.delete_place_form') }}" method="post" class="row__delete"
+                    data-confirm="Delete &quot;{{ place.name }}&quot;? Events you made from it are kept.">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="placeid" value="{{ place.id }}">
+                <button type="submit" class="row__bin" title="Delete {{ place.name }}">
+                  {{ icon("trash") }}<span class="sr-only">Delete {{ place.name }}</span>
+                </button>
+              </form>
+            </li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+    </section>
+
+    <!-- Form -->
+    <section class="editor" aria-labelledby="form-title">
+      <h2 id="form-title" class="editor__title">{{ "Change place" if selected else "New place" }}</h2>
+      {% set p = selected or {} %}
+
+      <form action="{{ url_for('places.update_place_form') if selected else url_for('places.create_place_form') }}"
+            method="post" class="form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="weather_form" value="1">
+        {% if selected %}<input type="hidden" name="placeid" value="{{ selected.id }}">{% endif %}
+
+        <div class="field">
+          <label for="name" class="field__label">Name</label>
+          <input id="name" type="text" name="name" class="input" maxlength="60" required
+                 value="{{ p.name or '' }}" placeholder="Hyde Park">
+        </div>
+
+        <div class="field">
+          <label for="category" class="field__label">Kind of place</label>
+          <select id="category" name="category" class="input" required>
+            {% for c in categories %}
+              <option value="{{ c }}" {% if p.category == c %}selected{% endif %}>{{ c|capitalize }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="address" class="field__label">Address</label>
+          <input id="address" type="text" name="address" class="input" maxlength="200"
+                 value="{{ p.address or '' }}" placeholder="Hyde Park, London W2">
+        </div>
+
+        <fieldset class="field choices">
+          <legend class="field__label">Good in</legend>
+          {% for key, glyph, label in weather_marks %}
+            <label class="choice">
+              <input type="checkbox" name="{{ key }}" value="on"
+                     {% if (p[key] if selected else key != "suits_rainy") %}checked{% endif %}>
+              {{ icon(glyph, weight="fill") }}<span>{{ label }}</span>
+            </label>
+          {% endfor %}
+          <p class="field__help">Tick Rainy for places that are indoors or under cover.</p>
+        </fieldset>
+
+        <div class="form__pair">
+          <div class="field">
+            <label for="temp_min" class="field__label">Not below, °C</label>
+            <input id="temp_min" type="number" name="temp_min" class="input num" min="-30" max="50" step="1"
+                   value="{{ p.temp_min if p.temp_min is not none else '' }}" placeholder="Any">
+          </div>
+          <div class="field">
+            <label for="temp_max" class="field__label">Not above, °C</label>
+            <input id="temp_max" type="number" name="temp_max" class="input num" min="-30" max="50" step="1"
+                   value="{{ p.temp_max if p.temp_max is not none else '' }}" placeholder="Any">
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="visit_minutes" class="field__label">A visit usually takes</label>
+          <select id="visit_minutes" name="visit_minutes" class="input">
+            {% set current = p.visit_minutes or 120 %}
+            {% for m in visit_choices %}
+              <option value="{{ m }}" {% if m == current %}selected{% endif %}>
+                {%- if m < 60 %}{{ m }} minutes{% elif m % 60 %}{{ m // 60 }} hours {{ m % 60 }} minutes{% elif m == 60 %}1 hour{% else %}{{ m // 60 }} hours{% endif -%}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="notes" class="field__label">Notes</label>
+          <textarea id="notes" name="notes" class="input input--area" maxlength="500" rows="3"
+                    placeholder="Bring a blanket; the café shuts at 17:00">{{ p.notes or '' }}</textarea>
+        </div>
+
+        <input type="hidden" name="latitude" value="{{ p.latitude if p.latitude is not none else '' }}" data-lat>
+        <input type="hidden" name="longitude" value="{{ p.longitude if p.longitude is not none else '' }}" data-lng>
+
+        <div class="form__actions">
+          <button type="submit" class="btn btn--primary">{{ "Save changes" if selected else "Add place" }}</button>
+          {% if selected %}
+            <a href="{{ url_for('places.places_page') }}" class="btn btn--text">Cancel</a>
+          {% endif %}
+        </div>
+      </form>
+    </section>
+  </div>
+{% endblock %}

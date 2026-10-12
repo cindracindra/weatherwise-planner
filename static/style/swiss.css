@@ -1436,3 +1436,551 @@ input {
     transition: background-color 120ms linear, color 120ms linear, border-color 120ms linear;
   }
 }
+
+/* ==========================================================================
+   Places and suggestions
+   A fit is always an icon and a word as well as a colour.
+   ========================================================================== */
+
+.btn--small {
+  min-height: 44px;
+  padding: 0 14px;
+  font-size: var(--fs-s);
+}
+
+.btn--small .icon {
+  font-size: 15px;
+}
+
+/* ---------- Fit badges ---------- */
+
+.fit {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: var(--fs-s);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.fit .icon {
+  font-size: 17px;
+}
+
+.fit--great {
+  color: var(--accent-ink);
+}
+
+.fit--okay {
+  color: var(--ink);
+}
+
+.fit--poor {
+  color: var(--grey);
+}
+
+/* ---------- A list of suggestions ---------- */
+
+.picks {
+  display: grid;
+}
+
+.pick {
+  display: grid;
+  grid-template-columns: 6.5rem minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: 16px;
+  padding: 10px 0;
+  border-top: 1px solid var(--rule-soft);
+}
+
+.pick__body {
+  display: grid;
+  min-width: 0;
+}
+
+.pick__name {
+  font-weight: 700;
+}
+
+.pick__why {
+  color: var(--grey);
+  font-size: var(--fs-s);
+}
+
+/* ---------- Today's strip ---------- */
+
+.strip {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 4fr) minmax(0, 8fr);
+  column-gap: var(--gap);
+  margin-top: 24px;
+  padding: 14px 56px 6px 0;
+  border-top: 3px solid var(--accent);
+}
+
+.strip[hidden] {
+  display: none;
+}
+
+.strip__title {
+  padding-top: 10px;
+  font-size: var(--fs-l);
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+}
+
+.picks--strip .pick:first-child {
+  border-top: 0;
+}
+
+.strip__close {
+  position: absolute;
+  top: 10px;
+  right: 0;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  background: none;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+.strip__close:hover {
+  color: var(--accent-ink);
+}
+
+/* ---------- Good days ahead ---------- */
+
+.ahead {
+  margin-top: 64px;
+  border-top: 3px solid var(--rule);
+}
+
+.ahead__title {
+  padding-top: 10px;
+  font-size: var(--fs-xl);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.ahead__days {
+  margin-top: 16px;
+}
+
+.ahead__day {
+  display: grid;
+  grid-template-columns: 5rem minmax(0, 3fr) minmax(0, 5fr) 6rem;
+  align-items: center;
+  column-gap: var(--gap);
+  min-height: 52px;
+  padding: 8px 8px 8px 0;
+  border-top: 1px solid var(--rule-soft);
+  color: inherit;
+  text-decoration: none;
+}
+
+.ahead__days li:last-child .ahead__day {
+  border-bottom: 1px solid var(--rule-soft);
+}
+
+.ahead__day:hover {
+  background: var(--surface);
+}
+
+.ahead__day:hover .ahead__places {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.ahead__date {
+  font-size: var(--fs-l);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.ahead__weather {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ahead__weather .icon {
+  font-size: 20px;
+}
+
+.ahead__places {
+  font-weight: 500;
+}
+
+.ahead__sure {
+  color: var(--grey);
+  font-size: var(--fs-s);
+  text-align: right;
+}
+
+.ahead__note {
+  max-width: 60ch;
+  margin-top: 12px;
+}
+
+.ahead__note a,
+.panel__note a {
+  color: var(--accent-ink);
+  font-weight: 700;
+}
+
+/* ---------- Month: days are links, good days marked ---------- */
+
+a.date {
+  color: inherit;
+  text-decoration: none;
+}
+
+a.date:hover {
+  background: var(--surface);
+}
+
+a.date:focus-visible {
+  outline-offset: -3px;
+}
+
+.date--chosen {
+  background: var(--surface);
+  box-shadow: inset 0 -4px 0 var(--ink);
+}
+
+.date__good {
+  margin-left: auto;
+  color: var(--accent-ink);
+  font-size: 18px;
+  line-height: 1;
+}
+
+.date__good + .date__glyph {
+  margin-left: 0;
+}
+
+.cal__legend {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  color: var(--grey);
+  font-size: var(--fs-s);
+}
+
+.cal__legend .icon {
+  color: var(--accent-ink);
+  font-size: 16px;
+}
+
+/* ---------- The day panel ---------- */
+
+.panel {
+  margin: 0 0 8px;
+  padding: 16px 0 24px;
+  border-top: 3px solid var(--ink);
+  border-bottom: 1px solid var(--rule);
+  background: var(--surface);
+  scroll-margin-top: 16px;
+}
+
+.panel:focus {
+  outline: none;
+}
+
+.panel__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 16px;
+}
+
+.panel__title {
+  font-size: var(--fs-xl);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.panel__close {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  color: inherit;
+  font-weight: 500;
+}
+
+.panel__close:hover {
+  color: var(--accent-ink);
+}
+
+.panel__cols {
+  display: grid;
+  grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+  column-gap: var(--gap);
+  padding: 0 16px;
+}
+
+.panel__label {
+  margin-top: 20px;
+  margin-bottom: 6px;
+  font-size: var(--fs-s);
+  font-weight: 700;
+}
+
+.panel__weather {
+  display: flex;
+  gap: 12px;
+}
+
+.panel__weather > .icon {
+  font-size: 32px;
+}
+
+.panel__weather > span {
+  display: grid;
+}
+
+.panel__sure,
+.panel__note {
+  color: var(--grey);
+}
+
+.panel__events {
+  margin-bottom: 14px;
+}
+
+.panel__events li {
+  padding: 4px 0;
+}
+
+.panel__events .num {
+  margin-right: 8px;
+  font-weight: 500;
+}
+
+/* ---------- Places ---------- */
+
+.row__open.place {
+  grid-template-columns: minmax(0, 5fr) minmax(0, 4fr) minmax(0, 4fr);
+  align-items: start;
+}
+
+.place__main,
+.place__when {
+  display: grid;
+  gap: 2px;
+}
+
+.place__cat,
+.place__next {
+  color: var(--grey);
+  font-size: var(--fs-s);
+}
+
+.place__suits {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+}
+
+.suit {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--fs-s);
+}
+
+.place__today {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--fs-s);
+}
+
+select.input {
+  padding-right: 36px;
+  background-image: linear-gradient(45deg, transparent 50%, var(--ink) 50%),
+    linear-gradient(135deg, var(--ink) 50%, transparent 50%);
+  background-position: calc(100% - 18px) 50%, calc(100% - 12px) 50%;
+  background-size: 6px 6px;
+  background-repeat: no-repeat;
+  background-color: var(--surface);
+}
+
+.input--area {
+  min-height: 96px;
+  resize: vertical;
+  line-height: 1.4;
+}
+
+.field__help {
+  margin-top: 6px;
+  color: var(--grey);
+  font-size: var(--fs-s);
+}
+
+.choices {
+  border: 0;
+  padding: 0;
+}
+
+.choices .field__label {
+  margin-bottom: 6px;
+}
+
+.choice {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  cursor: pointer;
+}
+
+.choice input {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--ink);
+}
+
+.choice .icon {
+  font-size: 18px;
+}
+
+/* ---------- Settings ---------- */
+
+.settings {
+  max-width: 720px;
+}
+
+.settings__group {
+  border: 0;
+  border-top: 3px solid var(--rule);
+  padding: 10px 0 0;
+}
+
+/* A legend normally sits in its fieldset's border; floated, it sits under
+   the rule like every other section title */
+.settings__title {
+  float: left;
+  width: 100%;
+  padding-top: 10px;
+  margin-bottom: 8px;
+  font-size: var(--fs-l);
+  font-weight: 700;
+}
+
+.settings__title + * {
+  clear: both;
+}
+
+.settings__days {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 20px;
+  padding-left: 30px;
+}
+
+.settings__days[hidden] {
+  display: none;
+}
+
+.settings__windows {
+  display: grid;
+  gap: 20px;
+  margin-top: 12px;
+}
+
+/* ---------- The added notice ---------- */
+
+.flash__actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.flash__action {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 10px;
+  border: 0;
+  background: none;
+  color: inherit;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  cursor: pointer;
+}
+
+.flash__action:hover {
+  color: var(--accent-ink);
+}
+
+/* ---------- Narrower screens ---------- */
+
+@media (max-width: 1023px) {
+  .bar__name {
+    display: none;
+  }
+
+  .bar__account .bar__link {
+    white-space: nowrap;
+  }
+
+  .strip {
+    grid-template-columns: 1fr;
+  }
+
+  .ahead__day {
+    grid-template-columns: 4.5rem minmax(0, 1fr) 5.5rem;
+  }
+
+  .ahead__places {
+    grid-column: 2 / -1;
+    grid-row: 2;
+    color: var(--grey);
+  }
+
+  .row__open.place {
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: 6px;
+  }
+}
+
+@media (max-width: 639px) {
+  .pick {
+    grid-template-columns: minmax(0, 1fr) auto;
+    row-gap: 4px;
+  }
+
+  .pick .fit {
+    grid-column: 1 / -1;
+  }
+
+  .panel__cols {
+    grid-template-columns: 1fr;
+  }
+
+  .ahead__sure {
+    display: none;
+  }
+
+  .ahead__day {
+    grid-template-columns: 4rem minmax(0, 1fr);
+  }
+
+  .date__good {
+    font-size: 14px;
+  }
+
+  .bar__account .bar__link:not(.bar__out) {
+    padding-inline: 6px;
+  }
+}

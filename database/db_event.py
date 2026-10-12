@@ -264,3 +264,21 @@ def delete_event(eventid: Any, user_id: int) -> Tuple[Response, int]:
         )
     except Exception:
         return _server_error()
+
+
+def events_between(user_id: int, start: datetime, end: datetime
+                   ) -> list[Dict[str, Any]]:
+    """The account's events starting in [start, end), in order, with
+    datetimes (not text). Raises on a database failure; callers that
+    only add extras to a page handle it."""
+    stmt = (
+        select(Event)
+        .where(Event.user_id == user_id,
+               Event.start_time >= start, Event.start_time < end)
+        .order_by(Event.start_time)
+    )
+    with Session(engine) as session:
+        return [
+            _serialize_event(event, iso_format=False)
+            for event in session.execute(stmt).scalars().all()
+        ]

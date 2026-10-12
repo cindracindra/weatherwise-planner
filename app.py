@@ -17,6 +17,7 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 
 # Import blueprints
 from routes.auth_routes import auth_bp
+from routes.places_routes import places_bp
 from routes.web_routes import web_bp
 from routes.api_routes import api_bp
 from utils.auth import (
@@ -98,6 +99,7 @@ def create_app(config_name="default"):
     # Register blueprints
     app.register_blueprint(auth_bp)
     app.register_blueprint(web_bp)
+    app.register_blueprint(places_bp)
     app.register_blueprint(api_bp)
 
     # Every page and API call needs a signed-in user (sign-in pages and

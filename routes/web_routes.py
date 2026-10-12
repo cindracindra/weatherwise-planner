@@ -1,8 +1,11 @@
 """Web routes blueprint for HTML pages and form handling."""
 
+from datetime import date, datetime, timedelta
+
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 
 from database.db_event import (
+    events_between,
     get_events,
     get_event_by_id,
     create_event,
@@ -11,6 +14,7 @@ from database.db_event import (
 )
 from services.calendar_service import get_full_calendar
 from services.datetime_service import get_today_detail
+from services.planner import account_plans
 from services.weather_service import get_hourly_forecast_today
 from utils.current_user import current_user_id
 from utils.datafeed import (
@@ -53,9 +57,38 @@ def _form_with_times():
 # ========== Routes ==========
 
 
+def _chosen_day(value):
+    """The ?day=YYYY-MM-DD the day panel is open for, if valid."""
+    try:
+        return date.fromisoformat(value) if value else None
+    except ValueError:
+        return None
+
+
+def _day_panel(user_id, day, plans):
+    """What the day panel shows: the day's events, and its plan if the
+    forecast reaches it."""
+    start = datetime.combine(day, datetime.min.time())
+    try:
+        events = events_between(user_id, start, start + timedelta(days=1))
+    except Exception:
+        events = []
+    today = plans.now.date()
+    return {
+        "day": day,
+        "events": events,
+        "plan": plans.plan_for(day),
+        "past": day < today,
+        "beyond": day > today and plans.plan_for(day) is None,
+        "includes": plans.prefs.includes(day),
+    }
+
+
 @web_bp.route("/")
 def homepage():
-    """Homepage with today's weather and the month's calendar."""
+    """Homepage with today's weather and the month's calendar, plus the
+    suggestions: today's at the top, the good days ahead, marks on good
+    days in the month, and the panel for a chosen day."""
     user_id = current_user_id()
     today = get_today_detail()
     calendar_matrix = get_full_calendar(today["year"], today["month"])
@@ -64,6 +97,13 @@ def homepage():
 
     response, _ = get_events(user_id, today["year"], today["month"])
     monthly_event_data = _events_or_flash(response)
+
+    plans = account_plans(user_id)
+    chosen = _chosen_day(request.args.get("day"))
+    great_days = {
+        d.day for d in plans.great_days
+        if (d.year, d.month) == (today["year"], today["month"])
+    }
 
     return render_template(
         "index.html",
@@ -74,6 +114,9 @@ def homepage():
             monthly_event_data, today["day"]
         ),
         hourly_forecast=hourly_forecast,
+        plans=plans,
+        great_days=great_days,
+        panel=_day_panel(user_id, chosen, plans) if chosen else None,
     )
 
 
@@ -109,11 +152,16 @@ def web_management():
             "error",
         )
 
+    # "Add event on this day" from the day panel starts the form there
+    chosen = _chosen_day(request.args.get("day"))
+    prefill_start = f"{chosen.isoformat()}T09:00" if chosen else ""
+
     return render_template(
         "management.html",
         all_event=all_event,
         selected_event=selected_event,
         selected_eventid=selected_eventid,
+        prefill_start=prefill_start,
     )
 
 

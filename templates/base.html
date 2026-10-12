@@ -28,7 +28,8 @@
           <nav class="bar__nav" aria-label="Main">
             {% for key, label, endpoint in [
                  ("calendar", "Calendar", "web.homepage"),
-                 ("events", "Events", "web.web_management")] %}
+                 ("events", "Events", "web.web_management"),
+                 ("places", "Places", "places.places_page")] %}
               <a href="{{ url_for(endpoint) }}" class="bar__link"
                  {% if active == key %}aria-current="page"{% endif %}>{{ label }}</a>
             {% endfor %}
@@ -36,6 +37,8 @@
 
           <div class="bar__account">
             <span class="bar__name">{{ current_user.name }}</span>
+            <a href="{{ url_for('places.settings_page') }}" class="bar__link"
+               {% if active == "settings" %}aria-current="page"{% endif %}>Settings</a>
             <form action="{{ url_for('auth.logout') }}" method="post">
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
               <button type="submit" class="bar__link bar__out">Sign out</button>
@@ -66,6 +69,23 @@
           </div>
         {%- endfor -%}
       {%- endwith -%}
+
+      {#- After adding a suggestion: what was added, with Undo and Change -#}
+      {% if added_notice %}
+        <div class="flash flash--success flash--added">
+          <span class="flash__text">{{ added_notice.text }}</span>
+          <span class="flash__actions">
+            <form action="{{ url_for('places.undo_suggestion') }}" method="post">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <input type="hidden" name="eventid" value="{{ added_notice.id }}">
+              <input type="hidden" name="name" value="{{ added_notice.name }}">
+              <input type="hidden" name="next" value="{{ request.full_path.rstrip('?') }}{% if request.args.get('day') %}#day-panel{% endif %}">
+              <button type="submit" class="flash__action">Undo</button>
+            </form>
+            <a href="{{ url_for('web.web_management', selected_eventid=added_notice.id) }}" class="flash__action">Change</a>
+          </span>
+        </div>
+      {% endif %}
     </div>
 
     <main id="main" class="wrap page">

@@ -75,7 +75,7 @@
           <div class="field">
             <label for="start_time" class="field__label">Starts</label>
             <input id="start_time" type="datetime-local" name="start_time" class="input num" required
-                   value="{{ selected_event.start_time if selected_event else '' }}">
+                   value="{{ selected_event.start_time if selected_event else prefill_start }}">
           </div>
           <div class="field">
             <label for="end_time" class="field__label">Ends, same day</label>

@@ -31,3 +31,29 @@
   {%- else -%}rain
   {%- endif -%}
 {%- endmacro %}
+
+{#- How well a place suits the weather: an icon and a word as well as the
+    colour, so it never depends on colour alone -#}
+{% macro fit_badge(s) -%}
+  <span class="fit fit--{{ s.fit }}">{{ icon(s.fit_icon) }}<span class="fit__label">{{ s.fit_label }}</span></span>
+{%- endmacro %}
+
+{#- One suggestion: the place, when and why, and a one-click Add.
+    next is the page to come back to afterwards. -#}
+{% macro suggestion_row(s, next, show_day=false) -%}
+  <li class="pick">
+    {{ fit_badge(s) }}
+    <span class="pick__body">
+      <span class="pick__name">{{ s.place.name }}</span>
+      <span class="pick__why num">{% if show_day %}{{ s.start.strftime('%a') }} {{ s.start.day }} {{ s.start.strftime('%b') }}, {% endif %}{{ s.summary }}</span>
+    </span>
+    <form action="{{ url_for('places.add_suggestion') }}" method="post" class="pick__add">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="placeid" value="{{ s.place.id }}">
+      <input type="hidden" name="start" value="{{ s.start.isoformat() }}">
+      <input type="hidden" name="end" value="{{ s.end.isoformat() }}">
+      <input type="hidden" name="next" value="{{ next }}">
+      <button type="submit" class="btn btn--line btn--small">{{ icon("plus") }}Add<span class="sr-only"> {{ s.place.name }} to your calendar</span></button>
+    </form>
+  </li>
+{%- endmacro %}

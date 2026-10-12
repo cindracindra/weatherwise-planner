@@ -1,7 +1,8 @@
 """Demo accounts: one fresh, throwaway calendar per "Try the demo" click.
 
 Each demo account gets sample events placed around today's date, so the
-calendar and today's timeline have something to show. Demo accounts are
+calendar and today's timeline have something to show, and sample places
+so the suggestions do too. Demo accounts are
 deleted when their visitor signs out, or after DEMO_LIFETIME for visitors
 who just leave. At most DEMO_CAP exist at once: beyond that, new demos are
 refused rather than evicting someone mid-visit. Events go with their
@@ -15,6 +16,7 @@ from sqlalchemy.orm import Session
 
 from database.engine import engine
 from models.db_models.event import Event
+from models.db_models.place import Place
 from models.db_models.user import AppUser
 from services.datetime_service import get_today_detail
 
@@ -36,13 +38,51 @@ SAMPLE_EVENTS = [
 ]
 
 
+# (name, category, address, latitude, longitude, suits sunny, cloudy,
+#  rainy, lowest °C, highest °C, visit minutes, notes)
+SAMPLE_PLACES = [
+    ("Hyde Park", "park", "Hyde Park, London W2", 51.5073, -0.1657,
+     True, False, False, 14, None, 150, "Picnic by the Serpentine."),
+    ("Kew Gardens", "garden", "Kew, Richmond TW9 3AE", 51.4787, -0.2956,
+     True, True, False, 10, None, 180, "The glasshouses help if it turns."),
+    ("Primrose Hill", "viewpoint", "Primrose Hill, London NW1", 51.5394,
+     -0.1608, True, False, False, None, None, 60, "Best near sunset."),
+    ("Regent's Canal", "walk", "Little Venice to Camden Lock", 51.5226,
+     -0.1830, True, True, False, 8, None, 120, None),
+    ("Borough Market", "market", "8 Southwark Street, London SE1 1TL",
+     51.5055, -0.0910, True, True, True, None, None, 90, "Mostly covered."),
+    ("British Museum", "museum", "Great Russell Street, London WC1B 3DG",
+     51.5194, -0.1270, False, False, True, None, None, 150, None),
+    ("Tate Modern", "gallery", "Bankside, London SE1 9TG", 51.5076,
+     -0.0994, False, True, True, None, None, 120, "Free; the Turbine Hall."),
+    ("Prince Charles Cinema", "cinema", "7 Leicester Place, London WC2H 7BY",
+     51.5113, -0.1302, False, False, True, None, None, 150, None),
+]
+
+
+def sample_places(user_id: int) -> list[Place]:
+    """The sample places for a demo account."""
+    return [
+        Place(user_id=user_id, name=name, category=category, address=address,
+              latitude=lat, longitude=lng, suits_sunny=sunny,
+              suits_cloudy=cloudy, suits_rainy=rainy, temp_min=low,
+              temp_max=high, visit_minutes=minutes, notes=notes)
+        for (name, category, address, lat, lng, sunny, cloudy, rainy, low,
+             high, minutes, notes) in SAMPLE_PLACES
+    ]
+
+
 def _at(day: datetime, hhmm: str) -> datetime:
     hour, minute = map(int, hhmm.split(":"))
     return day.replace(hour=hour, minute=minute)
 
 
-def sample_events(user_id: int) -> list[Event]:
-    """The sample events for a demo account, around today (London)."""
+def sample_events(user_id: int, place_ids: dict | None = None
+                  ) -> list[Event]:
+    """The sample events for a demo account, around today (London). An
+    event at one of the sample places is linked to it (place_ids maps a
+    place's name to its id)."""
+    place_ids = place_ids or {}
     t = get_today_detail()
     today = datetime(t["year"], t["month"], t["day"])
     events = []
@@ -51,6 +91,7 @@ def sample_events(user_id: int) -> list[Event]:
         events.append(Event(
             name=name, location=location, user_id=user_id,
             start_time=_at(day, start), end_time=_at(day, end),
+            place_id=place_ids.get(location),
         ))
     return events
 
@@ -84,8 +125,12 @@ def create_demo_user() -> AppUser:
             raise DemoFull()
         user = AppUser(name=DEMO_NAME, is_demo=True)
         session.add(user)
-        session.flush()  # gives the account its id for the events
-        session.add_all(sample_events(user.id))
+        session.flush()  # gives the account its id for the rest
+        places = sample_places(user.id)
+        session.add_all(places)
+        session.flush()  # gives the places their ids for the events
+        session.add_all(sample_events(
+            user.id, {p.name: p.id for p in places}))
         session.commit()
         session.refresh(user)
         session.expunge(user)
@@ -93,8 +138,8 @@ def create_demo_user() -> AppUser:
 
 
 def delete_demo_user(user_id: int) -> None:
-    """Delete a demo account and its events. Real accounts are untouched,
-    whatever id is passed."""
+    """Delete a demo account with its events and places. Real accounts
+    are untouched, whatever id is passed."""
     with Session(engine) as session:
         session.execute(
             delete(AppUser).where(AppUser.id == user_id, AppUser.is_demo)
